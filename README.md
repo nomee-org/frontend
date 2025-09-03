@@ -93,8 +93,7 @@ A modern web3 domain marketplace built with React, TypeScript, and Tailwind CSS.
 
 1. **Clone the repository**
 ```bash
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
+git clone https://github.com/nomee-org/frontend.git
 ```
 
 2. **Install dependencies**
