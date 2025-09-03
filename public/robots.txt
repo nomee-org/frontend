@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Disallow private/user-specific pages  
+Disallow: /messages
+Disallow: /notifications
+Disallow: /settings
+
+# Allow public pages
+Allow: /
+Allow: /discover
+Allow: /search
+Allow: /portfolio
+Allow: /names/
+Allow: /feeds/
+
+# Sitemap location
+Sitemap: https://nomee.social/sitemap.xml
