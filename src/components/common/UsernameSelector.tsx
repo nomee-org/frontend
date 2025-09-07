@@ -45,7 +45,7 @@ export function UsernameSelector() {
         <span className="hidden sm:inline sm:ml-2 text-caption truncate">
           {activeUsername}
         </span>
-        <ChevronDown className="hidden sm:inline h-4 w-4 ml-auto" />
+        <ChevronDown className="h-4 w-4 ml-1" />
       </div>
     </Button>
   );

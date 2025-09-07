@@ -13,7 +13,7 @@ import { modal } from "@/configs/reown";
 import { UsernameProvider, useUsername } from "@/contexts/UsernameContext";
 import { UsernameSelector } from "@/components/common/UsernameSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
-import domaLogo from "@/assets/doma.png";
+import Nomee from "../common/Nomee";
 
 function AppLayoutContent() {
   const location = useLocation();
@@ -73,11 +73,7 @@ function AppLayoutContent() {
                 <SidebarTrigger className="hidden md:flex" />
 
                 {isMobile ? (
-                  <img
-                    src={domaLogo}
-                    alt="Doma"
-                    className="h-8 w-8 object-contain"
-                  />
+                  <Nomee />
                 ) : (
                   <h1 className="text-heading font-grotesk text-foreground truncate">
                     {getPageTitle()}

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Search, MessageSquare, Wallet, Settings, Users } from "lucide-react";
 import { useUsername } from "@/contexts/UsernameContext";
+import Nomee from "../common/Nomee";
 
 const navigationItems = [
   { title: "Feeds", url: "/", icon: Users },
@@ -53,11 +54,7 @@ export function AppSidebar() {
               isCollapsed ? "justify-center" : "justify-start"
             }`}
           >
-            <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
-              <span className="text-sidebar-primary-foreground font-bold text-sm">
-                N
-              </span>
-            </div>
+            <Nomee />
             {!isCollapsed && (
               <span className="ml-2 text-xl font-bold font-grotesk">Nomee</span>
             )}
