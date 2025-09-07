@@ -11,16 +11,10 @@ import { useName, useOffers } from "@/data/use-doma";
 import { Token } from "@/types/doma";
 import { useHelper } from "@/hooks/use-helper";
 import UserSelectionPopup from "@/components/domain/UserSelectionPopup";
-import { useWatchedNames } from "@/hooks/use-watched-names";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
-import {
-  WebSocketEventHandlers,
-  webSocketService,
-} from "@/services/backend/socketservice";
 import {
   ArrowLeft,
   Eye,
-  EyeOff,
   Share,
   MessageSquare,
   User,
@@ -35,11 +29,9 @@ import {
 } from "lucide-react";
 import { QueryLoader, QueryListLoader } from "@/components/ui/query-loader";
 import { QueryError, QueryErrorCard } from "@/components/ui/query-error";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import moment from "moment";
@@ -51,22 +43,15 @@ import { ListDomainPopup } from "@/components/domain/ListDomainPopup";
 import { OfferPopup } from "@/components/domain/OfferPopup";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
-  useCreatePost,
   useFollowUser,
   useGetFollowers,
   useGetFollowing,
   useGetPosts,
   useGetUserByUsername,
-  useLikePost,
-  useRepost,
-  useRepostWithComment,
   useUnfollowUser,
-  useUnlikePost,
 } from "@/data/use-backend";
 import CommunityPost from "@/components/posts/CommunityPost";
 import { useUsername } from "@/hooks/use-username";
-import { PendingMediaFile } from "@/components/posts/PostComposer";
-import { CreatePollDto } from "@/types/backend";
 import { DomainSEO } from "@/components/seo/DomainSEO";
 import { UserVerificationPopup } from "@/components/domain/UserVerificationPopup";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
@@ -85,7 +70,9 @@ const DomainDetails = () => {
   const [showVerificationPopup, setShowVerificationPopup] = useState(false);
   const [showAcceptRejectPopup, setShowAcceptRejectPopup] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
-  const [offerAction, setOfferAction] = useState<'accept' | 'reject' | null>(null);
+  const [offerAction, setOfferAction] = useState<"accept" | "reject" | null>(
+    null
+  );
   const { parseCAIP10, formatLargeNumber, trimAddress } = useHelper();
   const { address } = useAccount();
   const [activeTab, setActiveTab] = useState<
@@ -109,13 +96,8 @@ const DomainDetails = () => {
       ? nameData?.tokens?.[0]?.tokenId
       : undefined
   );
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const createPostMutation = useCreatePost();
-  const likeMutation = useLikePost();
-  const unlikeMutation = useUnlikePost();
-  const { token, activeUsername } = useUsername();
 
-  const { isWatched, toggleWatchlist } = useWatchedNames(address);
+  const { activeUsername } = useUsername();
   const isOwner = domainName === activeUsername;
 
   const {
@@ -187,51 +169,6 @@ const DomainDetails = () => {
       return toast("Connect your wallet");
     }
     setShowUserSelectionPopup(true);
-  };
-
-  const handleShare = (postId: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/feeds/${postId}`);
-    toast.success("Link copied to clipboard!");
-  };
-
-  const handlePostSubmit = async (
-    content: string,
-    mediaFiles: PendingMediaFile[] = [],
-    poll?: CreatePollDto
-  ) => {
-    try {
-      await createPostMutation.mutateAsync({
-        createPostDto: { content, poll },
-        mediaFiles: mediaFiles.map((pf) => pf.file),
-      });
-      toast.success("Post created successfully!");
-      if (replyingTo) {
-        setReplyingTo(null);
-      }
-    } catch (error) {
-      toast.error("Failed to create post");
-    }
-  };
-
-  const handleLike = async (postId: string) => {
-    try {
-      // Optimistic update could be added here
-      await likeMutation.mutateAsync(postId);
-    } catch (error) {
-      toast.error("Failed to like post");
-    }
-  };
-
-  const handleUnlike = async (postId: string) => {
-    try {
-      await unlikeMutation.mutateAsync(postId);
-    } catch (error) {
-      toast.error("Failed to unlike post");
-    }
-  };
-
-  const handleReply = (postId: string) => {
-    setReplyingTo(postId);
   };
 
   if (nameError) {
@@ -832,7 +769,9 @@ const DomainDetails = () => {
                                               {offer.orderbook}
                                             </div>
                                             <div className="text-sm text-muted-foreground">
-                                              {moment(offer.createdAt).fromNow()}
+                                              {moment(
+                                                offer.createdAt
+                                              ).fromNow()}
                                             </div>
                                             {offer.expiresAt && (
                                               <div className="text-xs text-muted-foreground">
@@ -844,28 +783,28 @@ const DomainDetails = () => {
                                             )}
                                           </div>
                                         </div>
-                                        
+
                                         {isOwner && (
                                           <div className="mt-3 pt-3 border-t border-border flex gap-2">
-                                            <Button 
-                                              variant="default" 
-                                              size="sm" 
+                                            <Button
+                                              variant="default"
+                                              size="sm"
                                               className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                                               onClick={() => {
                                                 setSelectedOffer(offer);
-                                                setOfferAction('accept');
+                                                setOfferAction("accept");
                                                 setShowAcceptRejectPopup(true);
                                               }}
                                             >
                                               Accept
                                             </Button>
-                                            <Button 
-                                              variant="outline" 
-                                              size="sm" 
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
                                               className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
                                               onClick={() => {
                                                 setSelectedOffer(offer);
-                                                setOfferAction('reject');
+                                                setOfferAction("reject");
                                                 setShowAcceptRejectPopup(true);
                                               }}
                                             >
@@ -1030,21 +969,23 @@ const DomainDetails = () => {
                         Highest Offer
                       </h3>
                       {(() => {
-                        const highestOffer = offersData?.pages?.flatMap((p) => p.items)?.[0];
+                        const highestOffer = offersData?.pages?.flatMap(
+                          (p) => p.items
+                        )?.[0];
                         if (!highestOffer) return null;
-                        
+
                         const handleAcceptOffer = () => {
                           setSelectedOffer(highestOffer);
-                          setOfferAction('accept');
+                          setOfferAction("accept");
                           setShowAcceptRejectPopup(true);
                         };
-                        
+
                         const handleRejectOffer = () => {
                           setSelectedOffer(highestOffer);
-                          setOfferAction('reject');
+                          setOfferAction("reject");
                           setShowAcceptRejectPopup(true);
                         };
-                        
+
                         return (
                           <div className="p-4 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
                             <div className="flex items-center justify-between mb-3">
@@ -1056,60 +997,81 @@ const DomainDetails = () => {
                                   <div className="text-2xl font-bold text-primary">
                                     {formatLargeNumber(
                                       Number(highestOffer.price) /
-                                        Math.pow(10, highestOffer.currency.decimals)
+                                        Math.pow(
+                                          10,
+                                          highestOffer.currency.decimals
+                                        )
                                     )}{" "}
-                                    <span className="text-lg">{highestOffer.currency.symbol}</span>
+                                    <span className="text-lg">
+                                      {highestOffer.currency.symbol}
+                                    </span>
                                   </div>
                                   <div className="text-sm text-muted-foreground">
                                     Current highest offer
                                   </div>
                                 </div>
                               </div>
-                              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                              <Badge
+                                variant="secondary"
+                                className="bg-primary/10 text-primary border-primary/20"
+                              >
                                 Top Offer
                               </Badge>
                             </div>
-                            
+
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Offered by:</span>
+                                <span className="text-muted-foreground">
+                                  Offered by:
+                                </span>
                                 <span className="font-medium">
-                                  {trimAddress(parseCAIP10(highestOffer.offererAddress).address)}
+                                  {trimAddress(
+                                    parseCAIP10(highestOffer.offererAddress)
+                                      .address
+                                  )}
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Orderbook:</span>
-                                <span className="font-medium">{highestOffer.orderbook}</span>
+                                <span className="text-muted-foreground">
+                                  Orderbook:
+                                </span>
+                                <span className="font-medium">
+                                  {highestOffer.orderbook}
+                                </span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Made:</span>
+                                <span className="text-muted-foreground">
+                                  Made:
+                                </span>
                                 <span className="font-medium">
                                   {moment(highestOffer.createdAt).fromNow()}
                                 </span>
                               </div>
                               {highestOffer.expiresAt && (
                                 <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Expires:</span>
+                                  <span className="text-muted-foreground">
+                                    Expires:
+                                  </span>
                                   <span className="font-medium text-orange-600">
                                     {moment(highestOffer.expiresAt).fromNow()}
                                   </span>
                                 </div>
                               )}
                             </div>
-                            
+
                             {isOwner && (
                               <div className="mt-4 pt-3 border-t border-primary/20 flex gap-2">
-                                <Button 
-                                  variant="default" 
-                                  size="sm" 
+                                <Button
+                                  variant="default"
+                                  size="sm"
                                   className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                                   onClick={handleAcceptOffer}
                                 >
                                   Accept Offer
                                 </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
                                   onClick={handleRejectOffer}
                                 >
@@ -1180,10 +1142,9 @@ const DomainDetails = () => {
                                   name: `media-${i}`,
                                 })) || []
                               }
-                               onReply={() => handleReply(post.id)}
-                               onClick={() => navigate(`/feeds/${post.id}`)}
-                               currentUser={activeUsername}
-                               poll={post.poll}
+                              onClick={() => navigate(`/feeds/${post.id}`)}
+                              currentUser={activeUsername}
+                              poll={post.poll}
                             />
                           );
                         })}
