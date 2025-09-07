@@ -211,22 +211,16 @@ const UserConversation = () => {
       },
     };
 
+    // lastReadConversationMutation.mutate(createConversation?.data?.id);
     webSocketService.setEventHandlers(handlers);
 
     return () => {
+      // lastReadConversationMutation.mutate(createConversation?.data?.id);
       webSocketService.removeEventHandlers(handlers);
     };
   }, [createConversation]);
 
-  useEffect(() => {
-    if (createConversation?.data?.id) {
-      lastReadConversationMutation.mutate(createConversation.data.id);
-
-      return () => {
-        lastReadConversationMutation.mutate(createConversation.data.id);
-      };
-    }
-  }, [createConversation]);
+  
 
   if (createConversation.isPending) {
     return (

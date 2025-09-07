@@ -345,7 +345,7 @@ const DomainDetails = () => {
                         </div>
                         <div className="flex items-center space-x-1">
                           <span className="text-sm font-semibold text-foreground">
-                            {userData?._count?.followers}
+                            {userData?._count?.following}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             following

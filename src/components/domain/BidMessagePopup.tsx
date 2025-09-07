@@ -71,7 +71,6 @@ const BidMessagePopup = ({
   const formatBidMessage = () => {
     const bidTypeText = {
       instant: "💰 Instant Buy Offer",
-      auction: "⏰ Auction Bid",
       offer: "📈 Domain Offer",
     }[bidType];
 
@@ -175,12 +174,7 @@ Sent via DOMA Bid System`;
                   <span>Instant Buy</span>
                 </div>
               </SelectItem>
-              <SelectItem value="auction">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4" />
-                  <span>Auction Bid</span>
-                </div>
-              </SelectItem>
+
               <SelectItem value="offer">
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="h-4 w-4" />

@@ -211,7 +211,7 @@ export function MessageBubble({
               <img
                 src={message.mediaUrl}
                 alt="Shared image"
-                className="max-w-xs rounded-lg cursor-pointer"
+                className="max-w-[min(100%,320px)] rounded-lg cursor-pointer"
                 onClick={() => window.open(message.mediaUrl, "_blank")}
               />
             )}
@@ -232,7 +232,7 @@ export function MessageBubble({
               <video
                 src={message.mediaUrl}
                 controls
-                className="max-w-xs rounded-lg"
+                className="max-w-[min(100%,320px)] rounded-lg"
               />
             )}
             {message.content && (
@@ -247,18 +247,22 @@ export function MessageBubble({
         );
       case MessageType.VOICE:
         return (
-          <div className="flex items-center space-x-2 bg-black/10 p-3 rounded-lg min-w-[200px]">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-full p-0"
-            >
-              ▶️
-            </Button>
-            <div className="flex-1 h-1 bg-white/20 rounded-full">
-              <div className="h-full w-1/3 bg-white/60 rounded-full"></div>
-            </div>
-            <span className="text-xs opacity-70">0:15</span>
+          <div className="space-y-2">
+            {message.mediaUrl && (
+              <audio
+                src={message.mediaUrl}
+                controls
+                className="max-w-[min(100%,320px)] rounded-lg"
+              />
+            )}
+            {message.content && (
+              <div
+                className="text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{
+                  __html: renderRichContent(message.content),
+                }}
+              />
+            )}
           </div>
         );
       case MessageType.FILE:
