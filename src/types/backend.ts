@@ -174,80 +174,6 @@ export interface IRepost {
   originalPost: IPost;
 }
 
-export interface IConversation {
-  id: string;
-  type: ConversationType;
-  name?: string;
-  description?: string;
-  avatarUrl?: string;
-  isEncrypted: boolean;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  lastMessageId?: string;
-  participants: IConversationParticipant[];
-  lastMessage?: IMessage;
-  pinnedMessages?: IPinnedMessage[];
-  unreadCount?: number;
-  _count: {
-    participants: number;
-    messages: number;
-    pinnedMessages: number;
-  };
-}
-
-export interface IConversationParticipant {
-  id: string;
-  role: ParticipantRole;
-  isActive: boolean;
-  isMuted: boolean;
-  lastReadAt: Date;
-  joinedAt: Date;
-  conversationId: string;
-  userId: string;
-  user: IUserBasic;
-}
-
-export interface IMessage {
-  id: string;
-  content?: string;
-  encryptedContent?: string;
-  type: MessageType;
-  mediaUrl?: string;
-  mediaType?: string;
-  mediaSize?: number;
-  stickerUrl?: string;
-  isEdited: boolean;
-  isDeleted: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  conversationId: string;
-  senderId: string;
-  replyToId?: string;
-  sender: IUserBasic;
-  replyTo?: IMessage;
-  reactions: IMessageReaction[];
-}
-
-export interface IMessageReaction {
-  id: string;
-  emoji: string;
-  createdAt: Date;
-  messageId: string;
-  userId: string;
-  user: IUserBasic;
-}
-
-export interface IPinnedMessage {
-  id: string;
-  createdAt: Date;
-  conversationId: string;
-  messageId: string;
-  pinnedById: string;
-  message: IMessage;
-  pinnedBy: IUserBasic;
-}
-
 export interface ISponsoredAd {
   id: string;
   title: string;
@@ -312,8 +238,6 @@ export enum NotificationType {
   MENTION = "MENTION",
   POST_REPLY = "POST_REPLY",
   TRENDING_HASHTAG = "TRENDING_HASHTAG",
-  MESSAGE = "MESSAGE",
-  GROUP_INVITE = "GROUP_INVITE",
   ANNOUNCEMENT = "ANNOUNCEMENT",
   POLL_VOTE = "POLL_VOTE",
   VERIFICATION_APPROVED = "VERIFICATION_APPROVED",
