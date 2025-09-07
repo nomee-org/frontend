@@ -42,12 +42,11 @@ const BidMessagePopup = ({
   isOpen,
   onClose,
   recipientName,
-  recipientId,
   domainName,
   conversationId,
 }: BidMessagePopupProps) => {
   const [bidAmount, setBidAmount] = useState("");
-  const [bidCurrency, setBidCurrency] = useState("ETH");
+  const [bidCurrency, setBidCurrency] = useState("USDC");
   const [bidType, setBidType] = useState("offer");
   const [durationDays, setDurationDays] = useState("7");
   const [message, setMessage] = useState("");
@@ -57,16 +56,9 @@ const BidMessagePopup = ({
   const sendMessageMutation = useSendMessage();
 
   const currencies = [
-    { value: "ETH", label: "ETH", rate: 2800 },
-    { value: "USDC", label: "USDC", rate: 1 },
-    { value: "WETH", label: "WETH", rate: 2800 },
+    { value: "USDC", label: "USDC" },
+    { value: "WETH", label: "WETH" },
   ];
-
-  const selectedCurrency = currencies.find((c) => c.value === bidCurrency);
-  const estimatedUSD =
-    bidAmount && selectedCurrency
-      ? parseFloat(bidAmount) * selectedCurrency.rate
-      : 0;
 
   const formatBidMessage = () => {
     const bidTypeText = {
@@ -80,13 +72,9 @@ const BidMessagePopup = ({
 
 🌐 Domain: ${domainName}
 💵 Amount: ${bidAmount} ${bidCurrency}
-${estimatedUSD ? `≈ $${estimatedUSD.toLocaleString()} USD` : ""}
 
 💬 Message:
-${message}
-
----
-Sent via DOMA Bid System`;
+${message}`;
   };
 
   const handleSubmitBid = async () => {
@@ -151,7 +139,7 @@ Sent via DOMA Bid System`;
         {/* Domain Info */}
         <div className="bg-accent/50 p-2 md:p-4 rounded-lg">
           <div className="flex items-center justify-between">
-            <span className="font-medium text-sm">Domain</span>
+            <span className="font-medium text-sm">From</span>
             <Badge variant="outline">{domainName}</Badge>
           </div>
           <div className="flex items-center justify-between mt-2">
@@ -211,11 +199,6 @@ Sent via DOMA Bid System`;
               </SelectContent>
             </Select>
           </div>
-          {bidAmount && (
-            <p className="text-sm text-muted-foreground">
-              ≈ ${estimatedUSD.toLocaleString()} USD
-            </p>
-          )}
         </div>
 
         {/* Duration (for auction bids) */}
