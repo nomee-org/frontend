@@ -57,11 +57,12 @@ export function OfferPopup({
   const [offerType, setOfferType] = useState<"instant" | "make-offer">(
     "instant"
   );
+  const [expirationDays, setExpirationDays] = useState("7");
+
   const { data: walletClient } = useWalletClient();
   const { switchChainAsync } = useSwitchChain();
   const { parseCAIP10, formatLargeNumber } = useHelper();
   const [currencies, setCurrencies] = useState<CurrencyToken[]>([]);
-  const [fees, setFees] = useState<OrderbookFee[]>([]);
 
   const [selectedCurrency, setSelectedCurrency] = useState<
     CurrencyToken | undefined
@@ -88,23 +89,9 @@ export function OfferPopup({
     }
   };
 
-  const getFees = async () => {
-    const fees = await client.getOrderbookFee({
-      chainId: token.chain.networkId,
-      contractAddress: token.tokenAddress,
-      orderbook: token.listings[0].orderbook,
-    });
-
-    setFees(fees.marketplaceFees);
-  };
-
   useEffect(() => {
     getCurrencies();
   }, [token]);
-
-  useEffect(() => {
-    getFees();
-  }, [token, offerAmount]);
 
   const handleSubmit = async () => {
     try {
@@ -117,7 +104,7 @@ export function OfferPopup({
           orderId: token.listings[0].externalId,
         };
 
-        const buyListing = await client.buyListing({
+        await client.buyListing({
           params,
           chainId: token.chain.networkId,
           onProgress: (progress) => {
@@ -130,14 +117,13 @@ export function OfferPopup({
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
 
-        console.log(buyListing);
         onClose();
       } else {
         if (!offerAmount) {
           return toast.error("Please enter an offer amount");
         }
 
-        const durationSecs = 60 * 60 * 24 * 7; // 7 days
+        const durationSecs = Number(expirationDays) * 24 * 3600;
 
         const params: CreateOfferParams = {
           items: [
@@ -154,7 +140,6 @@ export function OfferPopup({
           ],
           orderbook: token.listings[0].orderbook,
           source: import.meta.env.VITE_APP_NAME,
-          marketplaceFees: fees,
         };
 
         const createOffer = await client.createOffer({
@@ -239,6 +224,23 @@ export function OfferPopup({
                     </SelectItem>
                   );
                 })}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Expiration */}
+        {offerType === "make-offer" && (
+          <div className="space-y-2">
+            <Label htmlFor="expiration">Duration</Label>
+            <Select value={expirationDays} onValueChange={setExpirationDays}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">24 hours</SelectItem>
+                <SelectItem value="3">3 days</SelectItem>
+                <SelectItem value="7">7 days</SelectItem>
               </SelectContent>
             </Select>
           </div>

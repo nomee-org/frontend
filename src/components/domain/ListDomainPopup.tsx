@@ -141,7 +141,6 @@ export function ListDomainPopup({
         ],
         orderbook,
         source: import.meta.env.VITE_APP_NAME,
-        marketplaceFees: fees,
       };
 
       const a = await client.createListing({
