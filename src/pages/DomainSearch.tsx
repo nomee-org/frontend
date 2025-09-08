@@ -100,8 +100,9 @@ const DomainSearch = () => {
     setShowSuggestions(false);
   };
 
-  const handleOfferClick = (token: Token) => {
+  const handleOfferClick = (domainName: string, token: Token) => {
     setSelectedToken(token);
+    setSelectedDomain(domainName);
   };
 
   const handleWatch = (domainName: string) => {
@@ -372,7 +373,7 @@ const DomainSearch = () => {
                             className="flex-1"
                             onClick={(e) => {
                               e.preventDefault();
-                              handleOfferClick(name.tokens?.[0]);
+                              handleOfferClick(name.name, name.tokens?.[0]);
                             }}
                           >
                             Buy or Make Offer
