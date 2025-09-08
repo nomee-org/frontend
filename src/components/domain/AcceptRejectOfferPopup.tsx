@@ -14,12 +14,21 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { DollarSign, AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useHelper } from "@/hooks/use-helper";
 import { toast } from "sonner";
 import moment from "moment";
+import {
+  AcceptOfferParams,
+  createDomaOrderbookClient,
+  viemToEthersSigner,
+} from "@doma-protocol/orderbook-sdk";
+import { domaConfig } from "@/configs/doma";
+import { useNavigate } from "react-router-dom";
+import { useSwitchChain, useWalletClient } from "wagmi";
+import { Token } from "@/types/doma";
+import { dataService } from "@/services/doma/dataservice";
 
 interface Offer {
   externalId: string;
@@ -38,8 +47,9 @@ interface AcceptRejectOfferPopupProps {
   isOpen: boolean;
   onClose: () => void;
   offer: Offer | null;
-  action: 'accept' | 'reject' | null;
+  action: "accept" | "reject" | null;
   domainName?: string;
+  token?: Token;
 }
 
 export function AcceptRejectOfferPopup({
@@ -48,29 +58,67 @@ export function AcceptRejectOfferPopup({
   offer,
   action,
   domainName,
+  token,
 }: AcceptRejectOfferPopupProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const isMobile = useIsMobile();
   const { formatLargeNumber, parseCAIP10, trimAddress } = useHelper();
+  const client = createDomaOrderbookClient(domaConfig);
+  const navigate = useNavigate();
+  const { switchChainAsync } = useSwitchChain();
+  const { data: walletClient } = useWalletClient();
 
   const handleConfirm = async () => {
     if (!offer || !action) return;
 
     setIsProcessing(true);
     try {
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // TODO: Implement actual accept/reject offer functionality
-      if (action === 'accept') {
+      await switchChainAsync({
+        chainId: Number(parseCAIP10(token.chain.networkId).chainId),
+      });
+
+      if (action === "accept") {
+        const params: AcceptOfferParams = {
+          orderId: offer.externalId,
+        };
+
+        await client.acceptOffer({
+          params,
+          chainId: `eip155:${Number(
+            parseCAIP10(token.chain.networkId).chainId
+          )}`,
+          onProgress: (progress) => {
+            progress.forEach((step) => {
+              toast(step.description, {
+                id: `accept_offer_${offer.externalId}_step_${step.kind}`,
+              });
+            });
+          },
+          signer: viemToEthersSigner(walletClient, token.chain.networkId),
+        });
+
         toast.success("Offer accepted successfully!");
       } else {
-        toast.success("Offer rejected successfully!");
+        const names = await dataService.getOwnedNames({
+          page: 1,
+          take: 1,
+          address: parseCAIP10(offer.offererAddress).address,
+        });
+
+        if (names.totalCount === 0) {
+          return toast.error(
+            "Cannot send message. The offerer does not own any domains."
+          );
+        }
+
+        navigate(
+          `/messages/${names?.items?.[0]?.name}?message=Your offer for ${domainName} has been rejected.`
+        );
       }
-      
+
       onClose();
     } catch (error) {
-      toast.error(`Failed to ${action} offer. Please try again.`);
+      toast.error(error?.message);
     } finally {
       setIsProcessing(false);
     }
@@ -84,11 +132,11 @@ export function AcceptRejectOfferPopup({
 
   if (!offer || !action) return null;
 
-  const isAccept = action === 'accept';
-  const title = isAccept ? 'Accept Offer' : 'Reject Offer';
-  const description = isAccept 
-    ? 'Are you sure you want to accept this offer? This action cannot be undone.'
-    : 'Are you sure you want to reject this offer? The offerer will be notified.';
+  const isAccept = action === "accept";
+  const title = isAccept ? "Accept Offer" : "Reject Offer";
+  const description = isAccept
+    ? "Are you sure you want to accept this offer? This action cannot be undone."
+    : "Notify the offerer of the rejection.";
 
   const content = (
     <>
@@ -96,11 +144,13 @@ export function AcceptRejectOfferPopup({
         <ScrollArea className="max-h-[60vh]">
           <div className="space-y-6 p-1">
             {/* Warning Message */}
-            <div className={`p-4 rounded-lg border-2 ${
-              isAccept 
-                ? 'bg-green-50 border-green-200 text-green-800' 
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
+            <div
+              className={`p-4 rounded-lg border-2 ${
+                isAccept
+                  ? "bg-green-50 border-green-200 text-green-800"
+                  : "bg-red-50 border-red-200 text-red-800"
+              }`}
+            >
               <div className="flex items-start space-x-3">
                 {isAccept ? (
                   <CheckCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -124,7 +174,8 @@ export function AcceptRejectOfferPopup({
                   <div>
                     <div className="text-2xl font-bold text-primary">
                       {formatLargeNumber(
-                        Number(offer.price) / Math.pow(10, offer.currency.decimals)
+                        Number(offer.price) /
+                          Math.pow(10, offer.currency.decimals)
                       )}{" "}
                       <span className="text-lg">{offer.currency.symbol}</span>
                     </div>
@@ -133,15 +184,18 @@ export function AcceptRejectOfferPopup({
                     </div>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                <Badge
+                  variant="secondary"
+                  className="bg-primary/10 text-primary border-primary/20"
+                >
                   Pending
                 </Badge>
               </div>
-              
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Domain:</span>
-                  <span className="font-medium">{domainName || 'N/A'}</span>
+                  <span className="font-medium">{domainName || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Offered by:</span>
@@ -156,14 +210,14 @@ export function AcceptRejectOfferPopup({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Created:</span>
                   <span className="font-medium">
-                    {moment(offer.createdAt).format('MMM DD, YYYY HH:mm')}
+                    {moment(offer.createdAt).format("MMM DD, YYYY HH:mm")}
                   </span>
                 </div>
                 {offer.expiresAt && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Expires:</span>
                     <span className="font-medium text-orange-600">
-                      {moment(offer.expiresAt).format('MMM DD, YYYY HH:mm')}
+                      {moment(offer.expiresAt).format("MMM DD, YYYY HH:mm")}
                     </span>
                   </div>
                 )}
@@ -171,44 +225,39 @@ export function AcceptRejectOfferPopup({
             </div>
 
             {/* Important Notice */}
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-              <div className="flex items-start space-x-3">
-                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                <div className="text-amber-800">
-                  <h5 className="font-semibold mb-1">Important Notice</h5>
-                  <ul className="text-sm space-y-1">
-                    {isAccept ? (
+            {isAccept ? (
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-amber-800">
+                    <h5 className="font-semibold mb-1">Important Notice</h5>
+                    <ul className="text-sm space-y-1">
                       <>
                         <li>• This action will transfer domain ownership</li>
                         <li>• Payment will be processed automatically</li>
-                        <li>• You will receive funds in your connected wallet</li>
+                        <li>
+                          • You will receive funds in your connected wallet
+                        </li>
                         <li>• This action cannot be reversed</li>
                       </>
-                    ) : (
-                      <>
-                        <li>• The offerer will be notified of the rejection</li>
-                        <li>• The offer will be permanently declined</li>
-                        <li>• You can still accept other pending offers</li>
-                        <li>• This action cannot be undone</li>
-                      </>
-                    )}
-                  </ul>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </ScrollArea>
       </div>
 
       {/* Sticky Action Buttons */}
-      <div className="border-t bg-background p-4 space-y-2">
+      <div className="border-t bg-background pt-4">
         <Button
           onClick={handleConfirm}
           disabled={isProcessing}
           className={`w-full ${
             isAccept
-              ? 'bg-green-600 hover:bg-green-700 text-white'
-              : 'bg-red-600 hover:bg-red-700 text-white'
+              ? "bg-green-600 hover:bg-green-700 text-white"
+              : "bg-red-600 hover:bg-red-700 text-white"
           }`}
         >
           {isProcessing ? (
@@ -217,16 +266,8 @@ export function AcceptRejectOfferPopup({
               Processing...
             </>
           ) : (
-            `${isAccept ? 'Accept' : 'Reject'} Offer`
+            `${isAccept ? "Accept Offer" : "Send Message"}`
           )}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isProcessing}
-          className="w-full"
-        >
-          Cancel
         </Button>
       </div>
     </>

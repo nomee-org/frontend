@@ -36,13 +36,14 @@ import { useHelper } from "@/hooks/use-helper";
 import { TLDFilter } from "@/types/doma";
 import { Link } from "react-router-dom";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
-import { zeroAddress } from "viem";
+import { formatUnits, zeroAddress } from "viem";
 import { webSocketService } from "@/services/backend/socketservice";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { ConnectWallet } from "@/components/common/ConnectWallet";
 import { RegistrarPopup } from "@/components/domain/RegistrarPopup";
 import { toast } from "sonner";
 import { PortfolioSEO } from "@/components/seo/PortfolioSEO";
+import { forma } from "viem/chains";
 
 interface Activity {
   id: string;
@@ -67,6 +68,7 @@ const Portfolio = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isRegistrarPopupOpen, setIsRegistrarPopupOpen] = useState(false);
   const { toggleWatchlist, watchedNames } = useWatchedNames(address);
+  const { formatLargeNumber } = useHelper();
 
   const {
     data: namesData,
@@ -336,10 +338,6 @@ const Portfolio = () => {
                         {(() => {
                           const listing = name.tokens?.[0]?.listings?.[0];
                           if (listing) {
-                            const price = parseFloat(listing.price);
-                            const formattedPrice = (
-                              price / Math.pow(10, listing.currency.decimals)
-                            ).toFixed(4);
                             return (
                               <div className="space-y-4 bg-accent/20 rounded-xl p-4 border border-border/30">
                                 <div className="flex justify-between items-center">
@@ -347,7 +345,15 @@ const Portfolio = () => {
                                     Listed At
                                   </span>
                                   <span className="font-bold text-lg text-primary">
-                                    {formattedPrice} {listing.currency.symbol}
+                                    {formatLargeNumber(
+                                      Number(
+                                        formatUnits(
+                                          BigInt(listing.price),
+                                          listing.currency.decimals
+                                        )
+                                      )
+                                    )}{" "}
+                                    {listing.currency.symbol}
                                   </span>
                                 </div>
                                 <div className="flex justify-between items-center">
@@ -356,10 +362,14 @@ const Portfolio = () => {
                                   </span>
                                   <span className="text-sm font-medium">
                                     $
-                                    {(
-                                      parseFloat(formattedPrice) *
-                                      listing.currency.usdExchangeRate
-                                    ).toFixed(2)}
+                                    {formatLargeNumber(
+                                      Number(
+                                        formatUnits(
+                                          BigInt(listing.price),
+                                          listing.currency.decimals
+                                        )
+                                      ) * listing.currency.usdExchangeRate
+                                    )}
                                   </span>
                                 </div>
                                 <div className="flex justify-between items-center pt-2 border-t border-border/30">
@@ -367,7 +377,7 @@ const Portfolio = () => {
                                     Chain
                                   </span>
                                   <span className="font-semibold text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                    {listing.chain.name}
+                                    {name.tokens?.[0]?.chain?.name}
                                   </span>
                                 </div>
                               </div>

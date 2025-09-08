@@ -2,8 +2,8 @@ export const GET_OFFERS = `
     query OffersQuery(
         $tokenId: String!
         $offererAddresses: [AddressCAIP10!]
-        $skip: Float
-        $take: Float
+        $skip: Int
+        $take: Int
         $status: OfferStatus
         $sortOrder: SortOrderType
     ) {

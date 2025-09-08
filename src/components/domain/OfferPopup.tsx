@@ -117,7 +117,7 @@ export function OfferPopup({
           orderId: token.listings[0].externalId,
         };
 
-        const a = await client.buyListing({
+        const buyListing = await client.buyListing({
           params,
           chainId: token.chain.networkId,
           onProgress: (progress) => {
@@ -130,14 +130,16 @@ export function OfferPopup({
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
 
-        console.log(a);
+        console.log(buyListing);
         onClose();
       } else {
         if (!offerAmount) {
           return toast.error("Please enter an offer amount");
         }
 
-        const durationSecs = 0;
+        const durationSecs = 60 * 60 * 24 * 7; // 7 days
+
+        console.log(selectedCurrency);
 
         const params: CreateOfferParams = {
           items: [
@@ -157,7 +159,7 @@ export function OfferPopup({
           marketplaceFees: fees,
         };
 
-        const a = await client.createOffer({
+        const createOffer = await client.createOffer({
           params,
           chainId: token.chain.networkId,
           onProgress: (progress) => {
@@ -170,11 +172,11 @@ export function OfferPopup({
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
 
-        console.log(a);
+        console.log(createOffer);
         onClose();
       }
     } catch (error) {
-      console.log(error);
+      toast.error(error?.message);
     }
   };
 

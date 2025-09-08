@@ -270,14 +270,14 @@ export function ListDomainPopup({
         )}
 
         {/* Estimated USD Value */}
-        {listingPrice && selectedCurrency && (
+        {/* {listingPrice && selectedCurrency && (
           <div className="bg-muted p-3 rounded-lg">
             <p className="text-sm text-muted-foreground">Estimated USD Value</p>
             <p className="font-semibold">
-              ~${(parseFloat(listingPrice) * 1000).toFixed(2)} USD
+              ~${(parseFloat(listingPrice) * selectedCurrency?.).toFixed(2)} USD
             </p>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Action Buttons */}

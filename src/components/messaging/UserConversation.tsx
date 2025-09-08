@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // React imports
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 // Third-party imports
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 // UI component imports
 import { Button } from "@/components/ui/button";
@@ -57,12 +56,19 @@ import {
   addMessageInCache,
   useLastReadConversation,
 } from "@/data/use-backend";
-import { webSocketService, WebSocketEventHandlers } from "@/services/backend/socketservice";
+import {
+  webSocketService,
+  WebSocketEventHandlers,
+} from "@/services/backend/socketservice";
 
 // Type imports
 import { ConversationType, IMessage } from "@/types/backend";
 
 const UserConversation = () => {
+  const [params] = useSearchParams();
+
+  const initMessage = params.get("message");
+
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -79,8 +85,6 @@ const UserConversation = () => {
   const { activeUsername } = useUsername();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const createConversation = useCreateConversation();
-  const deleteConversation = useDeleteConversation();
-  const lastReadConversationMutation = useLastReadConversation();
 
   // Get current user's participant data to check mute status
   const currentParticipant = createConversation?.data?.participants?.find(
@@ -219,8 +223,6 @@ const UserConversation = () => {
       webSocketService.removeEventHandlers(handlers);
     };
   }, [createConversation]);
-
-  
 
   if (createConversation.isPending) {
     return (
@@ -393,6 +395,7 @@ const UserConversation = () => {
 
       {/* Message Input */}
       <MessageInput
+        placeHolder={initMessage || ""}
         conversationId={createConversation?.data?.id}
         replyToId={replyToId}
         onCancelReply={() => setReplyToId(undefined)}

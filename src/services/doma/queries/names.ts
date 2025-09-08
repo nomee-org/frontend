@@ -67,6 +67,7 @@ export const GET_NAMES = `
                             decimals
                             usdExchangeRate
                         }
+                                        
                         createdAt
                         expiresAt
                     }
@@ -201,6 +202,28 @@ export const GET_NAME = `
                     tld
                     createdAt
                 }
+            }
+        }
+    }
+`;
+
+export const GET_NAME_STATISTICS = `
+    query NameStatistics($tokenId: String!) {
+        nameStatistics(tokenId: $tokenId) {
+            activeOffers
+            offersLast3Days
+            highestOffer {
+                externalId
+                price
+                currency {
+                    decimals
+                    name
+                    symbol
+                }
+                offererAddress
+                orderbook
+                expiresAt
+                createdAt
             }
         }
     }

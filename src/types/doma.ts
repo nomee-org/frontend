@@ -24,6 +24,12 @@ export type Name = {
   activities: NameActivity[];
 };
 
+export type NameStats = {
+  activeOffers: number;
+  offersLast3Days: number;
+  highestOffer?: Offer;
+};
+
 export type NameSort = "DOMAIN" | "CHAIN" | "REGISTRAR" | "EXPIRES_AT";
 
 export type NameClaimStatus = "CLAIMED" | "UNCLAIMED" | "ALL";

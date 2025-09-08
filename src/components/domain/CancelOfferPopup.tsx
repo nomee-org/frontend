@@ -14,11 +14,10 @@ import {
 } from "@/components/ui/drawer";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { Token } from "@/types/doma";
+import { Offer, Token } from "@/types/doma";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwitchChain, useWalletClient } from "wagmi";
 import {
-  CancelListingParams,
   CancelOfferParams,
   createDomaOrderbookClient,
   viemToEthersSigner,
@@ -27,19 +26,21 @@ import { domaConfig } from "@/configs/doma";
 import { useHelper } from "@/hooks/use-helper";
 import { formatUnits } from "viem";
 
-interface CancelListingPopupProps {
+interface CancelOfferPopupProps {
   isOpen: boolean;
   onClose: () => void;
   token: Token;
+  offer: Offer;
   domainName: string;
 }
 
-export function CancelListingPopup({
+export function CancelOfferPopup({
   isOpen,
   onClose,
   token,
+  offer,
   domainName,
-}: CancelListingPopupProps) {
+}: CancelOfferPopupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const isMobile = useIsMobile();
   const client = createDomaOrderbookClient(domaConfig);
@@ -47,7 +48,7 @@ export function CancelListingPopup({
   const { data: walletClient } = useWalletClient();
   const { formatLargeNumber, parseCAIP10 } = useHelper();
 
-  const handleCancelListing = async () => {
+  const handleCancelOffer = async () => {
     setIsLoading(true);
 
     try {
@@ -55,26 +56,24 @@ export function CancelListingPopup({
         chainId: Number(parseCAIP10(token.chain.networkId).chainId),
       });
 
-      const orderId = token.listings?.[0]?.externalId ?? "";
-
-      const params: CancelListingParams = {
-        orderId,
+      const params: CancelOfferParams = {
+        orderId: offer.externalId,
       };
 
-      await client.cancelListing({
+      await client.cancelOffer({
         params,
         chainId: `eip155:${Number(parseCAIP10(token.chain.networkId).chainId)}`,
         onProgress: (progress) => {
           progress.forEach((step) => {
             toast(step.description, {
-              id: `cancel_listing_${orderId}_step_${step.kind}`,
+              id: `cancel_offer_${offer.externalId}_step_${step.kind}`,
             });
           });
         },
         signer: viemToEthersSigner(walletClient, token.chain.networkId),
       });
 
-      toast.success("Listing cancelled successfully");
+      toast.success("Offer cancelled successfully");
 
       onClose();
     } catch (error) {
@@ -87,23 +86,17 @@ export function CancelListingPopup({
   const content = (
     <>
       <div className="space-y-4 flex-1 overflow-y-auto">
-        {/* Current Listing Info */}
-        {token.listings && token.listings.length > 0 && (
+        {/* Current Offer Info */}
+        {offer && (
           <div className="bg-muted p-3 rounded-lg">
-            <p className="text-sm text-muted-foreground">Current Listing</p>
+            <p className="text-sm text-muted-foreground"> Offer</p>
             <p className="font-semibold">
               {formatLargeNumber(
                 Number(
-                  formatUnits(
-                    BigInt(token.listings[0].price),
-                    token.listings[0].currency.decimals
-                  )
+                  formatUnits(BigInt(offer.price), offer.currency.decimals)
                 )
               )}{" "}
-              {token.listings[0].currency.symbol}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Orderbook: {token.listings[0].orderbook}
+              {offer.currency.symbol}
             </p>
           </div>
         )}
@@ -111,8 +104,8 @@ export function CancelListingPopup({
         {/* Warning Message */}
         <div className="bg-destructive/10 border border-destructive/20 p-3 rounded-lg">
           <p className="text-sm text-destructive">
-            Are you sure you want to cancel this listing? This action cannot be
-            undone and your domain will no longer be available for purchase.
+            Are you sure you want to cancel this offer? This action cannot be
+            undone and your offer will no longer be available for consideration.
           </p>
         </div>
       </div>
@@ -125,15 +118,15 @@ export function CancelListingPopup({
           className="flex-1"
           disabled={isLoading}
         >
-          Keep Listing
+          Keep Offer
         </Button>
         <Button
           variant="destructive"
-          onClick={handleCancelListing}
+          onClick={handleCancelOffer}
           className="flex-1"
           disabled={isLoading}
         >
-          {isLoading ? "Cancelling..." : "Cancel Listing"}
+          {isLoading ? "Cancelling..." : "Cancel Offer"}
         </Button>
       </div>
     </>
@@ -146,7 +139,7 @@ export function CancelListingPopup({
           <DrawerHeader className="sticky top-0 bg-background border-b">
             <DrawerTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              Cancel Listing - {domainName}
+              Cancel Offer - {domainName}
             </DrawerTitle>
           </DrawerHeader>
           <div className="p-4 flex flex-col flex-1 overflow-hidden">
@@ -163,7 +156,7 @@ export function CancelListingPopup({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
-            Cancel Listing - {domainName}
+            Cancel Offer - {domainName}
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col overflow-hidden">{content}</div>

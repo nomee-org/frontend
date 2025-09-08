@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar } from "@/components/ui/avatar";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAccount } from "wagmi";
-import { useName, useOffers } from "@/data/use-doma";
+import { useName, useNameStats, useOffers } from "@/data/use-doma";
 import { Token } from "@/types/doma";
 import { useHelper } from "@/hooks/use-helper";
 import UserSelectionPopup from "@/components/domain/UserSelectionPopup";
@@ -56,6 +56,7 @@ import { DomainSEO } from "@/components/seo/DomainSEO";
 import { UserVerificationPopup } from "@/components/domain/UserVerificationPopup";
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
 import { AcceptRejectOfferPopup } from "@/components/domain/AcceptRejectOfferPopup";
+import { CancelOfferPopup } from "@/components/domain/CancelOfferPopup";
 
 const DomainDetails = () => {
   const { domainName } = useParams();
@@ -69,6 +70,7 @@ const DomainDetails = () => {
   const [showListDomainPopup, setShowListDomainPopup] = useState(false);
   const [showVerificationPopup, setShowVerificationPopup] = useState(false);
   const [showAcceptRejectPopup, setShowAcceptRejectPopup] = useState(false);
+  const [showCancelOfferPopup, setShowCancelOfferPopup] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [offerAction, setOfferAction] = useState<"accept" | "reject" | null>(
     null
@@ -84,18 +86,16 @@ const DomainDetails = () => {
     error: nameError,
     refetch: refetchName,
   } = useName(domainName);
+
+  const { data: nameStatsData } = useNameStats(nameData?.tokens?.[0]?.tokenId);
+
   const {
     data: offersData,
     hasNextPage: offersHasNextPage,
     fetchNextPage: offersFetchNextPage,
     error: offersError,
     refetch: refetchOffers,
-  } = useOffers(
-    20,
-    activeTab === "domain" && nameData?.tokens?.[0]?.tokenId
-      ? nameData?.tokens?.[0]?.tokenId
-      : undefined
-  );
+  } = useOffers(20, nameData?.tokens?.[0]?.tokenId);
 
   const { activeUsername } = useUsername();
   const isOwner = domainName === activeUsername;
@@ -704,7 +704,7 @@ const DomainDetails = () => {
                     <Card className="p-content">
                       <Tabs defaultValue="offers" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="offers">Offers 0</TabsTrigger>
+                          <TabsTrigger value="offers">Offers</TabsTrigger>
                           <TabsTrigger value="activity">
                             Recent Activity
                           </TabsTrigger>
@@ -745,14 +745,6 @@ const DomainDetails = () => {
                                                     )
                                                 )}{" "}
                                                 {offer.currency.symbol}
-                                                {index === 0 && (
-                                                  <Badge
-                                                    variant="secondary"
-                                                    className="bg-accent text-accent-foreground text-xs"
-                                                  >
-                                                    Highest
-                                                  </Badge>
-                                                )}
                                               </div>
                                               <div className="text-sm text-muted-foreground">
                                                 by{" "}
@@ -809,6 +801,23 @@ const DomainDetails = () => {
                                               }}
                                             >
                                               Reject
+                                            </Button>
+                                          </div>
+                                        )}
+
+                                        {parseCAIP10(offer.offererAddress)
+                                          .address === address && (
+                                          <div className="mt-3 pt-3 border-t border-border flex gap-2">
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                                              onClick={() => {
+                                                setSelectedOffer(offer);
+                                                setShowCancelOfferPopup(true);
+                                              }}
+                                            >
+                                              Cancel
                                             </Button>
                                           </div>
                                         )}
@@ -963,25 +972,20 @@ const DomainDetails = () => {
                   )}
 
                   {/* Highest Offer */}
-                  {offersData?.pages?.[0]?.totalCount > 0 && (
+                  {nameStatsData?.highestOffer && (
                     <Card className="p-content">
                       <h3 className="text-lg font-bold font-grotesk mb-4">
                         Highest Offer
                       </h3>
                       {(() => {
-                        const highestOffer = offersData?.pages?.flatMap(
-                          (p) => p.items
-                        )?.[0];
-                        if (!highestOffer) return null;
-
                         const handleAcceptOffer = () => {
-                          setSelectedOffer(highestOffer);
+                          setSelectedOffer(nameStatsData.highestOffer);
                           setOfferAction("accept");
                           setShowAcceptRejectPopup(true);
                         };
 
                         const handleRejectOffer = () => {
-                          setSelectedOffer(highestOffer);
+                          setSelectedOffer(nameStatsData.highestOffer);
                           setOfferAction("reject");
                           setShowAcceptRejectPopup(true);
                         };
@@ -996,14 +1000,18 @@ const DomainDetails = () => {
                                 <div>
                                   <div className="text-2xl font-bold text-primary">
                                     {formatLargeNumber(
-                                      Number(highestOffer.price) /
+                                      Number(nameStatsData.highestOffer.price) /
                                         Math.pow(
                                           10,
-                                          highestOffer.currency.decimals
+                                          nameStatsData.highestOffer.currency
+                                            .decimals
                                         )
                                     )}{" "}
                                     <span className="text-lg">
-                                      {highestOffer.currency.symbol}
+                                      {
+                                        nameStatsData.highestOffer.currency
+                                          .symbol
+                                      }
                                     </span>
                                   </div>
                                   <div className="text-sm text-muted-foreground">
@@ -1026,8 +1034,9 @@ const DomainDetails = () => {
                                 </span>
                                 <span className="font-medium">
                                   {trimAddress(
-                                    parseCAIP10(highestOffer.offererAddress)
-                                      .address
+                                    parseCAIP10(
+                                      nameStatsData.highestOffer.offererAddress
+                                    ).address
                                   )}
                                 </span>
                               </div>
@@ -1036,7 +1045,7 @@ const DomainDetails = () => {
                                   Orderbook:
                                 </span>
                                 <span className="font-medium">
-                                  {highestOffer.orderbook}
+                                  {nameStatsData.highestOffer.orderbook}
                                 </span>
                               </div>
                               <div className="flex justify-between">
@@ -1044,16 +1053,20 @@ const DomainDetails = () => {
                                   Made:
                                 </span>
                                 <span className="font-medium">
-                                  {moment(highestOffer.createdAt).fromNow()}
+                                  {moment(
+                                    nameStatsData.highestOffer.createdAt
+                                  ).fromNow()}
                                 </span>
                               </div>
-                              {highestOffer.expiresAt && (
+                              {nameStatsData.highestOffer.expiresAt && (
                                 <div className="flex justify-between">
                                   <span className="text-muted-foreground">
                                     Expires:
                                   </span>
                                   <span className="font-medium text-orange-600">
-                                    {moment(highestOffer.expiresAt).fromNow()}
+                                    {moment(
+                                      nameStatsData.highestOffer.expiresAt
+                                    ).fromNow()}
                                   </span>
                                 </div>
                               )}
@@ -1390,6 +1403,19 @@ const DomainDetails = () => {
           offer={selectedOffer}
           action={offerAction}
           domainName={nameData?.name}
+          token={nameData?.tokens?.[0]}
+        />
+
+        {/* Cancel Offer Popup */}
+        <CancelOfferPopup
+          isOpen={showCancelOfferPopup}
+          onClose={() => {
+            setShowCancelOfferPopup(false);
+            setSelectedOffer(null);
+          }}
+          offer={selectedOffer}
+          domainName={nameData?.name}
+          token={nameData?.tokens?.[0]}
         />
       </main>
     </>

@@ -22,6 +22,7 @@ import { webSocketService } from "@/services/backend/socketservice";
 import { useUsername } from "@/hooks/use-username";
 
 interface MessageInputProps {
+  placeHolder?: string;
   conversationId: string;
   replyToId?: string;
   onCancelReply?: () => void;
@@ -34,6 +35,7 @@ interface MessageInputProps {
 }
 
 export function MessageInput({
+  placeHolder,
   conversationId,
   replyToId,
   onCancelReply,
@@ -44,7 +46,7 @@ export function MessageInput({
   onRecording,
   participants = [],
 }: MessageInputProps) {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(placeHolder || "");
   const [selectedMedia, setSelectedMedia] = useState<ProcessedMediaFile[]>([]);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -407,7 +409,11 @@ export function MessageInput({
             value={message}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={(e) => {
-              if (showMemberTagging && participants && participants.length > 1) {
+              if (
+                showMemberTagging &&
+                participants &&
+                participants.length > 1
+              ) {
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
                   const filteredCount = participants.filter(
@@ -447,7 +453,11 @@ export function MessageInput({
               }
             }}
             onSelect={(e) => {
-              if (textareaRef.current && participants && participants.length > 1) {
+              if (
+                textareaRef.current &&
+                participants &&
+                participants.length > 1
+              ) {
                 handleMemberTagging(
                   message,
                   e.currentTarget.selectionStart || 0
