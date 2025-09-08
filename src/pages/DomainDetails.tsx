@@ -1355,7 +1355,11 @@ const DomainDetails = () => {
             isOpen={showOfferPopup}
             token={selectedToken}
             domainName={nameData?.name}
-            onClose={() => setShowOfferPopup(false)}
+            onClose={() => {
+              setShowOfferPopup(false);
+              refetchName();
+              refetchOffers();
+            }}
           />
         )}
 
@@ -1373,7 +1377,11 @@ const DomainDetails = () => {
             isOpen={showCancelListingPopup}
             token={selectedToken}
             domainName={nameData?.name}
-            onClose={() => setShowCancelListingPopup(false)}
+            onClose={() => {
+              setShowCancelListingPopup(false);
+              refetchName();
+              refetchOffers();
+            }}
           />
         )}
 
@@ -1382,7 +1390,11 @@ const DomainDetails = () => {
             isOpen={showListDomainPopup}
             token={selectedToken}
             domainName={nameData.name}
-            onClose={() => setShowListDomainPopup(false)}
+            onClose={() => {
+              setShowListDomainPopup(false);
+              refetchName();
+              refetchOffers();
+            }}
           />
         )}
 
@@ -1399,6 +1411,8 @@ const DomainDetails = () => {
             setShowAcceptRejectPopup(false);
             setSelectedOffer(null);
             setOfferAction(null);
+            refetchName();
+            refetchOffers();
           }}
           offer={selectedOffer}
           action={offerAction}
@@ -1412,6 +1426,8 @@ const DomainDetails = () => {
           onClose={() => {
             setShowCancelOfferPopup(false);
             setSelectedOffer(null);
+            refetchName();
+            refetchOffers();
           }}
           offer={selectedOffer}
           domainName={nameData?.name}

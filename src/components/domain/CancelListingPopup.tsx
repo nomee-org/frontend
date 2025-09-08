@@ -19,7 +19,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSwitchChain, useWalletClient } from "wagmi";
 import {
   CancelListingParams,
-  CancelOfferParams,
   createDomaOrderbookClient,
   viemToEthersSigner,
 } from "@doma-protocol/orderbook-sdk";
@@ -59,6 +58,7 @@ export function CancelListingPopup({
 
       const params: CancelListingParams = {
         orderId,
+        cancellationType: "off-chain",
       };
 
       await client.cancelListing({

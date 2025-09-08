@@ -139,8 +139,6 @@ export function OfferPopup({
 
         const durationSecs = 60 * 60 * 24 * 7; // 7 days
 
-        console.log(selectedCurrency);
-
         const params: CreateOfferParams = {
           items: [
             {
