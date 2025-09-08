@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DollarSign, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { Token } from "@/types/doma";
 import {
