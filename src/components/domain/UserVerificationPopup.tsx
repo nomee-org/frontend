@@ -1,10 +1,29 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Shield, TrendingUp, BarChart3, Sparkles } from "lucide-react";
+import {
+  CheckCircle,
+  Shield,
+  TrendingUp,
+  BarChart3,
+  Sparkles,
+} from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useRequestVerification } from "@/data/use-backend";
+import { useUsername } from "@/contexts/UsernameContext";
+import { toast } from "sonner";
 
 interface UserVerificationPopupProps {
   isOpen: boolean;
@@ -18,39 +37,44 @@ export function UserVerificationPopup({
   isVerified = false,
 }: UserVerificationPopupProps) {
   const isMobile = useIsMobile();
+  const { activeUsername } = useUsername();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const verificationMutation = useRequestVerification(activeUsername);
 
   const benefits = [
     {
       icon: <Sparkles className="h-5 w-5 text-primary" />,
       title: "Less Ads",
-      description: "Enjoy a cleaner experience with reduced advertising"
+      description: "Enjoy a cleaner experience with reduced advertising",
     },
     {
       icon: <TrendingUp className="h-5 w-5 text-primary" />,
       title: "Better Visibility",
-      description: "Your content gets higher priority and wider reach"
+      description: "Your content gets higher priority and wider reach",
     },
     {
       icon: <BarChart3 className="h-5 w-5 text-primary" />,
       title: "Engagement Analytics",
-      description: "Access detailed insights about your content performance"
-    }
+      description: "Access detailed insights about your content performance",
+    },
   ];
 
   const handleVerification = async () => {
-    if (isVerified) return;
-    
-    setIsProcessing(true);
-    // TODO: Implement verification payment logic with 12 USDC
-    // This would integrate with your payment system
-    console.log("Processing verification payment of 12 USDC");
-    
-    // Simulate processing time
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      if (isVerified) return;
+
+      setIsProcessing(true);
+
+      await verificationMutation.mutateAsync();
+
       onClose();
-    }, 2000);
+    } catch (error) {
+      toast.error(error?.message || "Verification request failed");
+    } finally {
+      window.open("https://x.com/nomee_social", "_blank");
+      setIsProcessing(false);
+    }
   };
 
   const content = (
@@ -74,12 +98,12 @@ export function UserVerificationPopup({
         <div className="space-y-3">
           {benefits.map((benefit, index) => (
             <div key={index} className="flex items-start space-x-3">
-              <div className="flex-shrink-0 mt-0.5">
-                {benefit.icon}
-              </div>
+              <div className="flex-shrink-0 mt-0.5">{benefit.icon}</div>
               <div className="space-y-1">
                 <p className="font-medium text-sm">{benefit.title}</p>
-                <p className="text-xs text-muted-foreground">{benefit.description}</p>
+                <p className="text-xs text-muted-foreground">
+                  {benefit.description}
+                </p>
               </div>
             </div>
           ))}
@@ -90,8 +114,12 @@ export function UserVerificationPopup({
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-medium">Verification Cost:</span>
           <div className="text-right">
-            <div className="text-2xl font-bold font-grotesk text-primary">12 USDC</div>
-            <div className="text-xs text-muted-foreground">One-time payment</div>
+            <div className="text-2xl font-bold font-grotesk text-primary">
+              0 USDC
+            </div>
+            <div className="text-xs text-muted-foreground">
+              and follow us on X
+            </div>
           </div>
         </div>
 
@@ -114,7 +142,7 @@ export function UserVerificationPopup({
           ) : (
             <>
               <Shield className="h-4 w-4 mr-2" />
-              Get Verified for 12 USDC
+              Get Verified for Free
             </>
           )}
         </Button>

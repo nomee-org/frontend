@@ -43,7 +43,6 @@ import { ConnectWallet } from "@/components/common/ConnectWallet";
 import { RegistrarPopup } from "@/components/domain/RegistrarPopup";
 import { toast } from "sonner";
 import { PortfolioSEO } from "@/components/seo/PortfolioSEO";
-import { forma } from "viem/chains";
 
 interface Activity {
   id: string;

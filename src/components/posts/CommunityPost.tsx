@@ -33,6 +33,8 @@ import {
   Link,
   Repeat,
   MessageSquare,
+  Check,
+  ShieldCheck,
 } from "lucide-react";
 import { IComment, IPost, IPoll, IPollVote } from "@/types/backend";
 import moment from "moment";
@@ -41,12 +43,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { PostLikesModal } from "@/components/posts/PostLikesModal";
 import CommentComposer from "@/components/posts/CommentComposer";
-import { 
-  useLikePost, 
-  useUnlikePost, 
-  useRepost, 
+import {
+  useLikePost,
+  useUnlikePost,
+  useRepost,
   useRepostWithComment,
-  useDeletePost
+  useDeletePost,
 } from "@/data/use-backend";
 import { useUsername } from "@/hooks/use-username";
 
@@ -60,6 +62,7 @@ export interface MediaFile {
 interface PostAuthor {
   domainName: string;
   avatar?: string;
+  isVerified?: boolean;
 }
 
 interface PostProps {
@@ -103,7 +106,7 @@ const CommunityPost = ({
   const [showCommentComposer, setShowCommentComposer] = useState(false);
   const isMobile = useIsMobile();
   const { activeUsername } = useUsername();
-  
+
   const likePost = useLikePost(activeUsername);
   const unlikePost = useUnlikePost(activeUsername);
   const repostPost = useRepost(activeUsername);
@@ -145,13 +148,13 @@ const CommunityPost = ({
       toast.error("Please add a comment");
       return;
     }
-    
+
     try {
       await repostWithComment.mutateAsync({
         postId: id,
         comment: repostContent.trim(),
       });
-      
+
       setRepostDialogOpen(false);
       setRepostContent("");
       toast.success("Post reposted with comment!");
@@ -169,6 +172,9 @@ const CommunityPost = ({
             <div className="flex items-center space-x-2 mb-2">
               <DomainAvatar domain={author.domainName} size="xs" />
               <span className="text-sm font-medium">{author.domainName}</span>
+              {author?.isVerified && (
+                <ShieldCheck className="w-4 h-4 text-blue-500" />
+              )}
               <span className="text-xs text-muted-foreground">
                 {moment(timestamp).fromNow()}
               </span>
@@ -235,6 +241,9 @@ const CommunityPost = ({
               <span className="font-semibold text-accent hover:underline cursor-pointer text-body">
                 {author.domainName}
               </span>
+              {author?.isVerified && (
+                <ShieldCheck className="w-4 h-4 text-blue-500" />
+              )}
               <span className="text-muted-foreground">·</span>
               <span className="text-muted-foreground text-caption">
                 {moment(timestamp).fromNow()}

@@ -31,7 +31,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 // Service/data imports
 import { useUserConversations } from "@/data/use-backend";
-import { webSocketService, WebSocketEventHandlers } from "@/services/backend/socketservice";
+import {
+  webSocketService,
+  WebSocketEventHandlers,
+} from "@/services/backend/socketservice";
 
 // Type imports
 import { IConversation, ConversationType } from "@/types/backend";

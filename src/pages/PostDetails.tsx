@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Link,
   Repeat,
+  ShieldCheck,
 } from "lucide-react";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { PollDisplay } from "@/components/posts/PollDisplay";
@@ -58,7 +59,6 @@ import { PostSEO } from "@/components/seo/PostSEO";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -392,9 +392,7 @@ const PostDetails = () => {
                   {post?.author?.username}
                 </span>
                 {post?.author?.isVerified && (
-                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">✓</span>
-                  </div>
+                  <ShieldCheck className="w-4 h-4 text-blue-500" />
                 )}
                 <span className="text-muted-foreground">·</span>
                 <span className="text-muted-foreground text-sm lg:text-base">

@@ -18,7 +18,9 @@ import { TrendingUp, Loader, User, Search, Sparkles } from "lucide-react";
 
 // Local component imports
 import CommunityPost from "@/components/posts/CommunityPost";
-import PostComposer, { PendingMediaFile } from "@/components/posts/PostComposer";
+import PostComposer, {
+  PendingMediaFile,
+} from "@/components/posts/PostComposer";
 import { MobilePostComposer } from "@/components/posts/MobilePostComposer";
 import { FloatingActionButton } from "@/components/layout/FloatingActionButton";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
@@ -38,7 +40,10 @@ import {
   useGetTrendingHashtags,
 } from "@/data/use-backend";
 import { useNames } from "@/data/use-doma";
-import { webSocketService, WebSocketEventHandlers } from "@/services/backend/socketservice";
+import {
+  webSocketService,
+  WebSocketEventHandlers,
+} from "@/services/backend/socketservice";
 
 // Type imports
 import { CreatePollDto } from "@/types/backend";
@@ -61,7 +66,9 @@ const Community = () => {
   // Local component states
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"timeline" | "trending">("timeline");
+  const [activeTab, setActiveTab] = useState<"timeline" | "trending">(
+    "timeline"
+  );
   const [showUserSuggestions, setShowUserSuggestions] = useState(false);
   const [showMobileComposer, setShowMobileComposer] = useState(false);
   const [interestsPopupOpen, setInterestsPopupOpen] = useState(false);
@@ -220,6 +227,7 @@ const Community = () => {
                               id={post.id}
                               author={{
                                 domainName: post?.author?.username,
+                                isVerified: post?.author?.isVerified,
                               }}
                               content={post.content}
                               timestamp={new Date(post.createdAt).toISOString()}
@@ -238,10 +246,10 @@ const Community = () => {
                                   name: `media-${i}`,
                                 })) || []
                               }
-                               onReply={() => handleReply(post.id)}
-                               onClick={() => navigate(`/feeds/${post.id}`)}
-                               currentUser={activeUsername}
-                               poll={post.poll}
+                              onReply={() => handleReply(post.id)}
+                              onClick={() => navigate(`/feeds/${post.id}`)}
+                              currentUser={activeUsername}
+                              poll={post.poll}
                             />
                           );
                         })}
@@ -289,6 +297,7 @@ const Community = () => {
                               id={post.id}
                               author={{
                                 domainName: post?.author?.username,
+                                isVerified: post?.author?.isVerified,
                               }}
                               content={post.content}
                               timestamp={new Date(post.createdAt).toISOString()}
@@ -307,10 +316,10 @@ const Community = () => {
                                   name: `media-${i}`,
                                 })) || []
                               }
-                               onReply={() => handleReply(post.id)}
-                               onClick={() => navigate(`/feeds/${post.id}`)}
-                               currentUser={activeUsername}
-                               poll={post.poll}
+                              onReply={() => handleReply(post.id)}
+                              onClick={() => navigate(`/feeds/${post.id}`)}
+                              currentUser={activeUsername}
+                              poll={post.poll}
                             />
                           );
                         })}

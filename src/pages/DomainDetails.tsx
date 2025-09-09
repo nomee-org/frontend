@@ -26,6 +26,7 @@ import {
   X,
   Plus,
   Loader,
+  ShieldCheck,
 } from "lucide-react";
 import { QueryLoader, QueryListLoader } from "@/components/ui/query-loader";
 import { QueryError, QueryErrorCard } from "@/components/ui/query-error";
@@ -97,7 +98,7 @@ const DomainDetails = () => {
     refetch: refetchOffers,
   } = useOffers(20, nameData?.tokens?.[0]?.tokenId);
 
-  const { activeUsername } = useUsername();
+  const { activeUsername, profile } = useUsername();
   const isOwner = domainName === activeUsername;
 
   const {
@@ -261,6 +262,9 @@ const DomainDetails = () => {
                       <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-grotesk truncate">
                         {nameData.name}
                       </h1>
+                      {userData?.isVerified && (
+                        <ShieldCheck className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
+                      )}
                       {nameData.isFractionalized && (
                         <Badge
                           variant="secondary"
@@ -334,17 +338,19 @@ const DomainDetails = () => {
                 )}
                 {isOwner ? (
                   <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowVerificationPopup(true)}
-                      className="px-2 md:px-3"
-                    >
-                      <Shield className="h-4 w-4" />
-                      <span className="hidden md:inline ml-2">
-                        Get Verified
-                      </span>
-                    </Button>
+                    {!profile?.isVerified && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowVerificationPopup(true)}
+                        className="px-2 md:px-3"
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span className="hidden md:inline ml-2">
+                          Get Verified
+                        </span>
+                      </Button>
+                    )}
                     {hasActiveListings ? (
                       <Button
                         variant="ghost"
@@ -1174,8 +1180,6 @@ const DomainDetails = () => {
                   onRetry={refetchFollowers}
                   message="Failed to load followers"
                 />
-              ) : followersLoading ? (
-                <QueryListLoader />
               ) : followersData?.pages?.flatMap((p) => p.data).length === 0 ? (
                 <div className="text-center p-8 text-muted-foreground">
                   <p>No followers yet.</p>
@@ -1270,8 +1274,6 @@ const DomainDetails = () => {
                   onRetry={refetchFollowing}
                   message="Failed to load following"
                 />
-              ) : followingLoading ? (
-                <QueryListLoader />
               ) : followingData?.pages?.flatMap((p) => p.data).length === 0 ? (
                 <div className="text-center p-8 text-muted-foreground">
                   <p>Not following anyone yet.</p>

@@ -21,7 +21,10 @@ import {
   Trash2,
 } from "lucide-react";
 import { INotification, NotificationType } from "@/types/backend";
-import { useMarkNotificationAsRead, useDeleteNotification } from "@/data/use-backend";
+import {
+  useMarkNotificationAsRead,
+  useDeleteNotification,
+} from "@/data/use-backend";
 import { useUsername } from "@/hooks/use-username";
 import { useToast } from "@/hooks/use-toast";
 import moment from "moment";
@@ -91,9 +94,7 @@ const NotificationItem = ({ notification }: NotificationItemProps) => {
     <div key={notification.id} className="relative group">
       <Card
         className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${
-          !notification.isRead
-            ? "border-primary/50 bg-primary/5"
-            : ""
+          !notification.isRead ? "border-primary/50 bg-primary/5" : ""
         }`}
         onClick={() => handleNotificationClick(notification)}
       >
@@ -116,7 +117,9 @@ const NotificationItem = ({ notification }: NotificationItemProps) => {
               </span>
             </div>
             <p className="text-sm mt-2">
-              {`@${notification.senderId} ${notification.message}`}
+              {`${notification?.senderId ? `@${notification.senderId} ` : ""}${
+                notification.message
+              }`}
             </p>
           </div>
         </div>
