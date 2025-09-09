@@ -63,6 +63,7 @@ import {
 
 // Type imports
 import { ConversationType, IMessage } from "@/types/backend";
+import { RecordingIndicator } from "./RecordingIndicator";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -84,6 +85,7 @@ const UserConversation = () => {
   >();
   const { activeUsername } = useUsername();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
   const createConversation = useCreateConversation();
 
   // Get current user's participant data to check mute status
@@ -104,6 +106,7 @@ const UserConversation = () => {
     data: messagesData,
     isLoading: messagesLoading,
     error: messagesError,
+    refetch: refetchMessages,
     fetchNextPage,
     hasNextPage,
   } = useGetMessages(createConversation?.data?.id, 50, activeUsername);
@@ -149,6 +152,8 @@ const UserConversation = () => {
             activeUsername
           );
         }
+
+        refetchMessages();
       },
       onMessageDeleted: ({ messageId }) => {
         if (createConversation?.data?.id) {
@@ -163,6 +168,8 @@ const UserConversation = () => {
                 : msg
           );
         }
+
+        refetchMessages();
       },
       onMessageReaction: (reaction) => {
         if (createConversation?.data?.id) {
@@ -183,6 +190,8 @@ const UserConversation = () => {
                 : msg
           );
         }
+
+        refetchMessages();
       },
       onMessageUpdated: (updatedMessage) => {
         if (createConversation?.data?.id) {
@@ -194,6 +203,8 @@ const UserConversation = () => {
             (msg) => (msg.id === updatedMessage.id ? updatedMessage : msg)
           );
         }
+
+        refetchMessages();
       },
       onUserTyping: ({ username, conversationId }) => {
         if (
@@ -211,6 +222,24 @@ const UserConversation = () => {
       onUserStoppedTyping: ({ username, conversationId }) => {
         if (conversationId === createConversation?.data?.id) {
           setTypingUsers((prev) => prev.filter((u) => u !== username));
+        }
+      },
+      onUserRecording: ({ username, conversationId }) => {
+        if (
+          conversationId === createConversation?.data?.id &&
+          username !== activeUsername
+        ) {
+          setRecordingUsers((prev) => {
+            if (!prev.includes(username)) {
+              return [...prev, username];
+            }
+            return prev;
+          });
+        }
+      },
+      onUserStoppedRecording: ({ username, conversationId }) => {
+        if (conversationId === createConversation?.data?.id) {
+          setRecordingUsers((prev) => prev.filter((u) => u !== username));
         }
       },
     };
@@ -381,6 +410,9 @@ const UserConversation = () => {
         {/* Typing Indicator */}
         <TypingIndicator usernames={typingUsers} />
 
+        {/* Recording Indicator */}
+        <RecordingIndicator usernames={recordingUsers} />
+
         {/* Scroll to bottom button */}
         {!isNearBottom && (
           <Button
@@ -411,11 +443,11 @@ const UserConversation = () => {
             webSocketService.stopTyping(createConversation?.data?.id);
           }
         }}
-        onRecording={(typing) => {
-          if (typing) {
-            webSocketService.startTyping(createConversation?.data?.id);
+        onRecording={(recording) => {
+          if (recording) {
+            webSocketService.startRecording(createConversation?.data?.id);
           } else {
-            webSocketService.stopTyping(createConversation?.data?.id);
+            webSocketService.stopRecording(createConversation?.data?.id);
           }
         }}
         onCancelEdit={() => setEditingMessage(undefined)}

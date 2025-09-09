@@ -64,6 +64,14 @@ export interface WebSocketEventHandlers {
     username: string;
     conversationId: string;
   }) => void;
+  onUserRecording?: (data: {
+    username: string;
+    conversationId: string;
+  }) => void;
+  onUserStoppedRecording?: (data: {
+    username: string;
+    conversationId: string;
+  }) => void;
 
   onNotification?: (notification: INotification) => void;
 
@@ -225,6 +233,24 @@ class WebSocketService {
     }
   }
 
+  startRecording(conversationId: string): void {
+    if (this.socket && this.isAuthenticated) {
+      this.socket.emit("recording-start", {
+        conversationId,
+        username: this.config.username,
+      });
+    }
+  }
+
+  stopRecording(conversationId: string): void {
+    if (this.socket && this.isAuthenticated) {
+      this.socket.emit("recording-stop", {
+        conversationId,
+        username: this.config.username,
+      });
+    }
+  }
+
   getJoinedRooms(): string[] {
     return Array.from(this.joinedRooms);
   }
@@ -374,6 +400,22 @@ class WebSocketService {
       "user-stopped-typing",
       (data: { username: string; conversationId: string }) => {
         this.handlers.forEach((handler) => handler.onUserStoppedTyping?.(data));
+      }
+    );
+
+    this.socket.on(
+      "user-recording",
+      (data: { username: string; conversationId: string }) => {
+        this.handlers.forEach((handler) => handler.onUserRecording?.(data));
+      }
+    );
+
+    this.socket.on(
+      "user-stopped-recording",
+      (data: { username: string; conversationId: string }) => {
+        this.handlers.forEach((handler) =>
+          handler.onUserStoppedRecording?.(data)
+        );
       }
     );
 

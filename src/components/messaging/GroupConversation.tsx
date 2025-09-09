@@ -55,10 +55,14 @@ import {
   addMessageInCache,
   useLastReadConversation,
 } from "@/data/use-backend";
-import { webSocketService, WebSocketEventHandlers } from "@/services/backend/socketservice";
+import {
+  webSocketService,
+  WebSocketEventHandlers,
+} from "@/services/backend/socketservice";
 
 // Type imports
 import { IMessage } from "@/types/backend";
+import { RecordingIndicator } from "./RecordingIndicator";
 
 const GroupConversation = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,6 +77,7 @@ const GroupConversation = () => {
   const { token, activeUsername } = useUsername();
   const queryClient = useQueryClient();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
 
   const {
     data: conversation,
@@ -84,6 +89,7 @@ const GroupConversation = () => {
     data: messagesData,
     isLoading: messagesLoading,
     error: messagesError,
+    refetch: refetchMessages,
     fetchNextPage,
     hasNextPage,
   } = useGetMessages(id, 50, activeUsername);
@@ -135,6 +141,8 @@ const GroupConversation = () => {
             activeUsername
           );
         }
+
+        refetchMessages();
       },
       onMessageDeleted: ({ messageId }) => {
         if (conversation?.id) {
@@ -149,6 +157,8 @@ const GroupConversation = () => {
                 : msg
           );
         }
+
+        refetchMessages();
       },
       onMessageReaction: (reaction) => {
         if (conversation?.id) {
@@ -169,6 +179,8 @@ const GroupConversation = () => {
                 : msg
           );
         }
+
+        refetchMessages();
       },
       onMessageUpdated: (updatedMessage) => {
         if (conversation?.id) {
@@ -180,6 +192,8 @@ const GroupConversation = () => {
             (msg) => (msg.id === updatedMessage.id ? updatedMessage : msg)
           );
         }
+
+        refetchMessages();
       },
       onUserTyping: ({ username, conversationId }) => {
         if (
@@ -197,6 +211,24 @@ const GroupConversation = () => {
       onUserStoppedTyping: ({ username, conversationId }) => {
         if (conversationId === conversation?.id) {
           setTypingUsers((prev) => prev.filter((u) => u !== username));
+        }
+      },
+      onUserRecording: ({ username, conversationId }) => {
+        if (
+          conversationId === conversation?.id &&
+          username !== activeUsername
+        ) {
+          setRecordingUsers((prev) => {
+            if (!prev.includes(username)) {
+              return [...prev, username];
+            }
+            return prev;
+          });
+        }
+      },
+      onUserStoppedRecording: ({ username, conversationId }) => {
+        if (conversationId === conversation?.id) {
+          setRecordingUsers((prev) => prev.filter((u) => u !== username));
         }
       },
     };
@@ -386,6 +418,9 @@ const GroupConversation = () => {
 
         {/* Typing Indicator */}
         <TypingIndicator usernames={typingUsers} />
+
+        {/* Recording Indicator */}
+        <RecordingIndicator usernames={recordingUsers} />
 
         {/* Scroll to bottom button */}
         {!isNearBottom && (
