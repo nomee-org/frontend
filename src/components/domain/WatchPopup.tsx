@@ -14,32 +14,46 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAccount } from "wagmi";
+import { toast } from "sonner";
+import { useUnWatchUser, useWatchUser } from "@/data/use-backend";
+import { useUsername } from "@/contexts/UsernameContext";
 
 interface WatchPopupProps {
   isOpen: boolean;
   onClose: () => void;
   domainName: string;
-  isWatched: boolean;
-  onToggleWatch: (domainName: string) => Promise<boolean>;
 }
 
-const WatchPopup = ({
-  isOpen,
-  onClose,
-  domainName,
-  isWatched,
-  onToggleWatch,
-}: WatchPopupProps) => {
+const WatchPopup = ({ isOpen, onClose, domainName }: WatchPopupProps) => {
   const [isToggling, setIsToggling] = useState(false);
   const isMobile = useIsMobile();
+  const { address } = useAccount();
+  const { profile, refetchProfile, activeUsername } = useUsername();
+  const watchUserMutation = useWatchUser(activeUsername);
+  const unWatchUserMutation = useUnWatchUser(activeUsername);
+
+  const isWatched = profile?.watchUsernames?.includes(domainName);
 
   const handleToggleWatch = async () => {
     setIsToggling(true);
     try {
-      const success = await onToggleWatch(domainName);
-      if (success) {
-        onClose();
+      if (!address) {
+        return toast("Connect your wallet");
       }
+
+      if (isWatched) {
+        const { message } = await unWatchUserMutation.mutateAsync(domainName);
+        toast.success(message);
+      } else {
+        const { message } = await watchUserMutation.mutateAsync(domainName);
+        toast.success(message);
+      }
+
+      refetchProfile();
+      onClose();
+    } catch (error) {
+      toast.error(error?.message || "An error occurred. Please try again.");
     } finally {
       setIsToggling(false);
     }
@@ -121,9 +135,7 @@ const WatchPopup = ({
             </span>
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col overflow-hidden">
-          {content}
-        </div>
+        <div className="flex flex-col overflow-hidden">{content}</div>
       </DialogContent>
     </Dialog>
   );

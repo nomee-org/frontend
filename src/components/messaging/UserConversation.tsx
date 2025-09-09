@@ -19,13 +19,13 @@ import {
 // Icon imports
 import {
   MoreVertical,
-  DollarSign,
   Loader,
   ChevronDown,
   ArrowLeft,
   Trash2,
   VolumeX,
   Volume2,
+  Send,
 } from "lucide-react";
 
 // Local component imports
@@ -51,10 +51,8 @@ import { usePinnedMessagesVisibility } from "@/hooks/use-pinned-messages-visibil
 import {
   useGetMessages,
   useCreateConversation,
-  useDeleteConversation,
   updateMessageInCache,
   addMessageInCache,
-  useLastReadConversation,
 } from "@/data/use-backend";
 import {
   webSocketService,
@@ -309,8 +307,8 @@ const UserConversation = () => {
             onClick={() => setShowBidPopup(true)}
             className="text-primary border-primary hover:bg-primary hover:text-primary-foreground text-xs lg:text-sm h-7 md:h-8"
           >
-            <DollarSign className="h-2 w-2 md:h-3 lg:h-4 md:w-3 lg:w-4 mr-0.5 md:mr-1" />
-            <span className="hidden sm:inline">Send </span>Bid
+            <Send className="h-2 w-2 md:h-3 lg:h-4 md:w-3 lg:w-4 mr-0.5 md:mr-1" />
+            Offer
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

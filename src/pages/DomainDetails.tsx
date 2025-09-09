@@ -1006,12 +1006,15 @@ const DomainDetails = () => {
                                 <div>
                                   <div className="text-2xl font-bold text-primary">
                                     {formatLargeNumber(
-                                      Number(nameStatsData.highestOffer.price) /
-                                        Math.pow(
-                                          10,
+                                      Number(
+                                        formatUnits(
+                                          BigInt(
+                                            nameStatsData.highestOffer.price
+                                          ),
                                           nameStatsData.highestOffer.currency
                                             .decimals
                                         )
+                                      )
                                     )}{" "}
                                     <span className="text-lg">
                                       {

@@ -20,7 +20,6 @@ import { Switch } from "@/components/ui/switch";
 import { useHelper } from "@/hooks/use-helper";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWatchedNames } from "@/hooks/use-watched-names";
 import { useAccount } from "wagmi";
 import WatchPopup from "@/components/domain/WatchPopup";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
@@ -29,6 +28,7 @@ import { toast } from "sonner";
 import { webSocketService } from "@/services/backend/socketservice";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { DomainSearchSEO } from "@/components/seo/DomainSearchSEO";
+import { useUsername } from "@/contexts/UsernameContext";
 const popularSuggestions = [
   "crypto",
   "defi",
@@ -61,7 +61,11 @@ const DomainSearch = () => {
   const [selectedDomain, setSelectedDomain] = useState<string>("");
   const { formatLargeNumber } = useHelper();
   const { address } = useAccount();
-  const { isWatched, toggleWatchlist } = useWatchedNames(address);
+  const { profile } = useUsername();
+
+  const isWatched = (domainName: string) => {
+    return profile?.watchUsernames?.includes(domainName);
+  };
 
   const {
     data: namesData,
@@ -417,8 +421,6 @@ const DomainSearch = () => {
           isOpen={showWatchPopup}
           onClose={() => setShowWatchPopup(false)}
           domainName={selectedDomain}
-          isWatched={isWatched(selectedDomain)}
-          onToggleWatch={toggleWatchlist}
         />
       )}
 

@@ -602,6 +602,34 @@ export function useVerifyUser(activeUsername?: string) {
   });
 }
 
+export function useWatchUser(activeUsername?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: (usernameToWatch: string) =>
+      backendService.watchUsername({ usernameToWatch }),
+    onSuccess: (_) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.users.profile(activeUsername),
+      });
+    },
+  });
+}
+
+export function useUnWatchUser(activeUsername?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: (usernameToUnwatch: string) =>
+      backendService.unwatchUsername(usernameToUnwatch),
+    onSuccess: (_) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.users.profile(activeUsername),
+      });
+    },
+  });
+}
+
 export function useUpdateInterests(activeUsername?: string) {
   const queryClient = useQueryClient();
 

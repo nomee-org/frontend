@@ -27,6 +27,7 @@ import {
   UpdateProfileDto,
   DeleteAccountDto,
   UpdateInterestsDto,
+  WatchUserDto,
   CreateConversationDto,
   UpdateConversationDto,
   AddParticipantDto,
@@ -505,6 +506,18 @@ class BackendService {
       `/search/users?q=${encodeURIComponent(
         query
       )}&limit=${limit}&activeUsername=${activeUsername}`
+    );
+  }
+
+  async watchUsername(dto: WatchUserDto): Promise<{ message: string }> {
+    return this.apiClient.post<{ message: string }>(`/users/watch`, dto);
+  }
+
+  async unwatchUsername(
+    usernameToUnwatch: string
+  ): Promise<{ message: string }> {
+    return this.apiClient.delete<{ message: string }>(
+      `/users/watch/${usernameToUnwatch}`
     );
   }
 

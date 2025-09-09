@@ -15,6 +15,7 @@ export interface IUser {
 
 export interface IUserProfile extends IUser {
   fcmToken?: string;
+  watchUsernames?: string[];
   _count: {
     followers: number;
     following: number;
@@ -390,6 +391,10 @@ export interface AuthResponse {
 
 export interface RefreshTokenDto {
   refreshToken: string;
+}
+
+export interface WatchUserDto {
+  usernameToWatch: string;
 }
 
 // Media types

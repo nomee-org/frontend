@@ -30,19 +30,20 @@ import {
 } from "lucide-react";
 
 import { useAccount } from "wagmi";
-import { useWatchedNames } from "@/hooks/use-watched-names";
 import { useOwnedNames, useSelectedNames } from "@/data/use-doma";
 import { useHelper } from "@/hooks/use-helper";
 import { TLDFilter } from "@/types/doma";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
-import { formatUnits, zeroAddress } from "viem";
+import { formatUnits } from "viem";
 import { webSocketService } from "@/services/backend/socketservice";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { ConnectWallet } from "@/components/common/ConnectWallet";
 import { RegistrarPopup } from "@/components/domain/RegistrarPopup";
 import { toast } from "sonner";
 import { PortfolioSEO } from "@/components/seo/PortfolioSEO";
+import { useUsername } from "@/contexts/UsernameContext";
+import WatchPopup from "@/components/domain/WatchPopup";
 
 interface Activity {
   id: string;
@@ -65,9 +66,11 @@ const Portfolio = () => {
   const { address } = useAccount();
   const [sortBy, setSortBy] = useState("value");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [watchName, setWatchName] = useState<string | undefined>(undefined);
   const [isRegistrarPopupOpen, setIsRegistrarPopupOpen] = useState(false);
-  const { toggleWatchlist, watchedNames } = useWatchedNames(address);
   const { formatLargeNumber } = useHelper();
+  const { profile } = useUsername();
+  const navigate = useNavigate();
 
   const {
     data: namesData,
@@ -86,7 +89,7 @@ const Portfolio = () => {
     hasNextPage: watchNamesHasNextPage,
     fetchNextPage: watchNamesFetchNextPage,
   } = useSelectedNames(
-    watchedNames.map((name) => name.domain_name),
+    profile?.watchUsernames ?? [],
     30,
     selectedCategory == "all" ? null : [selectedCategory]
   );
@@ -438,20 +441,20 @@ const Portfolio = () => {
                     Monitor domains you're interested in
                   </p>
                 </div>
-                <Button>
+                <Button onClick={() => navigate(`/discover`)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add to Watchlist
                 </Button>
               </div>
 
               <InfiniteScroll
-                dataLength={watchNamesData.pages.flatMap((p) => p.items).length}
+                dataLength={watchNamesData?.pages?.[0]?.totalCount ?? 0}
                 next={watchNamesFetchNextPage}
                 hasMore={watchNamesHasNextPage}
                 loader={null}
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                 children={watchNamesData?.pages
-                  .flatMap((p) => p.items)
+                  ?.flatMap((p) => p.items)
                   ?.map((name, index) => (
                     <Card
                       key={index}
@@ -487,7 +490,7 @@ const Portfolio = () => {
                             variant="ghost"
                             size="icon"
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => toggleWatchlist(name.name)}
+                            onClick={() => setWatchName(name.name)}
                           >
                             <EyeOff className="h-4 w-4" />
                           </Button>
@@ -501,21 +504,23 @@ const Portfolio = () => {
                             </span>
                             <span className="font-bold text-lg text-primary">
                               {name.tokens?.[0]?.listings?.[0]
-                                ? `${parseFloat(
-                                    name.tokens[0].listings[0].price
-                                  ).toFixed(2)} ETH`
+                                ? `${formatLargeNumber(
+                                    Number(
+                                      formatUnits(
+                                        BigInt(
+                                          name.tokens[0].listings[0].price
+                                        ),
+                                        name.tokens[0].listings[0].currency
+                                          .decimals
+                                      )
+                                    )
+                                  )} ${
+                                    name.tokens[0].listings[0].currency.symbol
+                                  }`
                                 : "Not Listed"}
                             </span>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">
-                              24h Change
-                            </span>
-                            <span className="text-sm font-medium flex items-center text-green-500">
-                              <TrendingUp className="h-3 w-3 mr-1" />
-                              +5.2%
-                            </span>
-                          </div>
+
                           <div className="flex justify-between items-center pt-2 border-t border-border/30">
                             <span className="text-sm text-muted-foreground">
                               Status
@@ -529,7 +534,7 @@ const Portfolio = () => {
                               }
                             >
                               {name.tokens?.[0]?.listings?.[0]
-                                ? "Available"
+                                ? "Listed"
                                 : "Unlisted"}
                             </Badge>
                           </div>
@@ -538,19 +543,26 @@ const Portfolio = () => {
                         {/* Actions */}
                         <div className="flex space-x-3">
                           <Button
+                            onClick={() =>
+                              navigate(
+                                `/messages/${
+                                  name.name
+                                }?message=${"Hello, I am interested in your domain."}`
+                              )
+                            }
                             variant="outline"
                             size="sm"
                             className="flex-1 bg-background/50 hover:bg-secondary/20 border-border/50"
                           >
-                            <DollarSign className="h-4 w-4 mr-2" />
-                            Make Offer
+                            Message Owner
                           </Button>
                           {name.tokens?.[0]?.listings?.[0] && (
                             <Button
+                              onClick={() => navigate(`/names/${name.name}`)}
                               size="sm"
                               className="flex-1 bg-gradient-to-r from-primary to-primary/90"
                             >
-                              Buy Now
+                              Buy or Make Offer
                             </Button>
                           )}
                         </div>
@@ -629,6 +641,14 @@ const Portfolio = () => {
           isOpen={isRegistrarPopupOpen}
           onClose={() => setIsRegistrarPopupOpen(false)}
         />
+
+        {watchName && (
+          <WatchPopup
+            isOpen={!!watchName}
+            onClose={() => setWatchName(undefined)}
+            domainName={watchName}
+          />
+        )}
       </div>
     </>
   );

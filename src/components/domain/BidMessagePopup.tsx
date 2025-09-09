@@ -268,7 +268,7 @@ ${message}`;
           ) : (
             <>
               <Send className="h-4 w-4 mr-2" />
-              Send Bid
+              Send Offer
             </>
           )}
         </Button>
@@ -282,10 +282,10 @@ ${message}`;
         <DrawerContent className="max-h-[80vh] flex flex-col">
           <DrawerHeader className="sticky top-0 bg-background border-b">
             <DrawerTitle className="text-xl font-bold font-grotesk">
-              Send Bid Message
+              Send Offer Message
             </DrawerTitle>
             <p className="text-sm text-muted-foreground">
-              Send a bidding proposal to {recipientName} for {domainName}
+              Send a proposal to {recipientName} from {domainName}
             </p>
           </DrawerHeader>
           <div className="p-4 flex flex-col flex-1 overflow-hidden">
@@ -301,7 +301,7 @@ ${message}`;
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold font-grotesk">
-            Send Bid Message
+            Send Offer Message
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
             Send a bidding proposal to {recipientName} for {domainName}

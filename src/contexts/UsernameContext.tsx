@@ -26,6 +26,7 @@ interface UsernameContextType {
   profile: IUserProfile;
   availableNames: string[] | undefined;
   lastOpenedCount: number;
+  refetchProfile: () => void;
 }
 
 const UsernameContext = createContext<UsernameContextType | undefined>(
@@ -118,6 +119,7 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
     availableNames:
       namesData?.pages?.flatMap((p) => p.items)?.map((name) => name.name) ?? [],
     lastOpenedCount: lastOpenedCountData?.count ?? 0,
+    refetchProfile,
   };
 
   return (

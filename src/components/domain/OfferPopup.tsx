@@ -38,6 +38,9 @@ import { domaConfig } from "@/configs/doma";
 import { Token } from "@/types/doma";
 import { useSwitchChain, useWalletClient } from "wagmi";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Textarea } from "../ui/textarea";
+import { backendService } from "@/services/backend/backendservice";
+import { ConversationType, MessageType } from "@/types/backend";
 interface OfferPopupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -58,6 +61,7 @@ export function OfferPopup({
     "instant"
   );
   const [expirationDays, setExpirationDays] = useState("7");
+  const [message, setMessage] = useState("");
 
   const { data: walletClient } = useWalletClient();
   const { switchChainAsync } = useSwitchChain();
@@ -142,7 +146,7 @@ export function OfferPopup({
           source: import.meta.env.VITE_APP_NAME,
         };
 
-        const createOffer = await client.createOffer({
+        await client.createOffer({
           params,
           chainId: token.chain.networkId,
           onProgress: (progress) => {
@@ -155,7 +159,19 @@ export function OfferPopup({
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
 
-        console.log(createOffer);
+        if (message.trim()) {
+          const conversation = await backendService.createConversation({
+            type: ConversationType.DIRECT,
+            participantUsernames: [domainName],
+          });
+
+          await backendService.sendMessage({
+            content: message.trim(),
+            conversationId: conversation.id,
+            type: MessageType.TEXT,
+          });
+        }
+
         onClose();
       }
     } catch (error) {
@@ -257,6 +273,23 @@ export function OfferPopup({
               value={offerAmount}
               onChange={(e) => setOfferAmount(e.target.value)}
             />
+          </div>
+        )}
+
+        {/* Message */}
+        {offerType === "make-offer" && (
+          <div className="space-y-2">
+            <Label>Message (Optional)</Label>
+            <Textarea
+              placeholder="Describe your offer and why you're interested in this domain..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="resize-none"
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">
+              {message.length}/500 characters
+            </p>
           </div>
         )}
       </div>
