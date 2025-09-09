@@ -10,7 +10,6 @@ import { useAccount } from "wagmi";
 import { useName, useNameStats, useOffers } from "@/data/use-doma";
 import { Token } from "@/types/doma";
 import { useHelper } from "@/hooks/use-helper";
-import UserSelectionPopup from "@/components/domain/UserSelectionPopup";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import {
   ArrowLeft,
@@ -27,6 +26,7 @@ import {
   Plus,
   Loader,
   ShieldCheck,
+  EyeOff,
 } from "lucide-react";
 import { QueryLoader, QueryListLoader } from "@/components/ui/query-loader";
 import { QueryError, QueryErrorCard } from "@/components/ui/query-error";
@@ -58,6 +58,7 @@ import { UserVerificationPopup } from "@/components/domain/UserVerificationPopup
 import { VerifiedBadge } from "@/components/common/VerifiedBadge";
 import { AcceptRejectOfferPopup } from "@/components/domain/AcceptRejectOfferPopup";
 import { CancelOfferPopup } from "@/components/domain/CancelOfferPopup";
+import WatchPopup from "@/components/domain/WatchPopup";
 
 const DomainDetails = () => {
   const { domainName } = useParams();
@@ -66,7 +67,7 @@ const DomainDetails = () => {
     undefined
   );
   const [showOfferPopup, setShowOfferPopup] = useState(false);
-  const [showUserSelectionPopup, setShowUserSelectionPopup] = useState(false);
+  const [showWatchPopup, setShowWatchPopup] = useState(false);
   const [showCancelListingPopup, setShowCancelListingPopup] = useState(false);
   const [showListDomainPopup, setShowListDomainPopup] = useState(false);
   const [showVerificationPopup, setShowVerificationPopup] = useState(false);
@@ -169,7 +170,7 @@ const DomainDetails = () => {
     if (!address) {
       return toast("Connect your wallet");
     }
-    setShowUserSelectionPopup(true);
+    setShowWatchPopup(true);
   };
 
   if (nameError) {
@@ -380,14 +381,27 @@ const DomainDetails = () => {
                     )}
                   </>
                 ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleWatch}
-                    title="Add to Watchlist"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <>
+                    {!profile?.watchUsernames?.includes(domainName) ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleWatch}
+                        title="Add to Watchlist"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={handleWatch}
+                      >
+                        <EyeOff className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </>
                 )}
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1369,11 +1383,11 @@ const DomainDetails = () => {
         )}
 
         {/* User Selection Popup */}
-        {nameData && showUserSelectionPopup && (
-          <UserSelectionPopup
-            isOpen={showUserSelectionPopup}
+        {nameData && showWatchPopup && (
+          <WatchPopup
+            isOpen={showWatchPopup}
             domainName={nameData?.name}
-            onClose={() => setShowUserSelectionPopup(false)}
+            onClose={() => setShowWatchPopup(false)}
           />
         )}
 
