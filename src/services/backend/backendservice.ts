@@ -491,9 +491,7 @@ class BackendService {
     activeUsername?: string
   ): Promise<PaginatedResponse<IPost>> {
     return this.apiClient.get<PaginatedResponse<IPost>>(
-      `/hashtags/${encodeURIComponent(
-        tag
-      )}/posts?page=${page}&limit=${limit}&activeUsername=${activeUsername}`
+      `/hashtags/tag/posts?tag=${tag}&page=${page}&limit=${limit}&activeUsername=${activeUsername}`
     );
   }
 

@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Hash, TrendingUp, Users, Eye } from "lucide-react";
-import { useGetHashtagPosts, useLikePost, useUnlikePost, useRepost, useCreateComment } from "@/data/use-backend";
+import {
+  useGetHashtagPosts,
+  useLikePost,
+  useUnlikePost,
+  useRepost,
+  useCreateComment,
+} from "@/data/use-backend";
 import { useUsername } from "@/hooks/use-username";
 import CommunityPost from "@/components/posts/CommunityPost";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -30,14 +36,15 @@ const Hashtag = () => {
 
   const likeMutation = useLikePost();
   const unlikeMutation = useUnlikePost();
-  const repostMutation = useRepost();
   const createCommentMutation = useCreateComment();
 
-  const posts = postsData?.pages?.flatMap(p => p.data) || [];
+  const posts = postsData?.pages?.flatMap((p) => p.data) || [];
   const totalPosts = posts.length;
-  
+
   // Get hashtag stats from first post's hashtag data if available
-  const hashtagData = posts[0]?.hashtags?.find(h => h.hashtag.tag === hashtag)?.hashtag;
+  const hashtagData = posts[0]?.hashtags?.find(
+    (h) => h.hashtag.tag === hashtag
+  )?.hashtag;
 
   const handleLike = async (postId: string) => {
     try {
@@ -80,7 +87,7 @@ const Hashtag = () => {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto p-4 sm:p-6">
-        <QueryError 
+        <QueryError
           error={error}
           onRetry={refetch}
           message="Failed to load hashtag posts"
@@ -114,7 +121,7 @@ const Hashtag = () => {
 
   return (
     <>
-      <HashtagSEO 
+      <HashtagSEO
         hashtag={hashtag}
         postsCount={totalPosts}
         usageCount={hashtagData?.usageCount || totalPosts}
@@ -131,7 +138,7 @@ const Hashtag = () => {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            
+
             <div className="flex items-center space-x-3">
               <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Hash className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
@@ -141,10 +148,11 @@ const Hashtag = () => {
                   #{hashtag}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {hashtagData?.usageCount ? 
-                    `${hashtagData.usageCount.toLocaleString()} posts` :
-                    totalPosts > 0 ? `${totalPosts.toLocaleString()} posts loaded` : "No posts yet"
-                  }
+                  {hashtagData?.usageCount
+                    ? `${hashtagData.usageCount.toLocaleString()} posts`
+                    : totalPosts > 0
+                    ? `${totalPosts.toLocaleString()} posts loaded`
+                    : "No posts yet"}
                 </p>
               </div>
             </div>
@@ -167,20 +175,26 @@ const Hashtag = () => {
                 <div className="text-xl sm:text-2xl font-bold text-primary">
                   {hashtagData.usageCount.toLocaleString()}
                 </div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Total Posts</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Total Posts
+                </div>
               </div>
               <div className="space-y-1">
                 <div className="text-xl sm:text-2xl font-bold text-primary">
                   {totalPosts.toLocaleString()}
                 </div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Loaded</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Loaded
+                </div>
               </div>
               <div className="space-y-1 col-span-2 sm:col-span-1">
                 <div className="text-xl sm:text-2xl font-bold text-primary flex items-center justify-center">
                   <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
                   Trending
                 </div>
-                <div className="text-xs sm:text-sm text-muted-foreground">Popular Now</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Popular Now
+                </div>
               </div>
             </div>
           </Card>
@@ -194,9 +208,12 @@ const Hashtag = () => {
                 <Hash className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg sm:text-xl font-semibold">No posts yet</h3>
+                <h3 className="text-lg sm:text-xl font-semibold">
+                  No posts yet
+                </h3>
                 <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-                  Be the first to create a post with #{hashtag}! Start a conversation and let others discover this hashtag.
+                  Be the first to create a post with #{hashtag}! Start a
+                  conversation and let others discover this hashtag.
                 </p>
               </div>
               <Button onClick={() => navigate("/")} variant="outline">
@@ -221,7 +238,9 @@ const Hashtag = () => {
               endMessage={
                 posts.length > 5 && (
                   <div className="text-center p-6 text-muted-foreground">
-                    <p className="text-sm">You've seen all posts for #{hashtag}</p>
+                    <p className="text-sm">
+                      You've seen all posts for #{hashtag}
+                    </p>
                   </div>
                 )
               }
@@ -244,7 +263,10 @@ const Hashtag = () => {
                     post.mediaUrls?.map((url, i) => ({
                       id: `${post.id}-${i}`,
                       url,
-                      type: url.includes(".mp4") || url.includes(".mov") ? "video" : "image",
+                      type:
+                        url.includes(".mp4") || url.includes(".mov")
+                          ? "video"
+                          : "image",
                       name: `media-${i}`,
                     })) || []
                   }
