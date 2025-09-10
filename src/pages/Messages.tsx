@@ -47,7 +47,7 @@ const Messages = () => {
   const { address } = useAccount();
   const isMobile = useIsMobile();
   const { client } = useXmtp();
-  const { resolveUsername, loadResolveableIds } = useNameResolver();
+  const { resolveUsername } = useNameResolver();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,18 +62,6 @@ const Messages = () => {
     error: conversationsError,
     refetch: refetchConversationsData,
   } = useUserConversations(client, 50, activeUsername);
-
-  useEffect(() => {
-    if (conversationsData) {
-      conversationsData.forEach(async (c) => {
-        console.log({ c });
-
-        const idsx = (await (c as Dm).members()).map((m) => m.inboxId);
-        console.log({ idsx });
-        loadResolveableIds(idsx);
-      });
-    }
-  }, [conversationsData]);
 
   const handleConversationClick = (conversation: Conversation) => {
     if (
@@ -240,9 +228,7 @@ const Messages = () => {
                                 {conversation.metadata.conversationType ===
                                 ConversationType.Group.toString()
                                   ? (conversation as Group).name
-                                  : resolveUsername(
-                                      conversation.metadata.creatorInboxId
-                                    )}
+                                  : resolveUsername(conversation.id)}
                               </h3>
                               {/* {otherUser?.isOnline && (
                                 <span className="text-xs text-green-600 font-medium">
