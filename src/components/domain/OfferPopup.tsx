@@ -40,7 +40,8 @@ import { useSwitchChain, useWalletClient } from "wagmi";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Textarea } from "../ui/textarea";
 import { backendService } from "@/services/backend/backendservice";
-import { ConversationType, MessageType } from "@/types/backend";
+import { dataService } from "@/services/doma/dataservice";
+import { useXmtp } from "@/contexts/XmtpContext";
 interface OfferPopupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,6 +68,8 @@ export function OfferPopup({
   const { switchChainAsync } = useSwitchChain();
   const { parseCAIP10, formatLargeNumber } = useHelper();
   const [currencies, setCurrencies] = useState<CurrencyToken[]>([]);
+
+  const { client: xmtpClient } = useXmtp();
 
   const [selectedCurrency, setSelectedCurrency] = useState<
     CurrencyToken | undefined
@@ -160,16 +163,25 @@ export function OfferPopup({
         });
 
         if (message.trim()) {
-          const conversation = await backendService.createConversation({
-            type: ConversationType.DIRECT,
-            participantUsernames: [domainName],
+          const otherName = await dataService.getName({ name: domainName });
+          const otherAddress = parseCAIP10(otherName.claimedBy).address;
+
+          const inboxId = await xmtpClient.findInboxIdByIdentifier({
+            identifier: otherAddress,
+            identifierKind: "Ethereum",
           });
 
-          await backendService.sendMessage({
-            content: message.trim(),
-            conversationId: conversation.id,
-            type: MessageType.TEXT,
-          });
+          if (!inboxId) {
+            return toast.error(
+              "Connect send Message. Recipient is not yet on XMTP."
+            );
+          }
+
+          const conversation =
+            (await xmtpClient.conversations.getDmByInboxId(inboxId)) ??
+            (await xmtpClient.conversations.newDm(inboxId));
+
+          await conversation.send(message);
         }
 
         onClose();

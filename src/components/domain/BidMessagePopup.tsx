@@ -27,9 +27,11 @@ import { DollarSign, Clock, TrendingUp, AlertCircle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSendMessage } from "@/data/use-backend";
-import { MessageType } from "@/types/backend";
+import { useXmtp } from "@/contexts/XmtpContext";
+import { Conversation } from "@xmtp/browser-sdk";
 
 interface BidMessagePopupProps {
+  conversation: Conversation;
   isOpen: boolean;
   onClose: () => void;
   recipientName: string;
@@ -39,6 +41,7 @@ interface BidMessagePopupProps {
 }
 
 const BidMessagePopup = ({
+  conversation,
   isOpen,
   onClose,
   recipientName,
@@ -53,7 +56,8 @@ const BidMessagePopup = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const sendMessageMutation = useSendMessage();
+
+  const sendMessageMutation = useSendMessage(conversation);
 
   const currencies = [
     { value: "USDC", label: "USDC" },
@@ -102,11 +106,7 @@ ${message}`;
       const richMessage = formatBidMessage();
 
       await sendMessageMutation.mutateAsync({
-        createMessageDto: {
-          conversationId,
-          content: richMessage,
-          type: MessageType.TEXT,
-        },
+        content: richMessage,
       });
 
       toast({

@@ -107,7 +107,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
         createConversation.mutate({ conversation: conversation as Dm });
       }
     } catch (error) {
-      console.log(error);
+      toast.error(error?.message);
     }
   };
 
@@ -403,12 +403,13 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
       />
 
       {/* Bid Message Popup */}
-      {username && (
+      {username && createConversation?.data && (
         <BidMessagePopup
+          conversation={createConversation?.data}
           isOpen={showBidPopup}
           onClose={() => setShowBidPopup(false)}
-          recipientName={username}
           recipientId={username}
+          recipientName={username}
           domainName={activeUsername || ""}
           conversationId={createConversation?.data?.id}
         />
