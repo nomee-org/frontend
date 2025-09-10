@@ -64,7 +64,6 @@ const tlds: TLDFilter[] = [
 
 const Portfolio = () => {
   const { address } = useAccount();
-  const [sortBy, setSortBy] = useState("value");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [watchName, setWatchName] = useState<string | undefined>(undefined);
   const [isRegistrarPopupOpen, setIsRegistrarPopupOpen] = useState(false);
@@ -272,18 +271,6 @@ const Portfolio = () => {
                         {tld.name}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="value">Current Value</SelectItem>
-                    <SelectItem value="change">24h Change</SelectItem>
-                    <SelectItem value="gainloss">Total Gain/Loss</SelectItem>
-                    <SelectItem value="date">Purchase Date</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

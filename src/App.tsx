@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/common/ThemeProvider";
 import { wagmiAdapter } from "./configs/reown";
 import { AppRoutes } from "./Routes";
 import { UsernameProvider } from "./contexts/UsernameContext";
+import { XmtpProvider } from "./contexts/XmtpContext";
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -19,7 +20,9 @@ const App = () => {
             <Toaster />
             <Sonner />
             <UsernameProvider>
-              <AppRoutes />
+              <XmtpProvider>
+                <AppRoutes />
+              </XmtpProvider>
             </UsernameProvider>
           </TooltipProvider>
         </QueryClientProvider>

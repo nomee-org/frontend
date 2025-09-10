@@ -36,9 +36,6 @@ interface ConversationInfoModalProps {
   onClose: () => void;
   conversation?: IConversation;
   username?: string; // For direct conversations
-  onOpenMessageSettings?: () => void;
-  conversationId?: string;
-  selectedMessageId?: string;
 }
 
 export const ConversationInfoModal = ({
@@ -46,13 +43,9 @@ export const ConversationInfoModal = ({
   onClose,
   conversation,
   username,
-  onOpenMessageSettings,
-  conversationId,
-  selectedMessageId,
 }: ConversationInfoModalProps) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<"info" | "members">("info");
-
   const isGroupConversation = conversation?.type === ConversationType.GROUP;
   const otherUser = conversation?.participants?.find(
     (p) => p.userId !== username
@@ -164,18 +157,6 @@ export const ConversationInfoModal = ({
                 Add Members
               </Button>
             )}
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => {
-                if (onOpenMessageSettings) {
-                  onOpenMessageSettings();
-                }
-              }}
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              {isGroupConversation ? "Group Settings" : "Chat Settings"}
-            </Button>
           </div>
         </div>
       )}

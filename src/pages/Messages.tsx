@@ -33,6 +33,7 @@ import { useUserConversations } from "@/data/use-backend";
 
 // Type imports
 import { IConversation, ConversationType } from "@/types/backend";
+import { useXmtp } from "@/contexts/XmtpContext";
 
 const Messages = () => {
   // Navigation and routing states
@@ -41,6 +42,7 @@ const Messages = () => {
 
   // User and account states
   const { activeUsername } = useUsername();
+  const { connect } = useXmtp();
   const { address } = useAccount();
   const isMobile = useIsMobile();
 
@@ -133,14 +135,24 @@ const Messages = () => {
           <div className="p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-xl font-bold text-foreground">Chats</h1>
-              <Button
-                size="sm"
-                className="animate-fade-in shadow-sm"
-                onClick={() => setShowCreateGroup(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden xs:inline">New </span>Group
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  className="animate-fade-in shadow-sm"
+                  onClick={() => connect(activeUsername)}
+                >
+                  Sync
+                </Button>
+
+                <Button
+                  size="sm"
+                  className="animate-fade-in shadow-sm"
+                  onClick={() => setShowCreateGroup(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden xs:inline">New </span>Group
+                </Button>
+              </div>
             </div>
 
             {/* Search */}

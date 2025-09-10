@@ -75,9 +75,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
-  const [selectedMessageId, setSelectedMessageId] = useState<
-    string | undefined
-  >();
+
   const { activeUsername } = useUsername();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
@@ -436,11 +434,6 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
         onClose={() => setShowConversationInfo(false)}
         conversation={createConversation?.data}
         username={username}
-        onOpenMessageSettings={() => {
-          setShowConversationInfo(false);
-        }}
-        conversationId={createConversation?.data?.id}
-        selectedMessageId={selectedMessageId}
       />
 
       {/* Delete Chat Dialog */}

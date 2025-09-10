@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // React imports
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 // Third-party imports
 import { useParams, useNavigate } from "react-router-dom";
