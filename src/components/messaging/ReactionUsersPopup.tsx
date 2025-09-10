@@ -5,12 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

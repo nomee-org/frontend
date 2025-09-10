@@ -61,7 +61,6 @@ const PostComposer = ({
   const [showPollCreator, setShowPollCreator] = useState(false);
   const [poll, setPoll] = useState<CreatePollDto | undefined>(undefined);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const maxLength = 280;
@@ -421,7 +420,7 @@ const PostComposer = ({
           isOpen={showMediaPicker}
           onClose={() => setShowMediaPicker(false)}
           onFilesSelected={handleFileSelect}
-          maxFiles={4}
+          maxFiles={2}
           acceptedTypes={["image/*", "video/*"]}
           existingFiles={pendingMedia}
         />

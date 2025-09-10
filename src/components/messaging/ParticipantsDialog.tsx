@@ -40,7 +40,7 @@ import {
   useGetConversation,
 } from "@/data/use-backend";
 import { useNames } from "@/data/use-doma";
-import { ParticipantRole } from "@/types/backend";
+import { IConversationParticipant, ParticipantRole } from "@/types/backend";
 import { toast } from "sonner";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -133,7 +133,7 @@ export function ParticipantsDialog({
   };
 
   // Check if current user can manage a specific participant
-  const canManageParticipant = (participant: any) => {
+  const canManageParticipant = (participant: IConversationParticipant) => {
     if (!canManageParticipants) return false;
     if (participant.user.username === activeUsername) return false; // Can't manage self
     if (participant.role === ParticipantRole.OWNER) return false; // Can't manage owner

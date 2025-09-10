@@ -181,7 +181,6 @@ export interface IConversation {
   name?: string;
   description?: string;
   avatarUrl?: string;
-  isEncrypted: boolean;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -212,7 +211,6 @@ export interface IConversationParticipant {
 export interface IMessage {
   id: string;
   content?: string;
-  encryptedContent?: string;
   type: MessageType;
   mediaUrl?: string;
   mediaType?: string;
@@ -407,7 +405,6 @@ export interface MediaUploadResponse {
   compressionRatio?: number;
   filename?: string;
   mimetype?: string;
-  isEncrypted?: boolean;
 }
 
 export interface UploadProgress {
@@ -485,8 +482,6 @@ export interface CreateMessageDto {
   content?: string;
   type?: MessageType;
   replyToId?: string;
-  encryptedContent?: string;
-  userPassword?: string;
 }
 
 export interface UpdateMessageDto {
@@ -532,12 +527,6 @@ export interface UpdateAdDto extends Partial<CreateAdDto> {
 
 export interface AdInteractionDto {
   type: AdInteractionType;
-}
-
-export interface SetupEncryptionDto {
-  publicKey: string;
-  encryptedPrivateKey: string;
-  enableByDefault?: boolean;
 }
 
 export interface DecryptMessageDto {

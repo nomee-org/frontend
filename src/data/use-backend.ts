@@ -46,8 +46,6 @@ import {
   CreateAdDto,
   UpdateAdDto,
   AdInteractionDto,
-  SetupEncryptionDto,
-  DecryptMessageDto,
   StickerPack,
   ParticipantRole,
   Sticker,
@@ -230,14 +228,6 @@ export const queryKeys = {
         conversationId,
         query,
         limit,
-        activeUsername,
-      ] as const,
-    encryptionStatus: (conversationId: string, activeUsername?: string) =>
-      [
-        "messages",
-        "conversation",
-        conversationId,
-        "encryption-status",
         activeUsername,
       ] as const,
   },
@@ -1927,53 +1917,6 @@ export function useConversationLastOpenedCount(
     queryKey: queryKeys.conversations.lastOpenedCount(lastOpenedAt),
     queryFn: () => backendService.getLastOpenedConversationCount(lastOpenedAt),
     ...options,
-  });
-}
-
-export function useSetupEncryption() {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    { message: string },
-    Error,
-    { conversationId: string; setupEncryptionDto: SetupEncryptionDto }
-  >({
-    mutationFn: ({ setupEncryptionDto }) =>
-      backendService.setupEncryption(setupEncryptionDto),
-    onSuccess: (_, { conversationId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.encryptionStatus(conversationId),
-      });
-    },
-  });
-}
-
-export function useConversationEncryptionStatus(
-  conversationId: string,
-  options?: UseQueryOptions<
-    { isEncrypted: boolean; algorithm: string; keyExchangeComplete: boolean },
-    Error
-  >
-) {
-  return useQuery<
-    { isEncrypted: boolean; algorithm: string; keyExchangeComplete: boolean },
-    Error
-  >({
-    queryKey: queryKeys.messages.encryptionStatus(conversationId),
-    queryFn: () =>
-      backendService.getConversationEncryptionStatus(conversationId),
-    ...options,
-  });
-}
-
-export function useDecryptMessage() {
-  return useMutation<
-    { messageId: string; content: string; type: any; createdAt: Date },
-    Error,
-    { messageId: string; dto: DecryptMessageDto }
-  >({
-    mutationFn: ({ messageId, dto }) =>
-      backendService.decryptMessage(messageId, dto),
   });
 }
 

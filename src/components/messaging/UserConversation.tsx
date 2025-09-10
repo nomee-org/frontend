@@ -36,7 +36,6 @@ import { MessageList } from "@/components/messaging/MessageList";
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
 import { OnlineStatus } from "@/components/messaging/OnlineStatus";
 import { ConversationInfoModal } from "@/components/messaging/ConversationInfoModal";
-import { MessageSettingsPopup } from "@/components/messaging/MessageSettingsPopup";
 import { DeleteChatDialog } from "@/components/messaging/DeleteChatDialog";
 import { MuteConversationPopup } from "@/components/messaging/MuteConversationPopup";
 import { PinnedMessagesBar } from "@/components/messaging/PinnedMessagesBar";
@@ -74,7 +73,6 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const [replyToId, setReplyToId] = useState<string | undefined>();
   const [editingMessage, setEditingMessage] = useState<IMessage | undefined>();
   const [showConversationInfo, setShowConversationInfo] = useState(false);
-  const [showMessageSettings, setShowMessageSettings] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<
@@ -440,18 +438,9 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
         username={username}
         onOpenMessageSettings={() => {
           setShowConversationInfo(false);
-          setShowMessageSettings(true);
         }}
         conversationId={createConversation?.data?.id}
         selectedMessageId={selectedMessageId}
-      />
-
-      {/* Message Settings Popup */}
-      <MessageSettingsPopup
-        isOpen={showMessageSettings}
-        onClose={() => setShowMessageSettings(false)}
-        conversationId={createConversation?.data?.id}
-        messageId={selectedMessageId}
       />
 
       {/* Delete Chat Dialog */}

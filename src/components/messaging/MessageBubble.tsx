@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { UserPreviewPopup } from "./UserPreviewPopup";
 import { ReactionUsersPopup } from "./ReactionUsersPopup";

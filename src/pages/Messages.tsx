@@ -79,7 +79,7 @@ const Messages = () => {
     );
 
     const wasSelected = isConversationSelected;
-    const isSelected = location.pathname !== "/messages";
+    const isSelected = location.pathname !== "/";
 
     // Handle reverse animation when going back to messages
     if (wasSelected && !isSelected && isMobile) {
@@ -132,7 +132,7 @@ const Messages = () => {
           {/* Header */}
           <div className="p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-bold text-foreground">Messages</h1>
+              <h1 className="text-xl font-bold text-foreground">Chats</h1>
               <Button
                 size="sm"
                 className="animate-fade-in shadow-sm"
@@ -256,13 +256,6 @@ const Messages = () => {
                                 {conversation.lastMessage?.content ||
                                   "No messages yet"}
                               </p>
-                              {conversation.isEncrypted && (
-                                <div className="flex-shrink-0">
-                                  <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>

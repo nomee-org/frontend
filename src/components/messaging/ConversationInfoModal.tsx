@@ -28,7 +28,6 @@ import {
 import { IConversation, ConversationType } from "@/types/backend";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { OnlineStatus } from "@/components/messaging/OnlineStatus";
-import { MessageSettingsPopup } from "@/components/messaging/MessageSettingsPopup";
 import { useIsMobile } from "@/hooks/use-mobile";
 import moment from "moment";
 
@@ -53,7 +52,6 @@ export const ConversationInfoModal = ({
 }: ConversationInfoModalProps) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<"info" | "members">("info");
-  const [showMessageSettings, setShowMessageSettings] = useState(false);
 
   const isGroupConversation = conversation?.type === ConversationType.GROUP;
   const otherUser = conversation?.participants?.find(
@@ -172,8 +170,6 @@ export const ConversationInfoModal = ({
               onClick={() => {
                 if (onOpenMessageSettings) {
                   onOpenMessageSettings();
-                } else {
-                  setShowMessageSettings(true);
                 }
               }}
             >
@@ -245,14 +241,6 @@ export const ConversationInfoModal = ({
             <div className="px-4 pb-8">{renderContent()}</div>
           </DrawerContent>
         </Drawer>
-
-        {/* Message Settings Popup */}
-        <MessageSettingsPopup
-          isOpen={showMessageSettings}
-          onClose={() => setShowMessageSettings(false)}
-          conversationId={conversationId}
-          messageId={selectedMessageId}
-        />
       </>
     );
   }
@@ -269,14 +257,6 @@ export const ConversationInfoModal = ({
           <ScrollArea className="max-h-[60vh]">{renderContent()}</ScrollArea>
         </DialogContent>
       </Dialog>
-
-      {/* Message Settings Popup */}
-      <MessageSettingsPopup
-        isOpen={showMessageSettings}
-        onClose={() => setShowMessageSettings(false)}
-        conversationId={conversationId}
-        messageId={selectedMessageId}
-      />
     </>
   );
 };

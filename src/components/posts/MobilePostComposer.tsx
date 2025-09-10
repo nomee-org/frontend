@@ -1,10 +1,4 @@
-import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import PostComposer, {
   PendingMediaFile,
 } from "@/components/posts/PostComposer";
