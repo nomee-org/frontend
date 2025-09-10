@@ -243,11 +243,7 @@ const DomainDetails = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() =>
-                    window.history.length > 0
-                      ? window.history.back()
-                      : navigate("/discover")
-                  }
+                  onClick={() => navigate(-1)}
                   className="shrink-0"
                 >
                   <ArrowLeft className="h-4 w-4" />

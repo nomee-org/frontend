@@ -1,13 +1,18 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Search, MessageSquare, Wallet, Settings, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import {
+  Search,
+  MessageSquare,
+  Settings,
+  Users,
+  UserCircle,
+} from "lucide-react";
 import { useUsername } from "@/contexts/UsernameContext";
 
 const navigationItems = [
-  { title: "Feeds", url: "/", icon: Users },
+  { title: "Messages", url: "/", icon: MessageSquare },
   { title: "Discover", url: "/discover", icon: Search },
-  { title: "Portfolio", url: "/portfolio", icon: Wallet },
-  { title: "Messages", url: "/messages", icon: MessageSquare },
+  { title: "Feeds", url: "/feeds", icon: Users },
+  { title: "Me", url: "/me", icon: UserCircle },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 

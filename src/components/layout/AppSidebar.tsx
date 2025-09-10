@@ -16,15 +16,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Search, MessageSquare, Wallet, Settings, Users } from "lucide-react";
+import {
+  Search,
+  MessageSquare,
+  Settings,
+  Users,
+  UserCircle,
+} from "lucide-react";
 import { useUsername } from "@/contexts/UsernameContext";
 import Nomee from "../common/Nomee";
 
 const navigationItems = [
-  { title: "Feeds", url: "/", icon: Users },
+  { title: "Messages", url: "/", icon: MessageSquare },
   { title: "Discover", url: "/discover", icon: Search },
-  { title: "Portfolio", url: "/portfolio", icon: Wallet },
-  { title: "Messages", url: "/messages", icon: MessageSquare },
+  { title: "Feeds", url: "/feeds", icon: Users },
+  { title: "Me", url: "/me", icon: UserCircle },
 ];
 
 const settingsItems = [{ title: "Settings", url: "/settings", icon: Settings }];

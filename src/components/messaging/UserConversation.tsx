@@ -51,7 +51,6 @@ import { usePinnedMessagesVisibility } from "@/hooks/use-pinned-messages-visibil
 import {
   useGetMessages,
   useCreateConversation,
-  updateMessageInCache,
   addMessageInCache,
 } from "@/data/use-backend";
 import {
@@ -63,7 +62,7 @@ import {
 import { ConversationType, IMessage } from "@/types/backend";
 import { RecordingIndicator } from "./RecordingIndicator";
 
-const UserConversation = () => {
+const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const [params] = useSearchParams();
 
   const initMessage = params.get("message");
@@ -152,57 +151,23 @@ const UserConversation = () => {
         }
 
         refetchMessages();
+        onRefresh();
       },
-      onMessageDeleted: ({ messageId }) => {
-        if (createConversation?.data?.id) {
-          updateMessageInCache(
-            queryClient,
-            createConversation.data.id,
-            50,
-            activeUsername,
-            (msg) =>
-              msg.id === messageId
-                ? { ...msg, isDeleted: true, content: undefined }
-                : msg
-          );
-        }
-
+      onMessageDeleted: () => {
         refetchMessages();
+        onRefresh();
       },
-      onMessageReaction: (reaction) => {
-        if (createConversation?.data?.id) {
-          updateMessageInCache(
-            queryClient,
-            createConversation.data.id,
-            50,
-            activeUsername,
-            (msg) =>
-              msg.id === reaction.messageId
-                ? {
-                    ...msg,
-                    reactions: [
-                      ...msg.reactions.filter((r) => r.id !== reaction.id),
-                      reaction,
-                    ],
-                  }
-                : msg
-          );
-        }
-
+      onMessageReaction: () => {
         refetchMessages();
+        onRefresh();
       },
-      onMessageUpdated: (updatedMessage) => {
-        if (createConversation?.data?.id) {
-          updateMessageInCache(
-            queryClient,
-            createConversation.data.id,
-            50,
-            activeUsername,
-            (msg) => (msg.id === updatedMessage.id ? updatedMessage : msg)
-          );
-        }
-
+      onRemoveMessageReaction() {
         refetchMessages();
+        onRefresh();
+      },
+      onMessageUpdated: () => {
+        refetchMessages();
+        onRefresh();
       },
       onUserTyping: ({ username, conversationId }) => {
         if (
@@ -271,11 +236,10 @@ const UserConversation = () => {
             variant="ghost"
             size="sm"
             onClick={() => {
-              // Add haptic feedback and smooth transition
               if (isMobile && navigator.vibrate) {
                 navigator.vibrate(50);
               }
-              navigate("/messages");
+              navigate("/");
             }}
             className="h-8 w-8 p-0 mr-2 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
           >
@@ -496,7 +460,8 @@ const UserConversation = () => {
         onClose={() => setShowDeleteDialog(false)}
         conversationId={createConversation?.data?.id || ""}
         onConfirm={() => {
-          navigate("/messages");
+          navigate("/");
+          onRefresh();
         }}
         chatName={username || "Unknown User"}
         isGroup={false}

@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { useHelper } from "@/hooks/use-helper";
 import { modal } from "@/configs/reown";
-import { UsernameProvider, useUsername } from "@/contexts/UsernameContext";
+import { useUsername } from "@/contexts/UsernameContext";
 import { UsernameSelector } from "@/components/common/UsernameSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Nomee from "../common/Nomee";
@@ -27,13 +27,14 @@ function AppLayoutContent() {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === "/discover") return "Discover";
-    if (path === "/portfolio") return "Portfolio";
-    if (path === "/messages") return "Messages";
+    if (path === "/me") return "Me";
+    if (path === "/feeds") return "Feeds";
+    if (path === "/") return "Messages";
     if (path === "/settings") return "Settings";
     if (path === "/notifications") return "Notifications";
     if (path.startsWith("/names/")) return "";
     if (path.startsWith("/feeds/")) return "";
-    return "Feeds";
+    return "";
   };
 
   useEffect(() => {
@@ -131,9 +132,5 @@ function AppLayoutContent() {
 }
 
 export function AppLayout() {
-  return (
-    <UsernameProvider>
-      <AppLayoutContent />
-    </UsernameProvider>
-  );
+  return <AppLayoutContent />;
 }

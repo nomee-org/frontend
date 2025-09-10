@@ -10,13 +10,12 @@ import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { QueryListLoader } from "@/components/ui/query-loader";
 import { QueryError } from "@/components/ui/query-error";
 
 // Icon imports
-import { Search, MessageSquare, User, Loader, Plus, Users } from "lucide-react";
+import { Search, MessageSquare, Plus, Users } from "lucide-react";
 
 // Local component imports
 import { CreateGroupDialog } from "@/components/common/CreateGroupDialog";
@@ -31,10 +30,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 // Service/data imports
 import { useUserConversations } from "@/data/use-backend";
-import {
-  webSocketService,
-  WebSocketEventHandlers,
-} from "@/services/backend/socketservice";
 
 // Type imports
 import { IConversation, ConversationType } from "@/types/backend";
@@ -45,7 +40,7 @@ const Messages = () => {
   const location = useLocation();
 
   // User and account states
-  const { token, activeUsername } = useUsername();
+  const { activeUsername } = useUsername();
   const { address } = useAccount();
   const isMobile = useIsMobile();
 
@@ -53,7 +48,6 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [isConversationSelected, setIsConversationSelected] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [isClosingConversation, setIsClosingConversation] = useState(false);
 
   // Data fetching states
@@ -65,13 +59,8 @@ const Messages = () => {
   } = useUserConversations(50, activeUsername);
 
   const handleConversationClick = (conversation: IConversation) => {
-    // Start animation on mobile with scale effect
-    if (isMobile) {
-      setIsAnimating(true);
-    }
-
     if (conversation.type === ConversationType.GROUP) {
-      navigate(`/messages/groups/${conversation.id}`);
+      navigate(`/groups/${conversation.id}`);
     } else {
       const otherUser = conversation?.participants?.find(
         (p) => p.userId !== activeUsername
@@ -98,57 +87,12 @@ const Messages = () => {
       setTimeout(() => {
         setIsConversationSelected(false);
         setIsClosingConversation(false);
-        setIsAnimating(false);
       }, 300);
       return;
     }
 
     setIsConversationSelected(isSelected);
-
-    // Handle forward animation when opening conversation
-    if (isSelected && !wasSelected && isMobile) {
-      setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 300);
-    }
-
-    // Reset animation when going back to messages list on desktop
-    if (!isSelected && wasSelected && !isMobile) {
-      setIsAnimating(false);
-    }
   }, [location.pathname, isConversationSelected, isMobile]);
-
-  useEffect(() => {
-    const conversations = conversationsData?.pages?.flatMap((p) => p.data);
-    if (conversations) {
-      for (const conversation of conversations) {
-        webSocketService.joinConversation(conversation.id);
-      }
-    }
-  }, [conversationsData]);
-
-  useEffect(() => {
-    const handlers: WebSocketEventHandlers = {
-      id: "all-conversations",
-      onNewMessage: () => {
-        refetchConversationsData();
-      },
-      onMessageDeleted: () => {
-        refetchConversationsData();
-      },
-      onMessageReaction: () => {
-        refetchConversationsData();
-      },
-      onMessageUpdated: () => {
-        refetchConversationsData();
-      },
-    };
-
-    webSocketService.setEventHandlers(handlers);
-
-    return () => {
-      webSocketService.removeEventHandlers(handlers);
-    };
-  }, []);
 
   // Show wallet connection message if no address
   if (!address) {

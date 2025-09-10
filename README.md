@@ -133,7 +133,7 @@ npm run preview
 - Sort by price, date, popularity
 - Watchlist functionality
 
-### **Messaging** (`/messages`)
+### **Messaging** (`/`)
 - Direct conversations with domain owners
 - Group messaging with member tagging
 - Voice messages and file sharing
@@ -146,7 +146,7 @@ npm run preview
 - Transaction history
 - Earnings overview
 
-### **Community** (`/community`)
+### **Community** (`/feeds`)
 - Social feed with posts
 - Follow system
 - Like and comment interactions

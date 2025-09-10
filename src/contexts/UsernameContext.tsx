@@ -9,7 +9,6 @@ import {
   useConversationLastOpenedCount,
   useGetToken,
   useGetUserProfile,
-  useLastReadConversation,
 } from "@/data/use-backend";
 import { useOwnedNames } from "@/data/use-doma";
 import { backendService } from "@/services/backend/backendservice";

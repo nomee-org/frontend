@@ -6,7 +6,6 @@ import { useEffect, useState, useRef } from "react";
 // Third-party imports
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 // UI component imports
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,6 @@ import {
   useGetConversation,
   useGetMessages,
   useDeleteConversation,
-  updateMessageInCache,
   addMessageInCache,
   useLastReadConversation,
 } from "@/data/use-backend";
@@ -64,7 +62,7 @@ import {
 import { IMessage } from "@/types/backend";
 import { RecordingIndicator } from "./RecordingIndicator";
 
-const GroupConversation = () => {
+const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -143,57 +141,19 @@ const GroupConversation = () => {
         }
 
         refetchMessages();
+        onRefresh();
       },
       onMessageDeleted: ({ messageId }) => {
-        if (conversation?.id) {
-          updateMessageInCache(
-            queryClient,
-            conversation.id,
-            50,
-            activeUsername,
-            (msg) =>
-              msg.id === messageId
-                ? { ...msg, isDeleted: true, content: undefined }
-                : msg
-          );
-        }
-
         refetchMessages();
+        onRefresh();
       },
       onMessageReaction: (reaction) => {
-        if (conversation?.id) {
-          updateMessageInCache(
-            queryClient,
-            conversation.id,
-            50,
-            activeUsername,
-            (msg) =>
-              msg.id === reaction.messageId
-                ? {
-                    ...msg,
-                    reactions: [
-                      ...msg.reactions.filter((r) => r.id !== reaction.id),
-                      reaction,
-                    ],
-                  }
-                : msg
-          );
-        }
-
         refetchMessages();
+        onRefresh();
       },
       onMessageUpdated: (updatedMessage) => {
-        if (conversation?.id) {
-          updateMessageInCache(
-            queryClient,
-            conversation.id,
-            50,
-            activeUsername,
-            (msg) => (msg.id === updatedMessage.id ? updatedMessage : msg)
-          );
-        }
-
         refetchMessages();
+        onRefresh();
       },
       onUserTyping: ({ username, conversationId }) => {
         if (
@@ -284,7 +244,7 @@ const GroupConversation = () => {
               if (isMobile && navigator.vibrate) {
                 navigator.vibrate(50);
               }
-              navigate("/messages");
+              navigate("/");
             }}
             className="h-8 w-8 p-0 mr-2 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
           >
@@ -489,7 +449,8 @@ const GroupConversation = () => {
         chatName={conversation?.name || "Group Chat"}
         isGroup={true}
         onConfirm={() => {
-          navigate("/messages");
+          navigate("/");
+          onRefresh();
         }}
       />
 
