@@ -35,6 +35,7 @@ import { useUserConversations } from "@/data/use-backend";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { InitXmtp } from "@/components/domain/InitXmtp";
 import { Conversation, ConversationType, Dm, Group } from "@xmtp/browser-sdk";
+import { useNameResolver } from "@/hooks/use-name-resolver";
 
 const Messages = () => {
   // Navigation and routing states
@@ -46,6 +47,7 @@ const Messages = () => {
   const { address } = useAccount();
   const isMobile = useIsMobile();
   const { client } = useXmtp();
+  const { resolveUsername, loadResolveableIds } = useNameResolver();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,6 +62,18 @@ const Messages = () => {
     error: conversationsError,
     refetch: refetchConversationsData,
   } = useUserConversations(client, 50, activeUsername);
+
+  useEffect(() => {
+    if (conversationsData) {
+      conversationsData.forEach(async (c) => {
+        console.log({ c });
+
+        const idsx = (await (c as Dm).members()).map((m) => m.inboxId);
+        console.log({ idsx });
+        loadResolveableIds(idsx);
+      });
+    }
+  }, [conversationsData]);
 
   const handleConversationClick = (conversation: Conversation) => {
     if (
@@ -226,7 +240,9 @@ const Messages = () => {
                                 {conversation.metadata.conversationType ===
                                 ConversationType.Group.toString()
                                   ? (conversation as Group).name
-                                  : conversation.id}
+                                  : resolveUsername(
+                                      conversation.metadata.creatorInboxId
+                                    )}
                               </h3>
                               {/* {otherUser?.isOnline && (
                                 <span className="text-xs text-green-600 font-medium">

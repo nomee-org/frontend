@@ -58,6 +58,8 @@ export const queryKeys = {
       ["users", "profile", activeUsername] as const,
     byUsername: (username: string, activeUsername?: string) =>
       ["users", username, activeUsername] as const,
+    byInboxIds: (inboxIds: string[]) =>
+      ["users", "byInboxIds", inboxIds] as const,
     followers: (
       username: string,
       page: number,
@@ -425,6 +427,15 @@ export function useGetUserByUsername(
     queryKey: queryKeys.users.byUsername(username, activeUsername),
     queryFn: () => backendService.getUserByUsername(username, activeUsername),
     ...options,
+  });
+}
+
+export function useGetUsersByInboxIds(inboxIds: string[]) {
+  return useQuery<IUserBasic[], Error>({
+    queryKey: queryKeys.users.byInboxIds(inboxIds.sort()),
+    queryFn: () => backendService.getUsersByInboxIds(inboxIds),
+    staleTime: 5 * 60 * 1000,
+    initialData: [],
   });
 }
 

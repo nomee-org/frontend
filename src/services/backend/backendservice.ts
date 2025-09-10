@@ -116,6 +116,12 @@ class BackendService {
     );
   }
 
+  async getUsersByInboxIds(inboxIds: string[]): Promise<IUserBasic[]> {
+    return this.apiClient.get<IUserBasic[]>(
+      `/users/from-inboxids?inboxIds=${inboxIds.join(",")}`
+    );
+  }
+
   async followUser(username: string): Promise<{ message: string }> {
     return this.apiClient.post<{ message: string }>(
       `/users/${username}/follow`

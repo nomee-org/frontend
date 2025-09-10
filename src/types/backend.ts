@@ -26,8 +26,7 @@ export interface IUserProfile extends IUser {
 
 export interface IUserBasic {
   username: string;
-  firstName?: string;
-  lastName?: string;
+  inboxId?: string;
   avatarUrl?: string;
   isVerified: boolean;
   isOnline?: boolean;
