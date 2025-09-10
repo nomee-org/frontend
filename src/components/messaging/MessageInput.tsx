@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,42 +15,43 @@ import {
 } from "@/components/media/MediaPickerPopup";
 import { StickersPickerPopup } from "@/components/media/StickersPickerPopup";
 import { MemberTaggingPopup } from "@/components/messaging/MemberTaggingPopup";
-import { useSendMessage, useUpdateMessage } from "@/data/use-backend";
-import { MessageType, IConversationParticipant } from "@/types/backend";
+import { useSendMessage } from "@/data/use-backend";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { webSocketService } from "@/services/backend/socketservice";
-import { useUsername } from "@/hooks/use-username";
+import { Conversation, SafeGroupMember } from "@xmtp/browser-sdk";
+import { useXmtp } from "@/contexts/XmtpContext";
+import {
+  AttachmentCodec,
+  ContentTypeRemoteAttachment,
+  RemoteAttachment,
+  RemoteAttachmentCodec,
+} from "@xmtp/content-type-remote-attachment";
+import { backendService } from "@/services/backend/backendservice";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 
 interface MessageInputProps {
   placeHolder?: string;
-  conversationId: string;
+  conversation: Conversation;
   replyToId?: string;
   onCancelReply?: () => void;
-  editingMessage?: { id: string; content: string };
-  onCancelEdit?: () => void;
   onSendSuccess?: () => void;
-  onTyping?: (isTyping: boolean) => void;
   onRecording?: (isRecording: boolean) => void;
-  participants?: IConversationParticipant[];
+  members?: SafeGroupMember[];
 }
 
 export function MessageInput({
   placeHolder,
-  conversationId,
+  conversation,
   replyToId,
   onCancelReply,
-  editingMessage,
-  onCancelEdit,
   onSendSuccess,
-  onTyping,
   onRecording,
-  participants = [],
+  members = [],
 }: MessageInputProps) {
   const [message, setMessage] = useState(placeHolder || "");
   const [selectedMedia, setSelectedMedia] = useState<ProcessedMediaFile[]>([]);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showStickersPicker, setShowStickersPicker] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -66,21 +68,13 @@ export function MessageInput({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
-  const { activeUsername } = useUsername();
-  const sendMessageMutation = useSendMessage();
-  const updateMessageMutation = useUpdateMessage();
+  const { client } = useXmtp();
+  const sendMessageMutation = useSendMessage(conversation);
 
   // Track recording state
   useEffect(() => {
     onRecording?.(isRecording);
   }, [isRecording, onRecording]);
-
-  // Pre-fill message content when editing
-  useEffect(() => {
-    if (editingMessage) {
-      setMessage(editingMessage.content);
-    }
-  }, [editingMessage]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -95,9 +89,9 @@ export function MessageInput({
 
   // Handle typing status with improved debouncing
   const handleTypingStart = useCallback(() => {
-    if (!isTyping && conversationId) {
+    if (!isTyping && conversation?.id) {
       setIsTyping(true);
-      webSocketService.startTyping(conversationId);
+      webSocketService.startTyping(conversation?.id);
     }
 
     // Clear existing timeout
@@ -108,11 +102,11 @@ export function MessageInput({
     // Set new timeout to stop typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
-      if (conversationId) {
-        webSocketService.stopTyping(conversationId);
+      if (conversation?.id) {
+        webSocketService.stopTyping(conversation?.id);
       }
     }, 2000);
-  }, [isTyping, conversationId]);
+  }, [isTyping, conversation?.id]);
 
   const handleTypingStop = useCallback(() => {
     if (typingTimeoutRef.current) {
@@ -120,17 +114,17 @@ export function MessageInput({
       typingTimeoutRef.current = null;
     }
 
-    if (isTyping && conversationId) {
+    if (isTyping && conversation?.id) {
       setIsTyping(false);
-      webSocketService.stopTyping(conversationId);
+      webSocketService.stopTyping(conversation?.id);
     }
-  }, [isTyping, conversationId]);
+  }, [isTyping, conversation?.id]);
 
   // Handle member tagging (only for group conversations)
   const handleMemberTagging = useCallback(
     (value: string, cursorPosition: number) => {
-      // Only enable member tagging if participants exist (group conversations)
-      if (!participants || participants.length <= 1) {
+      // Only enable member tagging if members exist (group conversations)
+      if (!members || members.length <= 1) {
         setShowMemberTagging(false);
         return;
       }
@@ -153,7 +147,7 @@ export function MessageInput({
 
       setShowMemberTagging(false);
     },
-    [participants]
+    [members]
   );
 
   const insertMention = useCallback(
@@ -189,17 +183,8 @@ export function MessageInput({
       if (textareaRef.current) {
         handleMemberTagging(value, textareaRef.current.selectionStart || 0);
       }
-
-      // Only handle typing for new messages, not when editing
-      if (!editingMessage) {
-        if (value.trim()) {
-          handleTypingStart();
-        } else {
-          handleTypingStop();
-        }
-      }
     },
-    [editingMessage, handleTypingStart, handleTypingStop, handleMemberTagging]
+    [handleTypingStart, handleTypingStop, handleMemberTagging]
   );
 
   // Cleanup typing timeout on unmount
@@ -208,38 +193,74 @@ export function MessageInput({
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      if (isTyping && conversationId) {
-        webSocketService.stopTyping(conversationId);
+      if (isTyping && conversation?.id) {
+        webSocketService.stopTyping(conversation?.id);
       }
     };
-  }, [isTyping, conversationId]);
+  }, [isTyping, conversation?.id]);
 
   const handleSendMessage = async () => {
     if (!message.trim() && selectedMedia.length === 0) return;
 
     try {
-      if (editingMessage) {
-        // Update existing message
-        await updateMessageMutation.mutateAsync({
-          messageId: editingMessage.id,
-          updateMessageDto: {
-            content: message.trim(),
-          },
+      // Send new message
+      if (selectedMedia?.length) {
+        const data: ArrayBuffer = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (reader.result instanceof ArrayBuffer) {
+              resolve(reader.result);
+            } else {
+              reject(new Error("Not an ArrayBuffer"));
+            }
+          };
+          reader.readAsArrayBuffer(selectedMedia[0].originalFile);
+        });
+
+        const attachment = {
+          filename: selectedMedia[0].originalFile?.name,
+          mimeType: selectedMedia[0].originalFile?.type,
+          data: new Uint8Array(data),
+        };
+
+        const encryptedEncoded = await RemoteAttachmentCodec.encodeEncrypted(
+          attachment,
+          new AttachmentCodec()
+        );
+
+        const url = await backendService.uploadFile(
+          selectedMedia[0].originalFile
+        );
+
+        const remoteAttachment = {
+          url,
+          contentDigest: encryptedEncoded.digest,
+          salt: encryptedEncoded.salt,
+          nonce: encryptedEncoded.nonce,
+          secret: encryptedEncoded.secret,
+          scheme: "https://",
+          filename: attachment.filename,
+          text: message,
+          contentLength: attachment.data.byteLength,
+        };
+
+        sendMessageMutation.mutate({
+          content: remoteAttachment,
+          contentType: ContentTypeRemoteAttachment as any,
+        });
+      } else if (replyToId) {
+        const reply: Reply = {
+          content: message,
+          reference: replyToId,
+          referenceInboxId: "",
+          contentType: ContentTypeReply,
+        };
+        sendMessageMutation.mutate({
+          content: reply,
+          contentType: ContentTypeReply as any,
         });
       } else {
-        // Send new message
-        await sendMessageMutation.mutateAsync({
-          createMessageDto: {
-            conversationId,
-            content: message.trim(),
-            type:
-              selectedMedia.length > 0
-                ? getMessageType(selectedMedia[0].file)
-                : MessageType.TEXT,
-            replyToId,
-          },
-          mediaFile: selectedMedia[0]?.file,
-        });
+        sendMessageMutation.mutate({ content: message });
       }
 
       setMessage("");
@@ -247,11 +268,8 @@ export function MessageInput({
       handleTypingStop(); // Stop typing when message is sent
       onSendSuccess?.();
       onCancelReply?.();
-      onCancelEdit?.();
     } catch (error) {
-      toast.error(
-        editingMessage ? "Failed to update message" : "Failed to send message"
-      );
+      toast.error(error?.message ?? "Failed to send message");
     }
   };
 
@@ -261,18 +279,48 @@ export function MessageInput({
         type: audioBlob.type,
       });
 
-      await sendMessageMutation.mutateAsync({
-        createMessageDto: {
-          conversationId,
-          content: `Voice message (${Math.floor(duration / 60)}:${(
-            duration % 60
-          )
-            .toString()
-            .padStart(2, "0")})`,
-          type: MessageType.VOICE,
-          replyToId,
-        },
-        mediaFile: audioFile,
+      const data: ArrayBuffer = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (reader.result instanceof ArrayBuffer) {
+            resolve(reader.result);
+          } else {
+            reject(new Error("Not an ArrayBuffer"));
+          }
+        };
+        reader.readAsArrayBuffer(audioFile);
+      });
+
+      const attachment = {
+        filename: audioFile?.name,
+        mimeType: audioFile?.type,
+        data: new Uint8Array(data),
+      };
+
+      const encryptedEncoded = await RemoteAttachmentCodec.encodeEncrypted(
+        attachment,
+        new AttachmentCodec()
+      );
+
+      const url = await backendService.uploadFile(audioFile);
+
+      const remoteAttachment = {
+        url,
+        contentDigest: encryptedEncoded.digest,
+        salt: encryptedEncoded.salt,
+        nonce: encryptedEncoded.nonce,
+        secret: encryptedEncoded.secret,
+        scheme: "https://",
+        filename: attachment.filename,
+        text: `Voice message (${Math.floor(duration / 60)}:${(duration % 60)
+          .toString()
+          .padStart(2, "0")})`,
+        contentLength: attachment.data.byteLength,
+      };
+
+      sendMessageMutation.mutate({
+        content: remoteAttachment,
+        contentType: ContentTypeRemoteAttachment as any,
       });
 
       onSendSuccess?.();
@@ -303,13 +351,6 @@ export function MessageInput({
     }
   };
 
-  const getMessageType = (file: File): MessageType => {
-    if (file.type.startsWith("image/")) return MessageType.IMAGE;
-    if (file.type.startsWith("video/")) return MessageType.VIDEO;
-    if (file.type.startsWith("audio/")) return MessageType.VOICE;
-    return MessageType.FILE;
-  };
-
   const removeMedia = (index: number) => {
     setSelectedMedia((prev) => {
       const fileToRemove = prev[index];
@@ -323,23 +364,18 @@ export function MessageInput({
   return (
     <div className="p-3 border-t border-border bg-background">
       {/* Reply/Edit Header */}
-      {(replyToId || editingMessage) && (
+      {replyToId && (
         <div className="mb-3 p-3 bg-muted/50 rounded-lg border-l-4 border-l-primary">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">
-                {editingMessage ? "Editing message" : "Replying to message"}
+                Replying to message
               </p>
-              {editingMessage && (
-                <p className="text-xs text-muted-foreground mt-1 truncate">
-                  {editingMessage.content}
-                </p>
-              )}
             </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={editingMessage ? onCancelEdit : onCancelReply}
+              onClick={onCancelReply}
               className="h-6 w-6 p-0"
             >
               <X className="h-3 w-3" />
@@ -392,14 +428,13 @@ export function MessageInput({
         {/* Text Input with emoji trigger and member tagging - Growing textarea */}
         <div className="flex-1 relative">
           {/* Member Tagging Popup - Only show for group conversations */}
-          {participants && participants.length > 1 && (
+          {members && members.length > 1 && (
             <MemberTaggingPopup
-              participants={participants}
+              members={members}
               query={tagQuery}
               isVisible={showMemberTagging}
               selectedIndex={tagSelectedIndex}
               onSelect={insertMention}
-              currentUsername={activeUsername}
             />
           )}
 
@@ -409,19 +444,13 @@ export function MessageInput({
             value={message}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={(e) => {
-              if (
-                showMemberTagging &&
-                participants &&
-                participants.length > 1
-              ) {
+              if (showMemberTagging && members && members.length > 1) {
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
-                  const filteredCount = participants.filter(
-                    (p) =>
-                      p.user.username !== activeUsername &&
-                      p.user.username
-                        .toLowerCase()
-                        .includes(tagQuery.toLowerCase())
+                  const filteredCount = members.filter(
+                    (m) =>
+                      m.inboxId !== client.inboxId &&
+                      m.inboxId.toLowerCase().includes(tagQuery.toLowerCase())
                   ).length;
                   setTagSelectedIndex((prev) =>
                     Math.min(prev + 1, filteredCount - 1)
@@ -431,17 +460,13 @@ export function MessageInput({
                   setTagSelectedIndex((prev) => Math.max(prev - 1, 0));
                 } else if (e.key === "Tab" || e.key === "Enter") {
                   e.preventDefault();
-                  const filteredParticipants = participants.filter(
-                    (p) =>
-                      p.user.username !== activeUsername &&
-                      p.user.username
-                        .toLowerCase()
-                        .includes(tagQuery.toLowerCase())
+                  const filteredmembers = members.filter(
+                    (m) =>
+                      m.inboxId !== client.inboxId &&
+                      m.inboxId.toLowerCase().includes(tagQuery.toLowerCase())
                   );
-                  if (filteredParticipants[tagSelectedIndex]) {
-                    insertMention(
-                      filteredParticipants[tagSelectedIndex].user.username
-                    );
+                  if (filteredmembers[tagSelectedIndex]) {
+                    insertMention(filteredmembers[tagSelectedIndex].inboxId);
                   }
                 } else if (e.key === "Escape") {
                   e.preventDefault();
@@ -453,11 +478,7 @@ export function MessageInput({
               }
             }}
             onSelect={(e) => {
-              if (
-                textareaRef.current &&
-                participants &&
-                participants.length > 1
-              ) {
+              if (textareaRef.current && members && members.length > 1) {
                 handleMemberTagging(
                   message,
                   e.currentTarget.selectionStart || 0
@@ -513,14 +534,11 @@ export function MessageInput({
         {message.trim() || selectedMedia.length > 0 ? (
           <Button
             onClick={handleSendMessage}
-            disabled={
-              sendMessageMutation.isPending || updateMessageMutation.isPending
-            }
+            disabled={sendMessageMutation.isPending}
             size="sm"
             className="rounded-full h-10 w-10 p-0 flex-shrink-0"
           >
-            {sendMessageMutation.isPending ||
-            updateMessageMutation.isPending ? (
+            {sendMessageMutation.isPending ? (
               <Loader className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />

@@ -19,37 +19,48 @@ import {
   Users,
   Calendar,
   MessageCircle,
-  Settings,
   UserPlus,
   Crown,
   Shield,
-  User,
 } from "lucide-react";
-import { IConversation, ConversationType } from "@/types/backend";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { OnlineStatus } from "@/components/messaging/OnlineStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import moment from "moment";
+import {
+  Conversation,
+  ConversationType,
+  DecodedMessage,
+  Group,
+  PermissionLevel,
+  SafeGroupMember,
+} from "@xmtp/browser-sdk";
+import { useXmtp } from "@/contexts/XmtpContext";
 
 interface ConversationInfoModalProps {
+  conversation: Conversation;
+  members: SafeGroupMember[];
+  messages: DecodedMessage[];
   isOpen: boolean;
   onClose: () => void;
-  conversation?: IConversation;
-  username?: string; // For direct conversations
 }
 
 export const ConversationInfoModal = ({
+  conversation,
+  members,
+  messages,
   isOpen,
   onClose,
-  conversation,
-  username,
 }: ConversationInfoModalProps) => {
   const isMobile = useIsMobile();
+  const { client } = useXmtp();
   const [activeTab, setActiveTab] = useState<"info" | "members">("info");
-  const isGroupConversation = conversation?.type === ConversationType.GROUP;
-  const otherUser = conversation?.participants?.find(
-    (p) => p.userId !== username
-  )?.user;
+
+  const isGroupConversation =
+    conversation.metadata.conversationType ===
+    ConversationType.Group.toString();
+
+  const otherMember = members.find((m) => m.inboxId !== client.inboxId);
 
   const renderContent = () => (
     <div className="space-y-6">
@@ -63,25 +74,22 @@ export const ConversationInfoModal = ({
               </div>
             </Avatar>
           ) : (
-            <DomainAvatar
-              domain={username || otherUser?.username}
-              className="h-20 w-20"
-            />
+            <DomainAvatar domain={otherMember?.inboxId} className="h-20 w-20" />
           )}
         </div>
         <div>
           <h2 className="text-xl font-semibold">
             {isGroupConversation
-              ? conversation?.name || "Group Chat"
-              : username || otherUser?.username || "Unknown User"}
+              ? (conversation as Group).name || "Group Chat"
+              : otherMember?.inboxId}
           </h2>
           {isGroupConversation ? (
             <p className="text-muted-foreground">
-              {conversation?.participants?.length || 0} members
+              {members?.length || 0} members
             </p>
           ) : (
             <div className="flex items-center justify-center mt-2">
-              <OnlineStatus isOnline={otherUser?.isOnline || false} />
+              <OnlineStatus isOnline={false} />
             </div>
           )}
         </div>
@@ -133,18 +141,18 @@ export const ConversationInfoModal = ({
               <div className="flex-1">
                 <p className="text-sm font-medium">Messages</p>
                 <p className="text-xs text-muted-foreground">
-                  {conversation?._count?.messages || 0} total messages
+                  {messages?.length || 0} total messages
                 </p>
               </div>
             </div>
           </div>
 
           {/* Group Description */}
-          {isGroupConversation && conversation?.description && (
+          {isGroupConversation && (conversation as Group).description && (
             <div className="space-y-2">
               <h3 className="text-sm font-medium">Description</h3>
               <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                {conversation.description}
+                {(conversation as Group).description}
               </p>
             </div>
           )}
@@ -165,32 +173,27 @@ export const ConversationInfoModal = ({
       {activeTab === "members" && isGroupConversation && (
         <ScrollArea className="h-80">
           <div className="space-y-2">
-            {conversation?.participants?.map((participant) => (
+            {members?.map((member) => (
               <div
-                key={participant.id}
+                key={member.inboxId}
                 className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors"
               >
                 <div className="relative">
-                  <DomainAvatar
-                    domain={participant.user.username}
-                    className="h-10 w-10"
-                  />
-                  {participant.user.isOnline && (
+                  <DomainAvatar domain={member.inboxId} className="h-10 w-10" />
+                  {/* {member.user.isOnline && (
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></div>
-                  )}
+                  )} */}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <p className="text-sm font-medium">
-                      {participant.user.username}
-                    </p>
-                    {participant.role === "ADMIN" && (
+                    <p className="text-sm font-medium">{member.inboxId}</p>
+                    {member.permissionLevel === PermissionLevel.Admin && (
                       <Badge variant="secondary" className="text-xs">
                         <Crown className="h-3 w-3 mr-1" />
                         Admin
                       </Badge>
                     )}
-                    {participant.role === "OWNER" && (
+                    {member.permissionLevel === PermissionLevel.SuperAdmin && (
                       <Badge variant="secondary" className="text-xs">
                         <Shield className="h-3 w-3 mr-1" />
                         Owner
@@ -198,7 +201,7 @@ export const ConversationInfoModal = ({
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Joined {moment(participant.joinedAt).format("MMM DD, YYYY")}
+                    Consent: {member.consentState}
                   </p>
                 </div>
               </div>

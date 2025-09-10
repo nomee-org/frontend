@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,15 +9,14 @@ import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { IMessageReaction } from "@/types/backend";
 import { X } from "lucide-react";
+import { Reaction } from "@xmtp/content-type-reaction";
+import { useXmtp } from "@/contexts/XmtpContext";
 
 interface ReactionUsersPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  reactions: IMessageReaction[];
-  messageId: string;
-  currentUserId?: string;
+  reactions: Reaction[];
   onRemoveReaction?: (reactionId: string) => void;
 }
 
@@ -26,20 +24,19 @@ export function ReactionUsersPopup({
   isOpen,
   onClose,
   reactions,
-  messageId,
-  currentUserId,
   onRemoveReaction,
 }: ReactionUsersPopupProps) {
   const isMobile = useIsMobile();
+  const { client } = useXmtp();
 
   // Group reactions by emoji
   const groupedReactions = reactions.reduce((acc, reaction) => {
-    if (!acc[reaction.emoji]) {
-      acc[reaction.emoji] = [];
+    if (!acc[reaction.content]) {
+      acc[reaction.content] = [];
     }
-    acc[reaction.emoji].push(reaction);
+    acc[reaction.content].push(reaction);
     return acc;
-  }, {} as Record<string, IMessageReaction[]>);
+  }, {} as Record<string, Reaction[]>);
 
   const ReactionContent = () => (
     <div className="space-y-4">
@@ -64,19 +61,19 @@ export function ReactionUsersPopup({
               </span>
             </div>
 
-            {emojiReactions.map((reaction) => (
+            {emojiReactions.map((reaction, index) => (
               <div
-                key={reaction.id}
+                key={index}
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors ml-6"
               >
                 <DomainAvatar
-                  domain={reaction.user?.username || "unknown"}
+                  domain={reaction.referenceInboxId || "unknown"}
                   size="sm"
                   className="h-8 w-8"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">
-                    {reaction.user?.username || "Unknown User"}
+                    {reaction.referenceInboxId || "Unknown User"}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Reacted with {emojiKey}
@@ -84,13 +81,13 @@ export function ReactionUsersPopup({
                 </div>
 
                 {/* Show remove button only for current user's reactions */}
-                {reaction.user?.username === currentUserId &&
+                {reaction.referenceInboxId === client.inboxId &&
                   onRemoveReaction && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => onRemoveReaction(reaction.id)}
+                      onClick={() => onRemoveReaction(reaction.reference)}
                     >
                       <X className="h-4 w-4" />
                     </Button>

@@ -18,7 +18,7 @@ import { QueryError } from "@/components/ui/query-error";
 import { Search, MessageSquare, Plus, Users } from "lucide-react";
 
 // Local component imports
-import { CreateGroupDialog } from "@/components/common/CreateGroupDialog";
+import { CreateGroupDialog } from "@/components/messaging/CreateGroupDialog";
 import { ConnectWallet } from "@/components/common/ConnectWallet";
 import { BuyDomain } from "@/components/domain/BuyDomain";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
@@ -32,8 +32,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserConversations } from "@/data/use-backend";
 
 // Type imports
-import { IConversation, ConversationType } from "@/types/backend";
 import { useXmtp } from "@/contexts/XmtpContext";
+import { InitXmtp } from "@/components/domain/InitXmtp";
+import { Conversation, ConversationType, Dm, Group } from "@xmtp/browser-sdk";
 
 const Messages = () => {
   // Navigation and routing states
@@ -42,9 +43,9 @@ const Messages = () => {
 
   // User and account states
   const { activeUsername } = useUsername();
-  const { connect } = useXmtp();
   const { address } = useAccount();
   const isMobile = useIsMobile();
+  const { client } = useXmtp();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,28 +59,20 @@ const Messages = () => {
     isLoading: conversationsLoading,
     error: conversationsError,
     refetch: refetchConversationsData,
-  } = useUserConversations(50, activeUsername);
+  } = useUserConversations(client, 50, activeUsername);
 
-  const handleConversationClick = (conversation: IConversation) => {
-    if (conversation.type === ConversationType.GROUP) {
+  const handleConversationClick = (conversation: Conversation) => {
+    if (
+      conversation.metadata.conversationType ===
+      ConversationType.Group.toString()
+    ) {
       navigate(`/groups/${conversation.id}`);
     } else {
-      const otherUser = conversation?.participants?.find(
-        (p) => p.userId !== activeUsername
-      )?.user;
-
-      if (otherUser) {
-        navigate(`/messages/${otherUser.username}`);
-      }
+      navigate(`/messages/${conversation.id}`);
     }
   };
 
   useEffect(() => {
-    localStorage.setItem(
-      `${activeUsername}:last-opened-at`,
-      new Date().toString()
-    );
-
     const wasSelected = isConversationSelected;
     const isSelected = location.pathname !== "/";
 
@@ -105,6 +98,12 @@ const Messages = () => {
 
   if (!activeUsername) {
     return <BuyDomain description="No active username." />;
+  }
+
+  if (!client) {
+    return (
+      <InitXmtp description="Confirm and continue using XMTP dev network." />
+    );
   }
 
   return (
@@ -135,24 +134,14 @@ const Messages = () => {
           <div className="p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-xl font-bold text-foreground">Chats</h1>
-              <div className="flex items-center space-x-2">
-                <Button
-                  size="sm"
-                  className="animate-fade-in shadow-sm"
-                  onClick={() => connect(activeUsername)}
-                >
-                  Sync
-                </Button>
-
-                <Button
-                  size="sm"
-                  className="animate-fade-in shadow-sm"
-                  onClick={() => setShowCreateGroup(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  <span className="hidden xs:inline">New </span>Group
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                className="animate-fade-in shadow-sm"
+                onClick={() => setShowCreateGroup(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden xs:inline">New </span>Group
+              </Button>
             </div>
 
             {/* Search */}
@@ -178,8 +167,7 @@ const Messages = () => {
               </div>
             ) : conversationsLoading ? (
               <QueryListLoader />
-            ) : conversationsData?.pages.flatMap((p) => p.data)?.length ===
-              0 ? (
+            ) : conversationsData?.length === 0 ? (
               <div className="p-content text-center text-muted-foreground">
                 <div className="space-y-1 md:space-y-2">
                   <p className="text-xs md:text-sm">No conversations found</p>
@@ -190,90 +178,86 @@ const Messages = () => {
               </div>
             ) : (
               <div className="space-y-3 p-4">
-                {conversationsData?.pages
-                  .flatMap((p) => p.data)
-                  ?.map((conversation) => {
-                    const otherUser = conversation?.participants?.find(
-                      (p) => p.user.username !== activeUsername
-                    )?.user;
+                {conversationsData?.map((conversation) => {
+                  const isSelected =
+                    conversation.metadata.conversationType ===
+                    ConversationType.Group.toString()
+                      ? location.pathname.includes(
+                          `/messages/groups/${conversation?.id}`
+                        )
+                      : location.pathname.includes(
+                          `/messages/${conversation.id}`
+                        );
 
-                    const isSelected =
-                      conversation?.type === ConversationType.GROUP
-                        ? location.pathname.includes(
-                            `/messages/groups/${conversation?.id}`
-                          )
-                        : conversation?.type === ConversationType.DIRECT &&
-                          location.pathname.includes(
-                            `/messages/${otherUser?.username}`
-                          );
+                  return (
+                    <div
+                      key={conversation.id}
+                      onClick={() => handleConversationClick(conversation)}
+                      className={`p-3 cursor-pointer transition-all duration-200 hover:bg-accent/80 rounded-xl border border-transparent ${
+                        isSelected
+                          ? "bg-accent border-primary/20 shadow-sm"
+                          : "hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className="relative flex-shrink-0">
+                          {conversation.metadata.conversationType ===
+                          ConversationType.Group.toString() ? (
+                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center border-2 border-primary/10">
+                              <Users className="h-5 w-5 text-primary" />
+                            </div>
+                          ) : (
+                            <div className="relative">
+                              <DomainAvatar
+                                domain={conversation.id}
+                                className="h-12 w-12 ring-2 ring-background shadow-sm"
+                              />
+                              {/* {otherUser?.isOnline && (
+                                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full"></div>
+                              )} */}
+                            </div>
+                          )}
+                        </div>
 
-                    return (
-                      <div
-                        key={conversation.id}
-                        onClick={() => handleConversationClick(conversation)}
-                        className={`p-3 cursor-pointer transition-all duration-200 hover:bg-accent/80 rounded-xl border border-transparent ${
-                          isSelected
-                            ? "bg-accent border-primary/20 shadow-sm"
-                            : "hover:shadow-sm"
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className="relative flex-shrink-0">
-                            {conversation.type === ConversationType.GROUP ? (
-                              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center border-2 border-primary/10">
-                                <Users className="h-5 w-5 text-primary" />
-                              </div>
-                            ) : (
-                              <div className="relative">
-                                <DomainAvatar
-                                  domain={otherUser?.username}
-                                  className="h-12 w-12 ring-2 ring-background shadow-sm"
-                                />
-                                {otherUser?.isOnline && (
-                                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full"></div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between mb-1">
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-sm truncate text-foreground">
-                                  {conversation.name ?? otherUser?.username}
-                                </h3>
-                                {otherUser?.isOnline && (
-                                  <span className="text-xs text-green-600 font-medium">
-                                    Online
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-                                <span className="text-xs text-muted-foreground font-medium">
-                                  {moment(conversation.updatedAt).format(
-                                    "HH:mm"
-                                  )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-1">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-sm truncate text-foreground">
+                                {conversation.metadata.conversationType ===
+                                ConversationType.Group.toString()
+                                  ? (conversation as Group).name
+                                  : conversation.id}
+                              </h3>
+                              {/* {otherUser?.isOnline && (
+                                <span className="text-xs text-green-600 font-medium">
+                                  Online
                                 </span>
-                                {conversation?.unreadCount > 0 && (
-                                  <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center rounded-full">
-                                    {(conversation?.unreadCount ?? 0) > 99
-                                      ? "99+"
-                                      : conversation?.unreadCount}
-                                  </Badge>
-                                )}
-                              </div>
+                              )} */}
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <p className="text-sm text-muted-foreground truncate flex-1 max-w-44">
-                                {conversation.lastMessage?.content ||
-                                  "No messages yet"}
-                              </p>
+                            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
+                              <span className="text-xs text-muted-foreground font-medium">
+                                {moment(conversation.createdAt).format("HH:mm")}
+                              </span>
+                              {/* {conversation?.unreadCount > 0 && (
+                                <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center rounded-full">
+                                  {(conversation?.unreadCount ?? 0) > 99
+                                    ? "99+"
+                                    : conversation?.unreadCount}
+                                </Badge>
+                              )} */}
                             </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {/* <p className="text-sm text-muted-foreground truncate flex-1 max-w-44">
+                              {conversation.lastMessage?.content ||
+                                "No messages yet"}
+                            </p> */}
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
@@ -315,6 +299,7 @@ const Messages = () => {
           onSuccess={(conversationId) => {
             navigate(`/messages/groups/${conversationId}`);
             setShowCreateGroup(false);
+            refetchConversationsData();
           }}
         />
       </div>

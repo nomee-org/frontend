@@ -8,11 +8,6 @@ import {
   IComment,
   IHashtag,
   INotification,
-  IConversation,
-  IConversationParticipant,
-  IMessage,
-  IMessageReaction,
-  IPinnedMessage,
   ISponsoredAd,
   IFollowSuggestion,
   AuthResponse,
@@ -28,19 +23,11 @@ import {
   DeleteAccountDto,
   UpdateInterestsDto,
   WatchUserDto,
-  CreateConversationDto,
-  UpdateConversationDto,
-  AddParticipantDto,
-  CreateMessageDto,
-  UpdateMessageDto,
-  AddReactionDto,
   VotePollDto,
   FollowSuggestionFeedbackDto,
   CreateAdDto,
   UpdateAdDto,
   AdInteractionDto,
-  SetupEncryptionDto,
-  DecryptMessageDto,
   StickerPack,
   Sticker,
   ClientConfig,
@@ -621,12 +608,8 @@ class BackendService {
     );
   }
 
-  async uploadFile(file: File): Promise<MediaUploadResponse> {
-    return this.apiClient.uploadFile<MediaUploadResponse>(
-      "/media/upload",
-      file,
-      "file"
-    );
+  async uploadFile(file: File): Promise<string> {
+    return this.apiClient.uploadFile<string>("/media/upload", file, "file");
   }
 
   async getUploadProgress(uploadId: string): Promise<UploadProgress> {
@@ -635,13 +618,12 @@ class BackendService {
     );
   }
 
-  async uploadMultipleFiles(
-    files: File[]
-  ): Promise<{ files: MediaUploadResponse[]; count: number }> {
-    return this.apiClient.uploadFiles<{
-      files: MediaUploadResponse[];
-      count: number;
-    }>("/media/upload-multiple", files, "files");
+  async uploadMultipleFiles(files: File[]): Promise<string[]> {
+    return this.apiClient.uploadFiles<string[]>(
+      "/media/upload-multiple",
+      files,
+      "files"
+    );
   }
 
   async deleteFile(key: string): Promise<{ message: string }> {
@@ -672,176 +654,6 @@ class BackendService {
     }>(`/media/info?url=${encodeURIComponent(fileUrl)}`);
   }
 
-  async sendMessage(
-    createMessageDto: CreateMessageDto,
-    mediaFile?: File
-  ): Promise<IMessage> {
-    return this.apiClient.postWithFile<IMessage>(
-      "/messages",
-      createMessageDto,
-      undefined,
-      "media",
-      mediaFile
-    );
-  }
-
-  async sendStickerMessage(
-    conversationId: string,
-    stickerId: string
-  ): Promise<IMessage> {
-    return this.apiClient.post<IMessage>("/messages/sticker", {
-      conversationId,
-      stickerId,
-    });
-  }
-
-  async getMessages(
-    conversationId: string,
-    page: number = 1,
-    limit: number = 50
-  ): Promise<PaginatedResponse<IMessage> & { isEncrypted: boolean }> {
-    return this.apiClient.get<
-      PaginatedResponse<IMessage> & { isEncrypted: boolean }
-    >(`/messages/conversation/${conversationId}?page=${page}&limit=${limit}`);
-  }
-
-  async updateMessage(
-    messageId: string,
-    updateMessageDto: UpdateMessageDto
-  ): Promise<IMessage> {
-    return this.apiClient.put<IMessage>(
-      `/messages/${messageId}`,
-      updateMessageDto
-    );
-  }
-
-  async deleteMessage(messageId: string): Promise<{ message: string }> {
-    return this.apiClient.delete<{ message: string }>(`/messages/${messageId}`);
-  }
-
-  async addMessageReaction(
-    messageId: string,
-    addReactionDto: AddReactionDto
-  ): Promise<IMessageReaction> {
-    return this.apiClient.post<IMessageReaction>(
-      `/messages/${messageId}/reactions`,
-      addReactionDto
-    );
-  }
-
-  async removeMessageReaction(
-    messageId: string,
-    emoji: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.delete<{ message: string }>(
-      `/messages/${messageId}/reactions/${emoji}`
-    );
-  }
-
-  async markMessageAsRead(messageId: string): Promise<{ message: string }> {
-    return this.apiClient.put<{ message: string }>(
-      `/messages/${messageId}/read`
-    );
-  }
-
-  async searchMessages(
-    conversationId: string,
-    query: string,
-    limit: number = 20
-  ): Promise<IMessage[]> {
-    return this.apiClient.get<IMessage[]>(
-      `/messages/search/${conversationId}?q=${encodeURIComponent(
-        query
-      )}&limit=${limit}`
-    );
-  }
-
-  async enableConversationEncryption(
-    conversationId: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.post<{ message: string }>(
-      `/messages/conversation/${conversationId}/enable-encryption`
-    );
-  }
-
-  async getConversationEncryptionStatus(conversationId: string): Promise<any> {
-    return this.apiClient.get<any>(
-      `/messages/conversation/${conversationId}/encryption-status`
-    );
-  }
-
-  async createConversation(
-    createConversationDto: CreateConversationDto
-  ): Promise<IConversation> {
-    return this.apiClient.post<IConversation>(
-      "/conversations",
-      createConversationDto
-    );
-  }
-
-  async getUserConversations(
-    page: number = 1,
-    limit: number = 20
-  ): Promise<PaginatedResponse<IConversation> & { summary: any }> {
-    return this.apiClient.get<
-      PaginatedResponse<IConversation> & { summary: any }
-    >(`/conversations?page=${page}&limit=${limit}`);
-  }
-
-  async getConversation(conversationId: string): Promise<IConversation> {
-    return this.apiClient.get<IConversation>(
-      `/conversations/${conversationId}`
-    );
-  }
-
-  async updateConversation(
-    conversationId: string,
-    updateConversationDto: UpdateConversationDto
-  ): Promise<IConversation> {
-    return this.apiClient.put<IConversation>(
-      `/conversations/${conversationId}`,
-      updateConversationDto
-    );
-  }
-
-  async deleteConversation(
-    conversationId: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.delete<{ message: string }>(
-      `/conversations/${conversationId}`
-    );
-  }
-
-  async addParticipant(
-    conversationId: string,
-    addParticipantDto: AddParticipantDto
-  ): Promise<IConversationParticipant> {
-    return this.apiClient.post<IConversationParticipant>(
-      `/conversations/${conversationId}/participants`,
-      addParticipantDto
-    );
-  }
-
-  async removeParticipant(
-    conversationId: string,
-    username: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.delete<{ message: string }>(
-      `/conversations/${conversationId}/participants/${username}`
-    );
-  }
-
-  async updateParticipantRole(
-    conversationId: string,
-    username: string,
-    role: string
-  ): Promise<IConversationParticipant> {
-    return this.apiClient.put<IConversationParticipant>(
-      `/conversations/${conversationId}/participants/${username}/role`,
-      { role }
-    );
-  }
-
   async muteConversation(conversationId: string): Promise<{ message: string }> {
     return this.apiClient.post<{ message: string }>(
       `/conversations/${conversationId}/mute`
@@ -856,70 +668,29 @@ class BackendService {
     );
   }
 
-  async lastReadConversation(
-    conversationId: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.put<{ message: string }>(
-      `/conversations/${conversationId}/last-read`
-    );
-  }
-
-  async leaveConversation(
+  async subscribeToConversation(
     conversationId: string
   ): Promise<{ message: string }> {
     return this.apiClient.post<{ message: string }>(
-      `/conversations/${conversationId}/leave`
+      `/messages/subscribe/${conversationId}`
     );
   }
 
-  async getConversationParticipants(
-    conversationId: string,
-    page: number = 1,
-    limit: number = 50
-  ): Promise<PaginatedResponse<IConversationParticipant>> {
-    return this.apiClient.get<PaginatedResponse<IConversationParticipant>>(
-      `/conversations/${conversationId}/participants?page=${page}&limit=${limit}`
-    );
-  }
-
-  async getConversationUnreadCount(
+  async unSubscribeFromConversation(
     conversationId: string
-  ): Promise<{ count: number }> {
-    return this.apiClient.get<{ count: number }>(
-      `/conversations/${conversationId}/unread-count`
-    );
-  }
-
-  async getLastOpenedConversationCount(
-    lastOpenedAt: Date
-  ): Promise<{ count: number }> {
-    return this.apiClient.get<{ count: number }>(
-      `/conversations/last-opened-count?lastOpenedAt=${lastOpenedAt}`
-    );
-  }
-
-  async pinMessage(
-    conversationId: string,
-    messageId: string
-  ): Promise<IPinnedMessage> {
-    return this.apiClient.post<IPinnedMessage>(
-      `/conversations/${conversationId}/pin-message`,
-      { messageId }
-    );
-  }
-
-  async unpinMessage(
-    conversationId: string,
-    messageId: string
   ): Promise<{ message: string }> {
-    return this.apiClient.delete<{ message: string }>(
-      `/conversations/${conversationId}/pin-message/${messageId}`
+    return this.apiClient.post<{ message: string }>(
+      `/messages/unsubscribe/${conversationId}`
     );
   }
 
-  async getPinnedMessages(conversationId: string): Promise<IPinnedMessage[]> {
-    return this.apiClient.get<IPinnedMessage[]>(
-      `/conversations/${conversationId}/pinned-messages`
+  async onMessageSent(
+    conversationId: string,
+    fromInboxId: string
+  ): Promise<{ message: string }> {
+    return this.apiClient.post<{ message: string }>(
+      `/messages/onsent/${conversationId}`,
+      { fromInboxId }
     );
   }
 
@@ -1002,16 +773,6 @@ class BackendService {
     return this.apiClient.put<ISponsoredAd>(`/ads/${adId}/resume`);
   }
 
-  async setupEncryption(
-    setupEncryptionDto: SetupEncryptionDto
-  ): Promise<{ message: string; keyPairId: string; publicKey: string }> {
-    return this.apiClient.post<{
-      message: string;
-      keyPairId: string;
-      publicKey: string;
-    }>("/encryption/setup", setupEncryptionDto);
-  }
-
   async getUserKeyPair(): Promise<{ hasEncryption: boolean; keyPair?: any }> {
     return this.apiClient.get<{ hasEncryption: boolean; keyPair?: any }>(
       "/encryption/keypair"
@@ -1030,23 +791,6 @@ class BackendService {
       algorithm: string;
       message: string;
     }>("/encryption/generate-keypair");
-  }
-
-  async decryptMessage(
-    messageId: string,
-    decryptMessageDto: DecryptMessageDto
-  ): Promise<{
-    messageId: string;
-    content: string;
-    type: any;
-    createdAt: Date;
-  }> {
-    return this.apiClient.post<{
-      messageId: string;
-      content: string;
-      type: any;
-      createdAt: Date;
-    }>(`/encryption/decrypt-message/${messageId}`, decryptMessageDto);
   }
 
   async rotateConversationKeys(

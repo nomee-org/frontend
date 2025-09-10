@@ -1,7 +1,7 @@
 import { Metadata } from "@reown/appkit";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { defineChain } from "viem";
-import { sepolia, baseSepolia } from "viem/chains";
+import { sepolia, baseSepolia, mainnet } from "viem/chains";
 import { createAppKit } from "@reown/appkit/react";
 
 export const domaTestnet = defineChain({
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   icons: ["https://avatars.githubusercontent.com/u/179229932"],
 };
 
-export const networks = [sepolia, baseSepolia, domaTestnet];
+export const networks = [sepolia, baseSepolia, domaTestnet, mainnet];
 
 export const wagmiAdapter = new WagmiAdapter({
   networks,

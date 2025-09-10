@@ -1,33 +1,36 @@
-import { IMessage, IPinnedMessage } from "@/types/backend";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { useUsername } from "@/hooks/use-username";
 import { Badge } from "@/components/ui/badge";
 import moment from "moment";
-import { cn } from "@/lib/utils";
-import { 
-  usePinMessage, 
-  useUnpinMessage, 
-  useDeleteMessage, 
-  useAddReaction 
+import {
+  usePinMessage,
+  useSendMessage,
+  useUnpinMessage,
 } from "@/data/use-backend";
 import { toast } from "sonner";
-
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { useXmtp } from "@/contexts/XmtpContext";
+import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
+import { formatUnits } from "viem";
+import type { Reply } from "@xmtp/content-type-reply";
+import { ContentTypeReply } from "@xmtp/content-type-reply";
 interface MessageListProps {
-  messages: IMessage[];
+  conversation: Conversation;
+  messages: DecodedMessage[];
   onReply?: (messageId: string) => void;
-  onEdit?: (message: IMessage) => void;
   onPin?: (messageId: string) => void;
   onUnpin?: (messageId: string) => void;
   onDelete?: (messageId: string) => void;
   onReaction?: (messageId: string, emoji: string) => void;
   onReplyClick?: (messageId: string) => void;
-  pinnedMessages?: IPinnedMessage[];
+  pinnedMessages?: DecodedMessage[];
 }
 
 interface MessageGroup {
   date: string;
   dateLabel: string;
-  messages: IMessage[];
+  messages: DecodedMessage[];
 }
 
 const DateSeparator = ({ label }: { label: string }) => (
@@ -60,26 +63,24 @@ const getDateLabel = (date: moment.Moment): string => {
 };
 
 export const MessageList = ({
+  conversation,
   messages,
   onReply,
-  onEdit,
   onPin,
   onUnpin,
-  onDelete,
   onReaction,
   onReplyClick,
   pinnedMessages = [],
 }: MessageListProps) => {
-  const { activeUsername } = useUsername();
-  
-  const pinMessage = usePinMessage();
-  const unpinMessage = useUnpinMessage();
-  const deleteMessage = useDeleteMessage();
-  const addReaction = useAddReaction();
+  const { client } = useXmtp();
 
-  const handlePin = async (messageId: string, conversationId: string) => {
+  const pinMessage = usePinMessage(conversation);
+  const unpinMessage = useUnpinMessage(conversation);
+  const sendMessage = useSendMessage(conversation);
+
+  const handlePin = async (messageId: string) => {
     try {
-      await pinMessage.mutateAsync({ conversationId, messageId });
+      await pinMessage.mutateAsync({ messageId });
       onPin?.(messageId);
       toast.success("Message pinned");
     } catch (error) {
@@ -88,9 +89,9 @@ export const MessageList = ({
     }
   };
 
-  const handleUnpin = async (messageId: string, conversationId: string) => {
+  const handleUnpin = async (messageId: string) => {
     try {
-      await unpinMessage.mutateAsync({ conversationId, messageId });
+      await unpinMessage.mutateAsync({ messageId });
       onUnpin?.(messageId);
       toast.success("Message unpinned");
     } catch (error) {
@@ -99,22 +100,15 @@ export const MessageList = ({
     }
   };
 
-  const handleDelete = async (messageId: string) => {
-    try {
-      await deleteMessage.mutateAsync({ messageId });
-      onDelete?.(messageId);
-      toast.success("Message deleted");
-    } catch (error) {
-      console.error("Failed to delete message:", error);
-      toast.error("Failed to delete message");
-    }
-  };
-
   const handleReaction = async (messageId: string, emoji: string) => {
     try {
-      await addReaction.mutateAsync({
-        messageId,
-        addReactionDto: { emoji },
+      await sendMessage.mutateAsync({
+        content: {
+          reference: messageId,
+          action: "added",
+          content: emoji,
+        } as Reaction,
+        contentType: ContentTypeReaction as any,
       });
       onReaction?.(messageId, emoji);
     } catch (error) {
@@ -124,32 +118,31 @@ export const MessageList = ({
   };
 
   const shouldShowAvatar = (
-    message: IMessage,
+    message: DecodedMessage,
     index: number,
-    groupMessages: IMessage[]
+    groupMessages: DecodedMessage[]
   ): boolean => {
-    if (message.sender?.username === activeUsername) return false;
+    if (message.senderInboxId === client.inboxId) return false;
 
     const nextMessage = groupMessages[index + 1];
-    return (
-      !nextMessage || nextMessage.sender?.username !== message.sender?.username
-    );
+    return !nextMessage || nextMessage.senderInboxId !== message.senderInboxId;
   };
 
   const shouldShowTail = (
-    message: IMessage,
+    message: DecodedMessage,
     index: number,
-    groupMessages: IMessage[]
+    groupMessages: DecodedMessage[]
   ): boolean => {
     const nextMessage = groupMessages[index + 1];
-    return (
-      !nextMessage || nextMessage.sender?.username !== message.sender?.username
-    );
+    return !nextMessage || nextMessage.senderInboxId !== message.senderInboxId;
   };
 
-  const getReplyToMessage = (message: IMessage): IMessage | undefined => {
-    if (!message.replyToId) return undefined;
-    return messages.find((m) => m.id === message.replyToId);
+  const getReplyToMessage = (
+    message: DecodedMessage
+  ): DecodedMessage | undefined => {
+    if (message.contentType.sameAs(ContentTypeReply)) return undefined;
+    const reply: Reply = message.content as any;
+    return messages.find((m) => m.id === reply.reference);
   };
 
   // Group messages by day
@@ -157,7 +150,9 @@ export const MessageList = ({
     const groups: { [key: string]: MessageGroup } = {};
 
     messages.forEach((message) => {
-      const messageDate = moment(message.createdAt);
+      const messageDate = moment(
+        Math.ceil(Number(formatUnits(message.sentAtNs, 6)))
+      );
       const dateKey = messageDate.format("YYYY-MM-DD");
 
       if (!groups[dateKey]) {
@@ -179,7 +174,9 @@ export const MessageList = ({
       .map((group) => ({
         ...group,
         messages: group.messages.sort((a, b) =>
-          moment(a.createdAt).diff(moment(b.createdAt))
+          moment(Math.ceil(Number(formatUnits(a.sentAtNs, 6)))).diff(
+            moment(formatUnits(b.sentAtNs, 6))
+          )
         ),
       }));
   };
@@ -193,9 +190,7 @@ export const MessageList = ({
           <DateSeparator label={group.dateLabel} />
           <div className="space-y-1">
             {group.messages.map((message, index) => {
-              if (message.isDeleted) return null;
-
-              const isOwn = message.sender?.username === activeUsername;
+              const isOwn = message.senderInboxId === client.inboxId;
               const showAvatar = shouldShowAvatar(
                 message,
                 index,
@@ -215,17 +210,17 @@ export const MessageList = ({
                   showAvatar={showAvatar}
                   showTail={showTail}
                   onReply={onReply}
-                  onEdit={onEdit}
                   onPin={
                     isPinned
-                      ? (messageId) => handleUnpin(messageId, message.conversationId)
-                      : (messageId) => handlePin(messageId, message.conversationId)
+                      ? (messageId) => handleUnpin(messageId)
+                      : (messageId) => handlePin(messageId)
                   }
-                  onDelete={(messageId) => handleDelete(messageId)}
-                  onReaction={(messageId, emoji) => handleReaction(messageId, emoji)}
+                  onReaction={(messageId, emoji) =>
+                    handleReaction(messageId, emoji)
+                  }
                   onReplyClick={onReplyClick}
                   isPinned={isPinned}
-                  replyTo={replyTo}
+                  reactions={[]}
                 />
               );
             })}

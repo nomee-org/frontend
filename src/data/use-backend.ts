@@ -6,9 +6,6 @@ import {
   useMutation,
   useQueryClient,
   UseQueryOptions,
-  InfiniteData,
-  QueryClient,
-  DefinedInitialDataInfiniteOptions,
 } from "@tanstack/react-query";
 import {
   IUser,
@@ -17,11 +14,6 @@ import {
   IPost,
   IComment,
   IHashtag,
-  IConversation,
-  IConversationParticipant,
-  IMessage,
-  IMessageReaction,
-  IPinnedMessage,
   ISponsoredAd,
   IFollowSuggestion,
   AuthResponse,
@@ -35,22 +27,26 @@ import {
   UpdateProfileDto,
   DeleteAccountDto,
   UpdateInterestsDto,
-  CreateConversationDto,
-  UpdateConversationDto,
-  AddParticipantDto,
-  CreateMessageDto,
-  UpdateMessageDto,
-  AddReactionDto,
   VotePollDto,
   FollowSuggestionFeedbackDto,
   CreateAdDto,
   UpdateAdDto,
   AdInteractionDto,
   StickerPack,
-  ParticipantRole,
   Sticker,
-  PaginatedResponse,
 } from "../types/backend";
+import {
+  Client,
+  ContentTypeId,
+  Conversation,
+  DecodedMessage,
+  Dm,
+  Group,
+  PermissionLevel,
+} from "@xmtp/browser-sdk";
+import { RemoteAttachment } from "@xmtp/content-type-remote-attachment";
+import { Reaction } from "@xmtp/content-type-reaction";
+import { Reply } from "@xmtp/content-type-reply";
 
 export const queryKeys = {
   auth: {
@@ -236,7 +232,7 @@ export const queryKeys = {
       ["conversations", page, limit, activeUsername] as const,
     byId: (conversationId: string, activeUsername?: string) =>
       ["conversations", conversationId, activeUsername] as const,
-    participants: (
+    members: (
       conversationId: string,
       page: number,
       limit: number,
@@ -245,7 +241,7 @@ export const queryKeys = {
       [
         "conversations",
         conversationId,
-        "participants",
+        "members",
         page,
         limit,
         activeUsername,
@@ -1419,104 +1415,41 @@ export function useGetMediaInfo(fileUrl: string) {
 }
 
 // Message hooks
-export function addMessageInCache(
-  queryClient: QueryClient,
-  newMessage: IMessage,
-  conversationId: string,
-  limit: number = 50,
-  activeUsername: string
-) {
-  queryClient.setQueryData(
-    queryKeys.messages.byConversation(conversationId, 1, limit, activeUsername),
-    (
-      oldData: InfiniteData<PaginatedResponse<IMessage>> | undefined
-    ): InfiniteData<PaginatedResponse<IMessage>> | undefined => {
-      if (!oldData) return oldData;
-
-      return {
-        ...oldData,
-        pages: oldData.pages.map(({ data, pagination }, idx) => {
-          if (idx === oldData.pages.length - 1) {
-            return {
-              data: [...data, newMessage],
-              pagination,
-            };
-          }
-          return { data, pagination };
-        }),
-      };
-    }
-  );
-}
-
-export function updateMessageInCache(
-  queryClient: QueryClient,
-  conversationId: string,
-  limit: number = 50,
-  activeUsername: string,
-  updater: (msg: IMessage) => IMessage
-) {
-  queryClient.setQueryData(
-    queryKeys.messages.byConversation(conversationId, 1, limit, activeUsername),
-    (
-      oldData: InfiniteData<PaginatedResponse<IMessage>> | undefined
-    ): InfiniteData<PaginatedResponse<IMessage>> | undefined => {
-      if (!oldData) return oldData;
-
-      return {
-        ...oldData,
-        pages: oldData.pages.map(({ data, pagination }) => ({
-          data: data.map((msg) => {
-            console.log(updater(msg));
-
-            return msg.id === updater(msg).id ? updater(msg) : msg;
-          }),
-          pagination,
-        })),
-      };
-    }
-  );
-}
-
 export function useUserConversations(
+  client: Client,
   limit: number = 20,
   activeUsername?: string
 ) {
-  return useInfiniteQuery({
+  return useQuery({
     queryKey: queryKeys.conversations.all(1, limit, activeUsername),
-    queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService.getUserConversations(pageParam, limit),
-    getNextPageParam: (lastPage) => {
-      return lastPage.pagination.page < lastPage.pagination.totalPages
-        ? lastPage.pagination.page + 1
-        : undefined;
-    },
-    getPreviousPageParam: (firstPage) => {
-      return firstPage.pagination.page > 0
-        ? firstPage.pagination.page - 1
-        : undefined;
-    },
-    initialPageParam: 1,
+    queryFn: () => client.conversations.list(),
   });
 }
 
 export function useGetConversation(
+  client: Client,
   conversationId: string,
-  options?: UseQueryOptions<IConversation, Error>,
+  options?: UseQueryOptions<Conversation, Error>,
   activeUsername?: string
 ) {
-  return useQuery<IConversation, Error>({
+  return useQuery<Conversation, Error>({
     queryKey: queryKeys.conversations.byId(conversationId, activeUsername),
-    queryFn: () => backendService.getConversation(conversationId),
+    queryFn: () => client.conversations.getConversationById(conversationId),
     ...options,
   });
 }
 
-export function useCreateConversation() {
+export function useCreateDmConversation(client: Client) {
   const queryClient = useQueryClient();
 
-  return useMutation<IConversation, Error, CreateConversationDto>({
-    mutationFn: (dto) => backendService.createConversation(dto),
+  return useMutation<Dm, Error, { inboxId?: string; conversation?: Dm }>({
+    mutationFn: async ({ inboxId, conversation }) => {
+      if (conversation) return conversation;
+      return (
+        (await client.conversations.getDmByInboxId(inboxId)) ??
+        (await client.conversations.newDm(inboxId))
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [queryKeys.conversations.all],
@@ -1525,20 +1458,21 @@ export function useCreateConversation() {
   });
 }
 
-export function useUpdateConversation() {
+export function useCreateGroupConversation(client: Client) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    IConversation,
+    Group,
     Error,
-    { conversationId: string; updateConversationDto: UpdateConversationDto }
+    { name: string; description: string; inboxIds: string[] }
   >({
-    mutationFn: ({ conversationId, updateConversationDto }) =>
-      backendService.updateConversation(conversationId, updateConversationDto),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.byId(data.id),
+    mutationFn: async ({ name, description, inboxIds }) => {
+      return await client.conversations.newGroup(inboxIds, {
+        name,
+        description,
       });
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [queryKeys.conversations.all],
       });
@@ -1546,109 +1480,49 @@ export function useUpdateConversation() {
   });
 }
 
-export function useDeleteConversation() {
-  const queryClient = useQueryClient();
-
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: (conversationId) =>
-      backendService.deleteConversation(conversationId),
-    onSuccess: (_, conversationId) => {
-      queryClient.removeQueries({
-        queryKey: queryKeys.conversations.byId(conversationId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [queryKeys.conversations.all],
-      });
-    },
-  });
-}
-
-export function useGetConversationParticipants(
-  conversationId: string,
+export function useGetConversationMembers(
+  conversation: Conversation,
   limit: number = 20
 ) {
-  return useInfiniteQuery({
-    queryKey: queryKeys.conversations.participants(conversationId, 1, limit),
-    queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService.getConversationParticipants(
-        conversationId,
-        pageParam,
-        limit
-      ),
-    getNextPageParam: (lastPage) => {
-      return lastPage.pagination.page < lastPage.pagination.totalPages
-        ? lastPage.pagination.page + 1
-        : undefined;
-    },
-    getPreviousPageParam: (firstPage) => {
-      return firstPage.pagination.page > 0
-        ? firstPage.pagination.page - 1
-        : undefined;
-    },
-    initialPageParam: 1,
+  return useQuery({
+    queryKey: queryKeys.conversations.members(conversation?.id, 1, limit),
+    queryFn: () => conversation.members(),
+    enabled: !!conversation,
   });
 }
 
-export function useAddParticipant() {
+export function useRemoveMember(group: Group) {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    IConversationParticipant,
-    Error,
-    { conversationId: string; addParticipantDto: AddParticipantDto }
-  >({
-    mutationFn: ({ conversationId, addParticipantDto }) =>
-      backendService.addParticipant(conversationId, addParticipantDto),
-    onSuccess: (data) => {
+  return useMutation<void, Error, { inboxIds: string[] }>({
+    mutationFn: ({ inboxIds }) => group.removeMembers(inboxIds),
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.participants(
-          data.conversationId,
-          1,
-          20
-        ),
+        queryKey: queryKeys.conversations.members(group.id, 1, 20),
       });
     },
   });
 }
 
-export function useRemoveParticipant() {
+export function useAddMember(group: Group) {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    { message: string },
-    Error,
-    { conversationId: string; participantId: string }
-  >({
-    mutationFn: ({ conversationId, participantId }) =>
-      backendService.removeParticipant(conversationId, participantId),
-    onSuccess: (_, { conversationId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.participants(conversationId, 1, 20),
-      });
+  return useMutation<void, Error, { inboxId: string; level: PermissionLevel }>({
+    mutationFn: ({ inboxId, level }) => {
+      if (level === PermissionLevel.SuperAdmin) {
+        return group.addSuperAdmin(inboxId);
+      } else if (level === PermissionLevel.Admin) {
+        return group.addAdmin(inboxId);
+      } else {
+        return group.addMembers([inboxId]);
+      }
     },
-  });
-}
-
-export function useUpdateParticipantRole() {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    IConversationParticipant,
-    Error,
-    { conversationId: string; username: string; role: ParticipantRole }
-  >({
-    mutationFn: ({ conversationId, username, role }) =>
-      backendService.updateParticipantRole(conversationId, username, role),
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.participants(
-          data.conversationId,
-          1,
-          20
-        ),
+        queryKey: queryKeys.conversations.members(group.id, 1, 20),
       });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.byId(data.conversationId),
+        queryKey: queryKeys.conversations.byId(group.id),
       });
     },
   });
@@ -1688,64 +1562,41 @@ export function useUnmuteConversation() {
   });
 }
 
-export function useLastReadConversation() {
-  const queryClient = useQueryClient();
-
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: (conversationId) =>
-      backendService.lastReadConversation(conversationId),
-    onSuccess: (_, conversationId) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.byId(conversationId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [queryKeys.conversations.all],
-      });
-    },
-  });
-}
-
 export function useGetMessages(
-  conversationId: string,
+  conversation?: Conversation,
   limit: number = 50,
   activeUsername?: string
 ) {
-  return useInfiniteQuery({
+  return useQuery({
     queryKey: queryKeys.messages.byConversation(
-      conversationId,
+      conversation?.id,
       1,
       limit,
       activeUsername
     ),
-    queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService.getMessages(conversationId, pageParam, limit),
-    getNextPageParam: (lastPage) => {
-      return lastPage.pagination.page < lastPage.pagination.totalPages
-        ? lastPage.pagination.page + 1
-        : undefined;
-    },
-    getPreviousPageParam: (firstPage) => {
-      return firstPage.pagination.page > 0
-        ? firstPage.pagination.page - 1
-        : undefined;
-    },
-    initialPageParam: 1,
+    queryFn: () => conversation?.messages({ limit: BigInt(limit) }),
+    enabled: !!conversation,
   });
 }
 
-export function useSendMessage() {
+export function useSendMessage(conversation: Conversation) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    IMessage,
+    void,
     Error,
-    { createMessageDto: CreateMessageDto; mediaFile?: File }
+    {
+      content: string | RemoteAttachment | Reaction | Reply;
+      contentType?: ContentTypeId;
+    }
   >({
-    mutationFn: ({ createMessageDto, mediaFile }) =>
-      backendService.sendMessage(createMessageDto, mediaFile),
-    onSuccess: (data) => {
+    mutationFn: ({ content, contentType }) => {
+      conversation.sendOptimistic(content, contentType as any);
+      return conversation.publishMessages();
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.byConversation(data.conversationId, 1, 50),
+        queryKey: queryKeys.messages.byConversation(conversation?.id, 1, 50),
       });
       queryClient.invalidateQueries({
         queryKey: [queryKeys.conversations.all],
@@ -1754,134 +1605,31 @@ export function useSendMessage() {
   });
 }
 
-export function useUpdateMessage() {
+export function usePinMessage(conversation: Conversation) {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    IMessage,
-    Error,
-    { messageId: string; updateMessageDto: UpdateMessageDto }
-  >({
-    mutationFn: ({ messageId, updateMessageDto }) =>
-      backendService.updateMessage(messageId, updateMessageDto),
-    onSuccess: (data) => {
+  return useMutation<void, Error, { messageId: string }>({
+    mutationFn: ({ messageId }) => {
+      return null;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.byConversation(data.conversationId, 1, 50),
+        queryKey: queryKeys.conversations.pinnedMessages(conversation.id),
       });
     },
   });
 }
 
-export function useDeleteMessage() {
+export function useUnpinMessage(conversation: Conversation) {
   const queryClient = useQueryClient();
 
-  return useMutation<{ message: string }, Error, { messageId: string }>({
-    mutationFn: ({ messageId }) => backendService.deleteMessage(messageId),
-    onSuccess: (_, { messageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.byConversation(messageId, 1, 50),
-      });
+  return useMutation<void, Error, { messageId: string }>({
+    mutationFn: ({ messageId }) => {
+      return null;
     },
-  });
-}
-
-export function useMarkMessagesAsRead() {
-  const queryClient = useQueryClient();
-
-  return useMutation<{ message: string }, Error, { messageId: string }>({
-    mutationFn: ({ messageId }) => backendService.markMessageAsRead(messageId),
-    onSuccess: (_, { messageId }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.byConversation(messageId, 1, 50),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [queryKeys.conversations.all],
-      });
-    },
-  });
-}
-
-export function useSearchMessages(
-  conversationId: string,
-  query: string,
-  limit: number = 20,
-  options?: UseQueryOptions<IMessage[], Error>
-) {
-  return useQuery<IMessage[], Error>({
-    queryKey: queryKeys.messages.search(conversationId, query, limit),
-    queryFn: () => backendService.searchMessages(conversationId, query, limit),
-    enabled: query.length > 0,
-    ...options,
-  });
-}
-
-export function useAddReaction() {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    IMessageReaction,
-    Error,
-    { messageId: string; addReactionDto: AddReactionDto }
-  >({
-    mutationFn: ({ messageId, addReactionDto }) =>
-      backendService.addMessageReaction(messageId, addReactionDto),
-    onSuccess: (_, { messageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.byConversation(messageId, 1, 50),
-      });
-    },
-  });
-}
-
-export function useRemoveMessageReaction() {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    { message: string },
-    Error,
-    { messageId: string; reactionId: string }
-  >({
-    mutationFn: ({ messageId, reactionId }) =>
-      backendService.removeMessageReaction(messageId, reactionId),
-    onSuccess: (_, { messageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.byConversation(messageId, 1, 50),
-      });
-    },
-  });
-}
-
-export function usePinMessage() {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    IPinnedMessage,
-    Error,
-    { conversationId: string; messageId: string }
-  >({
-    mutationFn: ({ conversationId, messageId }) =>
-      backendService.pinMessage(conversationId, messageId),
-    onSuccess: (_, { conversationId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.pinnedMessages(conversationId),
-      });
-    },
-  });
-}
-
-export function useUnpinMessage() {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    { message: string },
-    Error,
-    { conversationId: string; messageId: string }
-  >({
-    mutationFn: ({ conversationId, messageId }) =>
-      backendService.unpinMessage(conversationId, messageId),
-    onSuccess: (_, { conversationId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.pinnedMessages(conversationId),
+        queryKey: queryKeys.conversations.pinnedMessages(conversation.id),
       });
     },
   });
@@ -1889,33 +1637,11 @@ export function useUnpinMessage() {
 
 export function usePinnedMessages(
   conversationId: string,
-  options?: UseQueryOptions<IPinnedMessage[], Error>
+  options?: UseQueryOptions<DecodedMessage[], Error>
 ) {
-  return useQuery<IPinnedMessage[], Error>({
+  return useQuery<DecodedMessage[], Error>({
     queryKey: queryKeys.conversations.pinnedMessages(conversationId),
-    queryFn: () => backendService.getPinnedMessages(conversationId),
-    ...options,
-  });
-}
-
-export function useConversationUnreadCount(
-  conversationId: string,
-  options?: UseQueryOptions<{ count: number }, Error>
-) {
-  return useQuery<{ count: number }, Error>({
-    queryKey: queryKeys.conversations.unreadCount(conversationId),
-    queryFn: () => backendService.getConversationUnreadCount(conversationId),
-    ...options,
-  });
-}
-
-export function useConversationLastOpenedCount(
-  lastOpenedAt: Date,
-  options?: UseQueryOptions<{ count: number }, Error>
-) {
-  return useQuery<{ count: number }, Error>({
-    queryKey: queryKeys.conversations.lastOpenedCount(lastOpenedAt),
-    queryFn: () => backendService.getLastOpenedConversationCount(lastOpenedAt),
+    queryFn: () => [],
     ...options,
   });
 }

@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
-import { IMessage, IPinnedMessage } from "@/types/backend";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,30 +11,33 @@ import { toast } from "sonner";
 
 // Import Swiper styles
 import "swiper/css";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { formatUnits } from "viem";
 
 interface PinnedMessagesBarProps {
-  pinnedMessages: IPinnedMessage[];
+  conversation: Conversation;
+  pinnedMessages: DecodedMessage[];
   isVisible: boolean;
-  onMessageClick: (messageId: string) => void;
   onUnpin?: (messageId: string) => void;
   containerRef: React.RefObject<HTMLDivElement>;
 }
 
 export function PinnedMessagesBar({
+  conversation,
   pinnedMessages,
   isVisible,
-  onMessageClick,
   onUnpin,
   containerRef,
 }: PinnedMessagesBarProps) {
   const isMobile = useIsMobile();
+
   const [isAnimating, setIsAnimating] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
-  const unpinMessage = useUnpinMessage();
+  const unpinMessage = useUnpinMessage(conversation);
 
-  const handleUnpin = async (messageId: string, conversationId: string) => {
+  const handleUnpin = async (messageId: string) => {
     try {
-      await unpinMessage.mutateAsync({ conversationId, messageId });
+      await unpinMessage.mutateAsync({ messageId });
       onUnpin?.(messageId);
       toast.success("Message unpinned");
     } catch (error) {
@@ -77,7 +80,6 @@ export function PinnedMessagesBar({
         }, 2000);
       }
     }
-    onMessageClick(messageId);
   };
 
   const truncateContent = (content: string, maxLength: number = 60) => {
@@ -109,11 +111,10 @@ export function PinnedMessagesBar({
           className="w-full"
           style={{ height: "auto" }}
         >
-          {pinnedMessages.map((pinnedMessage) => {
-            const message = pinnedMessage.message;
+          {pinnedMessages.map((message, index) => {
             return (
               <SwiperSlide
-                key={pinnedMessage.id}
+                key={index}
                 style={{ width: "auto", maxWidth: "280px" }}
               >
                 <div
@@ -121,17 +122,19 @@ export function PinnedMessagesBar({
                   className="flex items-start space-x-2 p-2 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/80 transition-colors group"
                 >
                   <DomainAvatar
-                    domain={message.sender.username}
+                    domain={message.senderInboxId}
                     className="h-6 w-6 flex-shrink-0 mt-0.5"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-foreground truncate">
-                        {message.sender.username}
+                        {message.senderInboxId}
                       </span>
                       <div className="flex items-center space-x-1">
                         <span className="text-xs text-muted-foreground">
-                          {moment(message.createdAt).format("HH:mm")}
+                          {moment(formatUnits(message.sentAtNs, 6)).format(
+                            "HH:mm"
+                          )}
                         </span>
                         {/* Always show unpin button */}
                         <Button
@@ -139,7 +142,7 @@ export function PinnedMessagesBar({
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleUnpin(message.id, pinnedMessage.conversationId);
+                            handleUnpin(message.id);
                           }}
                           className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
                         >
@@ -149,7 +152,7 @@ export function PinnedMessagesBar({
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                       {message.content
-                        ? truncateContent(message.content)
+                        ? truncateContent(message.content as any)
                         : "Media message"}
                     </p>
                   </div>

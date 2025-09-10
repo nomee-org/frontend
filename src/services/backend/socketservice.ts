@@ -4,8 +4,6 @@ import {
   IPost,
   IComment,
   ILike,
-  IMessage,
-  IMessageReaction,
   IUserBasic,
   INotification,
   UploadProgress,
@@ -50,15 +48,7 @@ export interface WebSocketEventHandlers {
   onNewFollower?: (follower: IUserBasic) => void;
   onFollowingStatusUpdate?: (update: { username: string }) => void;
 
-  onNewMessage?: (message: IMessage) => void;
-  onMessageReaction?: (reaction: IMessageReaction) => void;
-  onRemoveMessageReaction?: (data: {
-    messageId: string;
-    reactionId: string;
-  }) => void;
-  onMessageUpdated?: (message: IMessage) => void;
-  onMessageDeleted?: (data: { messageId: string }) => void;
-  onMessageRead?: (data: { messageId: string }) => void;
+  onMessageChanged?: () => void;
   onUserTyping?: (data: { username: string; conversationId: string }) => void;
   onUserStoppedTyping?: (data: {
     username: string;
@@ -360,33 +350,8 @@ class WebSocketService {
       );
     });
 
-    this.socket.on("new-message", (message: IMessage) => {
-      this.handlers.forEach((handler) => handler.onNewMessage?.(message));
-    });
-
-    this.socket.on("message-reaction", (reaction: IMessageReaction) => {
-      this.handlers.forEach((handler) => handler.onMessageReaction?.(reaction));
-    });
-
-    this.socket.on(
-      "remove-message-reaction",
-      (data: { messageId: string; reactionId: string }) => {
-        this.handlers.forEach((handler) =>
-          handler.onRemoveMessageReaction?.(data)
-        );
-      }
-    );
-
-    this.socket.on("message-updated", (message: IMessage) => {
-      this.handlers.forEach((handler) => handler.onMessageUpdated?.(message));
-    });
-
-    this.socket.on("message-deleted", (data: { messageId: string }) => {
-      this.handlers.forEach((handler) => handler.onMessageDeleted?.(data));
-    });
-
-    this.socket.on("message-read", (data: { messageId: string }) => {
-      this.handlers.forEach((handler) => handler.onMessageRead?.(data));
+    this.socket.on("message-changed", () => {
+      this.handlers.forEach((handler) => handler.onMessageChanged?.());
     });
 
     this.socket.on(

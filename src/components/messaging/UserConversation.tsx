@@ -36,7 +36,6 @@ import { MessageList } from "@/components/messaging/MessageList";
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
 import { OnlineStatus } from "@/components/messaging/OnlineStatus";
 import { ConversationInfoModal } from "@/components/messaging/ConversationInfoModal";
-import { DeleteChatDialog } from "@/components/messaging/DeleteChatDialog";
 import { MuteConversationPopup } from "@/components/messaging/MuteConversationPopup";
 import { PinnedMessagesBar } from "@/components/messaging/PinnedMessagesBar";
 
@@ -47,19 +46,21 @@ import { useMessageScroll } from "@/hooks/use-message-scroll";
 import { usePinnedMessagesVisibility } from "@/hooks/use-pinned-messages-visibility";
 
 // Service/data imports
-import {
-  useGetMessages,
-  useCreateConversation,
-  addMessageInCache,
-} from "@/data/use-backend";
+import { useGetMessages, useCreateDmConversation } from "@/data/use-backend";
 import {
   webSocketService,
   WebSocketEventHandlers,
 } from "@/services/backend/socketservice";
 
 // Type imports
-import { ConversationType, IMessage } from "@/types/backend";
 import { RecordingIndicator } from "./RecordingIndicator";
+import { useXmtp } from "@/contexts/XmtpContext";
+import { dataService } from "@/services/doma/dataservice";
+import { useHelper } from "@/hooks/use-helper";
+import { Dm } from "@xmtp/browser-sdk";
+import { toast } from "sonner";
+import { formatUnits } from "viem";
+import { backendService } from "@/services/backend/backendservice";
 
 const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const [params] = useSearchParams();
@@ -71,27 +72,47 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const isMobile = useIsMobile();
   const [showBidPopup, setShowBidPopup] = useState(false);
   const [replyToId, setReplyToId] = useState<string | undefined>();
-  const [editingMessage, setEditingMessage] = useState<IMessage | undefined>();
   const [showConversationInfo, setShowConversationInfo] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
 
   const { activeUsername } = useUsername();
+  const { client } = useXmtp();
+  const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
-  const createConversation = useCreateConversation();
 
-  // Get current user's participant data to check mute status
-  const currentParticipant = createConversation?.data?.participants?.find(
-    (p) => p.user.username === activeUsername
-  );
+  const createConversation = useCreateDmConversation(client);
+
+  const initConversation = async () => {
+    try {
+      if (username.includes(".")) {
+        const otherName = await dataService.getName({ name: username });
+        const otherAddress = parseCAIP10(otherName.claimedBy).address;
+
+        const inboxId = await client.findInboxIdByIdentifier({
+          identifier: otherAddress,
+          identifierKind: "Ethereum",
+        });
+
+        if (!inboxId) {
+          return toast.error("Recipient is not yet on XMTP.");
+        }
+
+        createConversation.mutate({ inboxId });
+      } else {
+        const conversation = await client.conversations.getConversationById(
+          username
+        );
+        createConversation.mutate({ conversation: conversation as Dm });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
     if (username) {
-      createConversation.mutate({
-        type: ConversationType.DIRECT,
-        participantUsernames: [username],
-      });
+      initConversation();
     }
   }, [username]);
 
@@ -100,9 +121,8 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     isLoading: messagesLoading,
     error: messagesError,
     refetch: refetchMessages,
-    fetchNextPage,
-    hasNextPage,
-  } = useGetMessages(createConversation?.data?.id, 50, activeUsername);
+  } = useGetMessages(createConversation?.data, 50, activeUsername);
+  console.log(messagesData);
 
   const {
     containerRef,
@@ -111,14 +131,14 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     scrollToBottom,
     scrollToMessage,
   } = useMessageScroll({
-    hasNextPage: hasNextPage || false,
-    fetchNextPage: () => hasNextPage && fetchNextPage(),
+    hasNextPage: false,
+    fetchNextPage: () => refetchMessages(),
     isFetchingNextPage: false,
-    messages: messagesData?.pages?.flatMap((p) => p.data) ?? [],
+    messages: messagesData ?? [],
     newMessageCount: 0,
   });
 
-  const pinnedMessages = createConversation?.data?.pinnedMessages ?? [];
+  const pinnedMessages = [];
   const isPinnedBarVisible = usePinnedMessagesVisibility({
     containerRef,
     hasPinnedMessages: pinnedMessages.length > 0,
@@ -126,42 +146,15 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
 
   useEffect(() => {
     if (createConversation?.data?.id) {
+      backendService.subscribeToConversation(createConversation?.data?.id);
       webSocketService.joinConversation(createConversation.data.id);
     }
   }, [createConversation]);
 
-  const queryClient = useQueryClient();
-
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "user-conversations",
-      onNewMessage: (newMessage) => {
-        if (createConversation?.data?.id) {
-          addMessageInCache(
-            queryClient,
-            newMessage,
-            createConversation.data.id,
-            50,
-            activeUsername
-          );
-        }
-
-        refetchMessages();
-        onRefresh();
-      },
-      onMessageDeleted: () => {
-        refetchMessages();
-        onRefresh();
-      },
-      onMessageReaction: () => {
-        refetchMessages();
-        onRefresh();
-      },
-      onRemoveMessageReaction() {
-        refetchMessages();
-        onRefresh();
-      },
-      onMessageUpdated: () => {
+      onMessageChanged: () => {
         refetchMessages();
         onRefresh();
       },
@@ -203,11 +196,9 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
       },
     };
 
-    // lastReadConversationMutation.mutate(createConversation?.data?.id);
     webSocketService.setEventHandlers(handlers);
 
     return () => {
-      // lastReadConversationMutation.mutate(createConversation?.data?.id);
       webSocketService.removeEventHandlers(handlers);
     };
   }, [createConversation]);
@@ -288,7 +279,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
                 onClick={() => setShowMuteDialog(true)}
                 className="hover:bg-accent"
               >
-                {currentParticipant?.isMuted ? (
+                {/* {currentParticipant?.isMuted ? (
                   <>
                     <Volume2 className="h-4 w-4 mr-2" />
                     Unmute
@@ -298,14 +289,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
                     <VolumeX className="h-4 w-4 mr-2" />
                     Mute
                   </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-destructive focus:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Chat
+                )} */}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -313,14 +297,14 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
       </div>
 
       {/* Pinned Messages Bar */}
-      <PinnedMessagesBar
-        pinnedMessages={pinnedMessages}
-        isVisible={isPinnedBarVisible}
-        onMessageClick={(messageId) => {
-          // Additional handling if needed
-        }}
-        containerRef={containerRef}
-      />
+      {createConversation?.data && (
+        <PinnedMessagesBar
+          conversation={createConversation?.data}
+          pinnedMessages={pinnedMessages}
+          isVisible={isPinnedBarVisible}
+          containerRef={containerRef}
+        />
+      )}
 
       {/* Messages */}
       <div
@@ -336,7 +320,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
           <div className="text-center text-red-500 text-xs md:text-sm">
             Failed to load messages
           </div>
-        ) : (messagesData?.pages?.[0]?.pagination.total ?? 0) === 0 ? (
+        ) : messagesData?.length === 0 ? (
           <div className="text-center text-muted-foreground">
             <div className="space-y-1 md:space-y-2">
               <p className="text-xs md:text-sm">No messages yet</p>
@@ -348,17 +332,19 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
         ) : (
           <div className="space-y-0 px-2 md:px-0">
             <MessageList
+              conversation={createConversation?.data}
               messages={
-                messagesData?.pages
-                  ?.flatMap((p) => p.data)
-                  ?.sort(
-                    (a, b) =>
-                      new Date(a.createdAt).getTime() -
-                      new Date(b.createdAt).getTime()
-                  ) ?? []
+                messagesData?.sort(
+                  (a, b) =>
+                    new Date(
+                      Math.ceil(Number(formatUnits(a.sentAtNs, 6)))
+                    ).getTime() -
+                    new Date(
+                      Math.ceil(Number(formatUnits(b.sentAtNs, 6)))
+                    ).getTime()
+                ) ?? []
               }
               onReply={(messageId) => setReplyToId(messageId)}
-              onEdit={(message) => setEditingMessage(message)}
               onReplyClick={scrollToMessage}
               pinnedMessages={pinnedMessages}
             />
@@ -386,21 +372,9 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
       {/* Message Input */}
       <MessageInput
         placeHolder={initMessage || ""}
-        conversationId={createConversation?.data?.id}
+        conversation={createConversation?.data}
         replyToId={replyToId}
         onCancelReply={() => setReplyToId(undefined)}
-        editingMessage={
-          editingMessage
-            ? { id: editingMessage.id, content: editingMessage.content || "" }
-            : undefined
-        }
-        onTyping={(typing) => {
-          if (typing) {
-            webSocketService.startTyping(createConversation?.data?.id);
-          } else {
-            webSocketService.stopTyping(createConversation?.data?.id);
-          }
-        }}
         onRecording={(recording) => {
           if (recording) {
             webSocketService.startRecording(createConversation?.data?.id);
@@ -408,11 +382,19 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
             webSocketService.stopRecording(createConversation?.data?.id);
           }
         }}
-        onCancelEdit={() => setEditingMessage(undefined)}
         onSendSuccess={() => {
           setReplyToId(undefined);
-          setEditingMessage(undefined);
           scrollToBottom();
+
+          setTimeout(() => {
+            refetchMessages();
+            backendService.onMessageSent(
+              createConversation?.data?.id,
+              client.inboxId
+            );
+          }, 2000);
+
+          setTimeout(() => refetchMessages(), 5000);
         }}
       />
 
@@ -429,34 +411,24 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
       )}
 
       {/* Conversation Info Modal */}
-      <ConversationInfoModal
-        isOpen={showConversationInfo}
-        onClose={() => setShowConversationInfo(false)}
-        conversation={createConversation?.data}
-        username={username}
-      />
-
-      {/* Delete Chat Dialog */}
-      <DeleteChatDialog
-        isOpen={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        conversationId={createConversation?.data?.id || ""}
-        onConfirm={() => {
-          navigate("/");
-          onRefresh();
-        }}
-        chatName={username || "Unknown User"}
-        isGroup={false}
-      />
+      {createConversation?.data && (
+        <ConversationInfoModal
+          conversation={createConversation?.data}
+          members={[]}
+          messages={messagesData ?? []}
+          isOpen={showConversationInfo}
+          onClose={() => setShowConversationInfo(false)}
+        />
+      )}
 
       {/* Mute Conversation Popup */}
-      <MuteConversationPopup
+      {/* <MuteConversationPopup
         isOpen={showMuteDialog}
         onClose={() => setShowMuteDialog(false)}
         isMuted={currentParticipant?.isMuted || false}
         conversationId={createConversation?.data?.id || ""}
         conversationName={username || "user"}
-      />
+      /> */}
     </div>
   );
 };

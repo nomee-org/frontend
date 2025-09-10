@@ -5,18 +5,13 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import {
-  useConversationLastOpenedCount,
-  useGetToken,
-  useGetUserProfile,
-} from "@/data/use-backend";
+import { useGetToken, useGetUserProfile } from "@/data/use-backend";
 import { useOwnedNames } from "@/data/use-doma";
 import { backendService } from "@/services/backend/backendservice";
 import { webSocketService } from "@/services/backend/socketservice";
 import { useAccount } from "wagmi";
 import { AuthResponse, IUserProfile } from "@/types/backend";
 import { toast } from "sonner";
-
 interface UsernameContextType {
   token: AuthResponse;
   isSwitching: boolean;
@@ -24,7 +19,6 @@ interface UsernameContextType {
   setActiveUsername: (name: string | null) => void;
   profile: IUserProfile;
   availableNames: string[] | undefined;
-  lastOpenedCount: number;
   refetchProfile: () => void;
 }
 
@@ -52,11 +46,9 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
     localStorage.getItem(`${activeUsername}:last-opened-at`)
   );
 
-  const { data: lastOpenedCountData } =
-    useConversationLastOpenedCount(lastOpenedAt);
-
   const _setActiveUsername = (newUsername: string) => {
     setIsSwitching(true);
+
     backendService.getToken(newUsername).then((token) => {
       if (token && token.accessToken && token.refreshToken) {
         backendService.setTokens(token.accessToken, token.refreshToken);
@@ -117,7 +109,6 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
     profile: profileData,
     availableNames:
       namesData?.pages?.flatMap((p) => p.items)?.map((name) => name.name) ?? [],
-    lastOpenedCount: lastOpenedCountData?.count ?? 0,
     refetchProfile,
   };
 

@@ -1,15 +1,23 @@
-import { Client, type Signer, type Identifier } from "@xmtp/browser-sdk";
-import React, { createContext, ReactNode, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Client, Identifier } from "@xmtp/browser-sdk";
+import React, { createContext, ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { stringToBytes } from "viem";
+import { toBytes, WalletClient } from "viem";
 import { useAccount, useWalletClient } from "wagmi";
-
+import { BrowserProvider, JsonRpcSigner } from "ethers";
+import { mainnet } from "viem/chains";
+import { Reaction, ReactionCodec } from "@xmtp/content-type-reaction";
+import {
+  AttachmentCodec,
+  RemoteAttachmentCodec,
+} from "@xmtp/content-type-remote-attachment";
+import { ReplyCodec } from "@xmtp/content-type-reply";
 interface XmtpContextType {
-  client: Client | null;
+  client: Client<string | any | Reaction> | null;
   identifier: Identifier | null;
   isLoading: boolean;
   error: Error | null;
-  connect: (username: string) => Promise<void>;
+  connect: () => Promise<void>;
   disconnect: () => void;
 }
 
@@ -19,16 +27,37 @@ interface XmtpProviderProps {
   children: ReactNode;
 }
 
+const ethersSigner = (client?: WalletClient) => {
+  if (!client) return undefined;
+
+  const { account, chain, transport } = client;
+  const network = {
+    chainId: chain.id,
+    name: chain.name,
+    ensAddress: chain.contracts?.ensRegistry?.address,
+  };
+  const provider = new BrowserProvider(transport as any, network);
+  return new JsonRpcSigner(provider, account.address);
+};
+
 export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [client, setClient] = useState<Client | null>(null);
+  const [client, setClient] = useState<Client<string | any | Reaction> | null>(
+    null
+  );
   const [identifier, setIdentifier] = useState<Identifier | null>(null);
 
-  const connect = async (username: string) => {
+  useEffect(() => {
+    disconnect();
+  }, [address]);
+
+  const signer = ethersSigner(walletClient);
+
+  const connect = async () => {
     try {
       if (isLoading) {
         toast.warning("Connecting...");
@@ -39,41 +68,41 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
 
       setIsLoading(true);
 
+      await walletClient.switchChain({ id: mainnet.id });
+
       setIdentifier({
         identifier: address.toLowerCase(),
         identifierKind: "Ethereum",
       });
 
-      const chainId = await walletClient.getChainId();
-
-      const signer: Signer = {
-        type: "SCW",
-        getIdentifier: () => ({
-          identifier: address,
-          identifierKind: "Ethereum",
-        }),
-        signMessage: async (message: string) => {
-          const signature = await walletClient.signMessage({
-            message,
-            account: address,
-          });
-          return stringToBytes(signature);
-        },
-        getChainId: () => BigInt(chainId),
-      };
-
-      console.log("Connecting to XMTP...");
-
       setClient(
-        await Client.create(signer, {
-          env: "dev",
-          appVersion: "nomee-app/1.0",
-        })
+        await Client.create(
+          {
+            type: "SCW",
+            getIdentifier: () => ({
+              identifier: address.toLowerCase(),
+              identifierKind: "Ethereum",
+            }),
+            signMessage: async (message) => {
+              return toBytes(await signer.signMessage(message));
+            },
+            getChainId: () => BigInt(mainnet.id),
+          },
+          {
+            env: "dev",
+            appVersion: "nomee-app/1.0",
+            dbEncryptionKey: new Uint8Array(
+              import.meta.env.VITE_DB_ENCRYPTION_KEY.split(",").map(Number)
+            ),
+            codecs: [
+              new ReplyCodec(),
+              new ReactionCodec(),
+              new AttachmentCodec(),
+              new RemoteAttachmentCodec(),
+            ],
+          }
+        )
       );
-
-      console.log("XMTP connected");
-
-      toast(`Connected to XMTP as ${username}`);
 
       setIsLoading(false);
     } catch (error) {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
@@ -12,11 +13,9 @@ import {
 import {
   MoreVertical,
   Reply,
-  Edit,
   Pin,
   PinOff,
   Copy,
-  Trash,
   User,
   Heart,
   Laugh,
@@ -25,11 +24,18 @@ import {
   Angry,
   Check,
 } from "lucide-react";
-import { IMessage, MessageType } from "@/types/backend";
 import { cn } from "@/lib/utils";
 import moment from "moment";
-import { useUsername } from "@/hooks/use-username";
 import { toast } from "sonner";
+import { DecodedMessage } from "@xmtp/browser-sdk";
+import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
+import {
+  ContentTypeRemoteAttachment,
+  RemoteAttachment,
+  RemoteAttachmentCodec,
+} from "@xmtp/content-type-remote-attachment";
+import { useXmtp } from "@/contexts/XmtpContext";
+import { formatUnits } from "viem";
 
 const reactions = [
   { emoji: "❤️", icon: Heart, name: "heart" },
@@ -41,19 +47,17 @@ const reactions = [
 ];
 
 interface MessageBubbleProps {
-  message: IMessage;
+  message: DecodedMessage;
   isOwn: boolean;
   showAvatar: boolean;
   showTail: boolean;
   onReply?: (messageId: string) => void;
-  onEdit?: (message: IMessage) => void;
   onPin?: (messageId: string) => void;
   onReaction?: (messageId: string, emoji: string) => void;
   onUnpin?: (messageId: string) => void;
-  onDelete?: (messageId: string) => void;
   onReplyClick?: (messageId: string) => void;
   isPinned?: boolean;
-  replyTo?: IMessage;
+  reactions: Reaction[];
 }
 
 export function MessageBubble({
@@ -63,22 +67,18 @@ export function MessageBubble({
   showTail,
   onReply,
   onReaction,
-  onEdit,
   onPin,
   onUnpin,
-  onDelete,
   isPinned,
-  replyTo,
+  reactions,
 }: MessageBubbleProps) {
-  const { activeUsername } = useUsername();
+  const { client } = useXmtp();
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [showReplyIcon, setShowReplyIcon] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [isLongPressed, setIsLongPressed] = useState(false);
   const [showReactionUsers, setShowReactionUsers] = useState(false);
-  const [selectedReactionEmoji, setSelectedReactionEmoji] =
-    useState<string>("");
   const messageRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
   const currentX = useRef(0);
@@ -148,29 +148,6 @@ export function MessageBubble({
     }
   };
 
-  const handleReactionClick = (emoji: string) => {
-    // Check if there are reactions for this emoji to show users popup
-    const hasReactionsForEmoji = message.reactions?.some(
-      (r) => r.emoji === emoji
-    );
-
-    if (hasReactionsForEmoji) {
-      setSelectedReactionEmoji(emoji);
-      setShowReactionUsers(true);
-    } else {
-      // Add new reaction
-      handleReaction(emoji);
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      onDelete(message.id);
-    } catch (error) {
-      toast.error("Failed to delete message");
-    }
-  };
-
   const renderRichContent = (content: string) => {
     if (!content) return "";
 
@@ -202,104 +179,140 @@ export function MessageBubble({
   };
 
   const renderMessageContent = () => {
-    switch (message.type) {
-      case MessageType.IMAGE:
-        return (
-          <div className="space-y-2">
-            {message.mediaUrl && (
-              <img
-                src={message.mediaUrl}
-                alt="Shared image"
-                className="max-w-[min(100%,320px)] rounded-lg cursor-pointer"
-                onClick={() => window.open(message.mediaUrl, "_blank")}
-              />
-            )}
-            {message.content && (
-              <div
-                className="text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: renderRichContent(message.content),
-                }}
-              />
-            )}
-          </div>
-        );
-      case MessageType.VIDEO:
-        return (
-          <div className="space-y-2">
-            {message.mediaUrl && (
-              <video
-                src={message.mediaUrl}
-                controls
-                className="max-w-[min(100%,320px)] rounded-lg"
-              />
-            )}
-            {message.content && (
-              <div
-                className="text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: renderRichContent(message.content),
-                }}
-              />
-            )}
-          </div>
-        );
-      case MessageType.VOICE:
-        return (
-          <div className="space-y-2">
-            {message.mediaUrl && (
-              <audio
-                src={message.mediaUrl}
-                controls
-                className="max-w-[min(100%,320px)] rounded-lg"
-              />
-            )}
-            {message.content && (
-              <div
-                className="text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{
-                  __html: renderRichContent(message.content),
-                }}
-              />
-            )}
-          </div>
-        );
-      case MessageType.FILE:
-        return (
-          <div className="flex items-center space-x-3 bg-black/10 p-3 rounded-lg">
-            <div className="p-2 bg-white/10 rounded">
-              <User className="h-4 w-4" />
+    if (message.contentType.sameAs(ContentTypeRemoteAttachment)) {
+      <>
+        {async () => {
+          const attachment: RemoteAttachment = await RemoteAttachmentCodec.load(
+            message.content as any,
+            client
+          );
+
+          if (attachment.url.includes("/images/")) {
+            return (
+              <div className="space-y-2">
+                {attachment.url && (
+                  <img
+                    src={attachment.url}
+                    alt="Shared image"
+                    className="max-w-[min(100%,320px)] rounded-lg cursor-pointer"
+                    onClick={() => window.open(attachment.url, "_blank")}
+                  />
+                )}
+                {message.content && (
+                  <div
+                    className="text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: renderRichContent(attachment.filename),
+                    }}
+                  />
+                )}
+              </div>
+            );
+          }
+
+          if (attachment.url.includes("/videos/")) {
+            return (
+              <div className="space-y-2">
+                {attachment.url && (
+                  <video
+                    src={attachment.url}
+                    controls
+                    className="max-w-[min(100%,320px)] rounded-lg"
+                  />
+                )}
+                {message.content && (
+                  <div
+                    className="text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: renderRichContent(attachment.filename),
+                    }}
+                  />
+                )}
+              </div>
+            );
+          }
+
+          if (attachment.url.includes("/audios/")) {
+            return (
+              <div className="space-y-2">
+                {attachment.url && (
+                  <audio
+                    src={attachment.url}
+                    controls
+                    className="max-w-[min(100%,320px)] rounded-lg"
+                  />
+                )}
+                {message.content && (
+                  <div
+                    className="text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: renderRichContent(attachment.filename),
+                    }}
+                  />
+                )}
+              </div>
+            );
+          }
+
+          if (attachment.url.includes("/stickers/")) {
+            return (
+              <div className="w-32 h-32">
+                {attachment.url && (
+                  <img
+                    src={attachment.url}
+                    alt="Sticker"
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <div className="flex items-center space-x-3 bg-black/10 p-3 rounded-lg">
+              <div className="p-2 bg-white/10 rounded">
+                <User className="h-4 w-4" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{attachment.filename}</p>
+                <p className="text-xs opacity-70">Document</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => window.open(attachment.url, "_blank")}
+              >
+                Download
+              </Button>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">{message.content}</p>
-              <p className="text-xs opacity-70">Document</p>
-            </div>
-            <Button variant="ghost" size="sm" className="text-xs">
-              Download
-            </Button>
-          </div>
-        );
-      case MessageType.STICKER:
-        return (
-          <div className="w-32 h-32">
-            {message.mediaUrl && (
-              <img
-                src={message.mediaUrl}
-                alt="Sticker"
-                className="w-full h-full object-cover rounded-lg"
-              />
-            )}
-          </div>
-        );
-      default:
-        return (
-          <div
-            className="text-sm leading-relaxed break-words whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{
-              __html: renderRichContent(message.content || ""),
-            }}
-          />
-        );
+          );
+        }}
+      </>;
+    } else if (message.contentType.sameAs(ContentTypeReaction)) {
+      <>
+        {() => {
+          const reaction: Reaction = message.content as any;
+
+          return (
+            <div
+              className="text-sm leading-relaxed break-words whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{
+                __html: renderRichContent(reaction.content),
+              }}
+            />
+          );
+        }}
+      </>;
+    } else {
+      return (
+        <div
+          className="text-sm leading-relaxed break-words whitespace-pre-wrap"
+          dangerouslySetInnerHTML={{
+            __html: renderRichContent(message.content as any),
+          }}
+        />
+      );
     }
   };
 
@@ -339,10 +352,10 @@ export function MessageBubble({
               showAvatar ? "opacity-100" : "opacity-0"
             )}
           >
-            <UserPreviewPopup username={message.sender?.username || "unknown"}>
+            <UserPreviewPopup username={message.senderInboxId || "unknown"}>
               <div className="cursor-pointer">
                 <DomainAvatar
-                  domain={message.sender?.username || "unknown"}
+                  domain={message.senderInboxId || "unknown"}
                   size="xs"
                   className="h-6 w-6 md:h-8 md:w-8 hover:scale-105 transition-transform"
                 />
@@ -367,23 +380,6 @@ export function MessageBubble({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Reply-to message */}
-          {replyTo && (
-            <div
-              className={cn(
-                "mb-2 p-2 rounded-lg border-l-4 bg-muted/30 text-sm max-w-xs",
-                isOwn ? "border-l-primary ml-auto" : "border-l-secondary"
-              )}
-            >
-              <p className="text-muted-foreground text-xs font-medium">
-                {replyTo.sender?.username || "User"}
-              </p>
-              <p className="text-foreground truncate text-xs">
-                {replyTo.content || "Media message"}
-              </p>
-            </div>
-          )}
-
           {/* Pinned indicator */}
           {isPinned && (
             <div
@@ -411,7 +407,7 @@ export function MessageBubble({
             {/* Username for group chats */}
             {!isOwn && showAvatar && (
               <p className="text-xs font-medium mb-1 opacity-70">
-                {message.sender?.username}
+                {message.senderInboxId}
               </p>
             )}
 
@@ -425,11 +421,10 @@ export function MessageBubble({
                 isOwn ? "text-primary-foreground/60" : "text-muted-foreground"
               )}
             >
-              {message.isEdited && (
-                <span className="text-xs opacity-60">edited</span>
-              )}
               <span className="text-xs">
-                {moment(message.createdAt).format("HH:mm")}
+                {moment(
+                  Math.ceil(Number(formatUnits(message.sentAtNs, 6)))
+                ).format("HH:mm")}
               </span>
               {isOwn && (
                 <div className="flex items-center space-x-0.5">
@@ -456,15 +451,9 @@ export function MessageBubble({
                     <Reply className="h-4 w-4 mr-2" />
                     Reply
                   </DropdownMenuItem>
-                  {message.sender?.username === activeUsername && (
-                    <DropdownMenuItem onClick={() => onEdit?.(message)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem
                     onClick={() =>
-                      navigator.clipboard.writeText(message.content || "")
+                      navigator.clipboard.writeText(message.content as any)
                     }
                   >
                     <Copy className="h-4 w-4 mr-2" />
@@ -487,53 +476,10 @@ export function MessageBubble({
                       </>
                     )}
                   </DropdownMenuItem>
-                  {message.sender?.username === activeUsername && (
-                    <DropdownMenuItem
-                      onClick={handleDelete}
-                      className="text-destructive"
-                    >
-                      <Trash className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
-
-          {/* Reactions positioned at opposite end from tail */}
-          {message.reactions && message.reactions.length > 0 && (
-            <div
-              className={cn(
-                "absolute -bottom-2 z-10",
-                // Position reactions opposite to tail
-                isOwn ? "left-0" : "right-0"
-              )}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 px-2 text-xs rounded-full bg-background border shadow-sm hover:bg-muted transition-colors"
-                onClick={() => {
-                  setSelectedReactionEmoji("");
-                  setShowReactionUsers(true);
-                }}
-              >
-                {/* Show first 2 unique emojis */}
-                {Array.from(new Set(message.reactions.map((r) => r.emoji)))
-                  .slice(0, 2)
-                  .join("")}
-                {/* Show count - if more than 2 unique emojis, show +X format */}
-                {Array.from(new Set(message.reactions.map((r) => r.emoji)))
-                  .length > 2
-                  ? ` +${
-                      Array.from(new Set(message.reactions.map((r) => r.emoji)))
-                        .length - 2
-                    }`
-                  : ` ${message.reactions.length}`}
-              </Button>
-            </div>
-          )}
 
           {/* Reaction selector */}
           {showReactions && (
@@ -543,15 +489,15 @@ export function MessageBubble({
                 isOwn ? "right-0 translate-x-1/4" : "left-1/2"
               )}
             >
-              {reactions.map((reaction) => (
+              {reactions?.map((reaction, index) => (
                 <Button
-                  key={reaction.name}
+                  key={index}
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-lg hover:bg-accent rounded-full"
-                  onClick={() => handleReaction(reaction.emoji)}
+                  onClick={() => handleReaction(reaction.content)}
                 >
-                  {reaction.emoji}
+                  {reaction.content}
                 </Button>
               ))}
             </div>
@@ -598,13 +544,7 @@ export function MessageBubble({
       <ReactionUsersPopup
         isOpen={showReactionUsers}
         onClose={() => setShowReactionUsers(false)}
-        reactions={message.reactions || []}
-        messageId={message.id}
-        currentUserId={activeUsername}
-        onRemoveReaction={(reactionId) => {
-          // Handle reaction removal - this would need to be implemented in parent
-          console.log("Remove reaction:", reactionId);
-        }}
+        reactions={reactions || []}
       />
     </div>
   );

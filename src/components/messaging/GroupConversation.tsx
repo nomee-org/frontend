@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 
 // Third-party imports
 import { useParams, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 
 // UI component imports
 import { Button } from "@/components/ui/button";
@@ -24,18 +23,13 @@ import {
   Loader,
   ChevronDown,
   ArrowLeft,
-  Trash2,
-  VolumeX,
-  Volume2,
 } from "lucide-react";
 
 // Local component imports
 import { MessageInput } from "@/components/messaging/MessageInput";
-import { ParticipantsDialog } from "@/components/messaging/ParticipantsDialog";
 import { MessageList } from "@/components/messaging/MessageList";
 import { TypingIndicator } from "@/components/messaging/TypingIndicator";
 import { ConversationInfoModal } from "@/components/messaging/ConversationInfoModal";
-import { DeleteChatDialog } from "@/components/messaging/DeleteChatDialog";
 import { MuteConversationPopup } from "@/components/messaging/MuteConversationPopup";
 import { PinnedMessagesBar } from "@/components/messaging/PinnedMessagesBar";
 
@@ -48,10 +42,8 @@ import { usePinnedMessagesVisibility } from "@/hooks/use-pinned-messages-visibil
 // Service/data imports
 import {
   useGetConversation,
+  useGetConversationMembers,
   useGetMessages,
-  useDeleteConversation,
-  addMessageInCache,
-  useLastReadConversation,
 } from "@/data/use-backend";
 import {
   webSocketService,
@@ -59,21 +51,24 @@ import {
 } from "@/services/backend/socketservice";
 
 // Type imports
-import { IMessage } from "@/types/backend";
 import { RecordingIndicator } from "./RecordingIndicator";
+import { useXmtp } from "@/contexts/XmtpContext";
+import { Group } from "@xmtp/browser-sdk";
+import { MembersDialog } from "./MembersDialog";
+import { formatUnits } from "viem";
+import { backendService } from "@/services/backend/backendservice";
 
 const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [replyToId, setReplyToId] = useState<string | undefined>();
-  const [editingMessage, setEditingMessage] = useState<IMessage | undefined>();
-  const [showParticipants, setShowParticipants] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const [showConversationInfo, setShowConversationInfo] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
-  const { token, activeUsername } = useUsername();
-  const queryClient = useQueryClient();
+  const { activeUsername } = useUsername();
+  const { client } = useXmtp();
+
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
 
@@ -81,24 +76,23 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     data: conversation,
     isLoading: conversationLoading,
     error: conversationError,
-  } = useGetConversation(id, undefined, activeUsername);
+  } = useGetConversation(client, id, undefined, activeUsername);
 
   const {
     data: messagesData,
     isLoading: messagesLoading,
     error: messagesError,
     refetch: refetchMessages,
-    fetchNextPage,
-    hasNextPage,
-  } = useGetMessages(id, 50, activeUsername);
+  } = useGetMessages(conversation, 50, activeUsername);
 
-  const deleteConversation = useDeleteConversation();
-  const lastReadConversationMutation = useLastReadConversation();
+  const {
+    data: membersData,
+    isLoading: membersLoading,
+    error: membersError,
+    refetch: refetchMembers,
+  } = useGetConversationMembers(conversation, 50);
 
-  // Get current user's participant data to check mute status
-  const currentParticipant = conversation?.participants.find(
-    (p) => p.user.username === activeUsername
-  );
+  const currentMember = membersData?.find((m) => m.inboxId === client.inboxId);
 
   const {
     containerRef,
@@ -107,14 +101,14 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     scrollToBottom,
     scrollToMessage,
   } = useMessageScroll({
-    hasNextPage: hasNextPage || false,
-    fetchNextPage: () => hasNextPage && fetchNextPage(),
+    hasNextPage: false,
+    fetchNextPage: () => refetchMessages(),
     isFetchingNextPage: false,
-    messages: messagesData?.pages?.flatMap((p) => p.data) ?? [],
+    messages: messagesData ?? [],
     newMessageCount: 0,
   });
 
-  const pinnedMessages = conversation?.pinnedMessages ?? [];
+  const pinnedMessages = [];
   const isPinnedBarVisible = usePinnedMessagesVisibility({
     containerRef,
     hasPinnedMessages: pinnedMessages.length > 0,
@@ -122,36 +116,15 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
 
   useEffect(() => {
     if (conversation?.id) {
+      backendService.subscribeToConversation(conversation?.id);
       webSocketService.joinConversation(conversation.id);
     }
-  }, [token, conversation]);
+  }, [conversation]);
 
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "group-conversations",
-      onNewMessage: (newMessage) => {
-        if (conversation?.id) {
-          addMessageInCache(
-            queryClient,
-            newMessage,
-            conversation.id,
-            50,
-            activeUsername
-          );
-        }
-
-        refetchMessages();
-        onRefresh();
-      },
-      onMessageDeleted: ({ messageId }) => {
-        refetchMessages();
-        onRefresh();
-      },
-      onMessageReaction: (reaction) => {
-        refetchMessages();
-        onRefresh();
-      },
-      onMessageUpdated: (updatedMessage) => {
+      onMessageChanged: () => {
         refetchMessages();
         onRefresh();
       },
@@ -198,16 +171,6 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     return () => {
       webSocketService.removeEventHandlers(handlers);
     };
-  }, [conversation]);
-
-  useEffect(() => {
-    if (conversation?.id) {
-      lastReadConversationMutation.mutate(conversation.id);
-
-      return () => {
-        lastReadConversationMutation.mutate(conversation.id);
-      };
-    }
   }, [conversation]);
 
   if (conversationLoading) {
@@ -263,10 +226,10 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
             </div>
             <div>
               <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
-                {conversation.name || "Group Chat"}
+                {(conversation as Group).name || "Group Chat"}
               </h3>
               <p className="text-xs text-muted-foreground">
-                {conversation.participants.length} members
+                {membersData?.length} members
               </p>
             </div>
           </div>
@@ -276,7 +239,7 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowParticipants(true)}
+            onClick={() => setShowMembers(true)}
             className="h-7 w-7 md:h-8 md:w-8"
           >
             <Users className="h-3 w-3 md:h-4 md:w-4" />
@@ -299,7 +262,7 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
                 onClick={() => setShowMuteDialog(true)}
                 className="hover:bg-accent"
               >
-                {currentParticipant?.isMuted ? (
+                {/* {currentMember?.isMuted ? (
                   <>
                     <Volume2 className="h-4 w-4 mr-2" />
                     Unmute
@@ -309,14 +272,7 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
                     <VolumeX className="h-4 w-4 mr-2" />
                     Mute
                   </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-destructive focus:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Group
+                )} */}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -324,14 +280,14 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
       </div>
 
       {/* Pinned Messages Bar */}
-      <PinnedMessagesBar
-        pinnedMessages={pinnedMessages}
-        isVisible={isPinnedBarVisible}
-        onMessageClick={(messageId) => {
-          // Additional handling if needed
-        }}
-        containerRef={containerRef}
-      />
+      {conversation && (
+        <PinnedMessagesBar
+          conversation={conversation}
+          pinnedMessages={pinnedMessages}
+          isVisible={isPinnedBarVisible}
+          containerRef={containerRef}
+        />
+      )}
 
       {/* Messages */}
       <div
@@ -347,7 +303,7 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
           <div className="text-center text-red-500 text-xs md:text-sm">
             Failed to load messages
           </div>
-        ) : (messagesData?.pages?.[0]?.pagination.total ?? 0) === 0 ? (
+        ) : (messagesData?.length ?? 0) === 0 ? (
           <div className="text-center text-muted-foreground">
             <div className="space-y-1 md:space-y-2">
               <p className="text-xs md:text-sm">No messages yet</p>
@@ -359,17 +315,19 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
         ) : (
           <div className="space-y-0 px-2 md:px-0">
             <MessageList
+              conversation={conversation}
               messages={
-                messagesData?.pages
-                  ?.flatMap((p) => p.data)
-                  ?.sort(
-                    (a, b) =>
-                      new Date(a.createdAt).getTime() -
-                      new Date(b.createdAt).getTime()
-                  ) ?? []
+                messagesData?.sort(
+                  (a, b) =>
+                    new Date(
+                      Math.ceil(Number(formatUnits(a.sentAtNs, 6)))
+                    ).getTime() -
+                    new Date(
+                      Math.ceil(Number(formatUnits(b.sentAtNs, 6)))
+                    ).getTime()
+                ) ?? []
               }
               onReply={(messageId) => setReplyToId(messageId)}
-              onEdit={(message) => setEditingMessage(message)}
               onReplyClick={scrollToMessage}
               pinnedMessages={pinnedMessages}
             />
@@ -396,22 +354,10 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
 
       {/* Message Input */}
       <MessageInput
-        conversationId={id || ""}
+        conversation={conversation}
         replyToId={replyToId}
         onCancelReply={() => setReplyToId(undefined)}
-        editingMessage={
-          editingMessage
-            ? { id: editingMessage.id, content: editingMessage.content || "" }
-            : undefined
-        }
-        participants={conversation?.participants}
-        onTyping={(typing) => {
-          if (typing) {
-            webSocketService.startTyping(conversation?.id);
-          } else {
-            webSocketService.stopTyping(conversation?.id);
-          }
-        }}
+        members={membersData ?? []}
         onRecording={(typing) => {
           if (typing) {
             webSocketService.startTyping(conversation?.id);
@@ -419,49 +365,49 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
             webSocketService.stopTyping(conversation?.id);
           }
         }}
-        onCancelEdit={() => setEditingMessage(undefined)}
         onSendSuccess={() => {
           setReplyToId(undefined);
-          setEditingMessage(undefined);
           scrollToBottom();
+
+          setTimeout(() => {
+            refetchMessages();
+            backendService.onMessageSent(conversation?.id, client.inboxId);
+          }, 2000);
+
+          setTimeout(() => refetchMessages(), 5000);
         }}
       />
 
-      {/* Participants Dialog */}
-      <ParticipantsDialog
-        isOpen={showParticipants}
-        onClose={() => setShowParticipants(false)}
-        conversationId={id || ""}
-      />
+      {/* Members Dialog */}
+      {conversation && (
+        <MembersDialog
+          isOpen={showMembers}
+          onClose={() => setShowMembers(false)}
+          group={conversation as Group}
+          members={membersData ?? []}
+          membersLoading={membersLoading}
+        />
+      )}
 
       {/* Conversation Info Modal */}
-      <ConversationInfoModal
-        isOpen={showConversationInfo}
-        onClose={() => setShowConversationInfo(false)}
-        conversation={conversation}
-      />
-
-      {/* Delete Chat Dialog */}
-      <DeleteChatDialog
-        isOpen={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        conversationId={id || ""}
-        chatName={conversation?.name || "Group Chat"}
-        isGroup={true}
-        onConfirm={() => {
-          navigate("/");
-          onRefresh();
-        }}
-      />
+      {conversation && (
+        <ConversationInfoModal
+          conversation={conversation}
+          members={membersData ?? []}
+          messages={messagesData ?? []}
+          isOpen={showConversationInfo}
+          onClose={() => setShowConversationInfo(false)}
+        />
+      )}
 
       {/* Mute Conversation Popup */}
-      <MuteConversationPopup
+      {/* <MuteConversationPopup
         isOpen={showMuteDialog}
         onClose={() => setShowMuteDialog(false)}
-        isMuted={currentParticipant?.isMuted || false}
+        isMuted={currentMember?.isMuted || false}
         conversationId={id || ""}
         conversationName={conversation?.name || "group"}
-      />
+      /> */}
     </div>
   );
 };

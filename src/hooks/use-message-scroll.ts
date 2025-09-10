@@ -1,11 +1,11 @@
-import { IMessage } from "@/types/backend";
+import { DecodedMessage } from "@xmtp/browser-sdk";
 import { useEffect, useRef, useState, useCallback } from "react";
 
 interface UseMessageScrollOptions {
   hasNextPage?: boolean;
   fetchNextPage: () => void;
   isFetchingNextPage?: boolean;
-  messages: IMessage[];
+  messages: DecodedMessage[];
   newMessageCount: number;
 }
 
