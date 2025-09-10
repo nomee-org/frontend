@@ -1,6 +1,7 @@
 export interface IUser {
   id?: string;
   username: string;
+  inboxId?: string;
   email?: string;
   firstName?: string;
   lastName?: string;
@@ -246,26 +247,6 @@ export enum NotificationType {
   REPOST = "REPOST",
 }
 
-export enum ConversationType {
-  DIRECT = "DIRECT",
-  GROUP = "GROUP",
-}
-
-export enum ParticipantRole {
-  MEMBER = "MEMBER",
-  ADMIN = "ADMIN",
-  OWNER = "OWNER",
-}
-
-export enum MessageType {
-  TEXT = "TEXT",
-  IMAGE = "IMAGE",
-  VIDEO = "VIDEO",
-  VOICE = "VOICE",
-  FILE = "FILE",
-  STICKER = "STICKER",
-}
-
 export enum AdInteractionType {
   IMPRESSION = "IMPRESSION",
   CLICK = "CLICK",
@@ -375,6 +356,7 @@ export interface UpdateProfileDto {
   bio?: string;
   avatarUrl?: string;
   fcmToken?: string;
+  inboxId?: string;
 }
 
 export interface DeleteAccountDto {
@@ -385,38 +367,6 @@ export interface DeleteAccountDto {
 
 export interface UpdateInterestsDto {
   interests: string[];
-}
-
-export interface CreateConversationDto {
-  type: ConversationType;
-  name?: string;
-  description?: string;
-  participantUsernames: string[];
-}
-
-export interface UpdateConversationDto {
-  name?: string;
-  description?: string;
-  avatarUrl?: string;
-}
-
-export interface AddParticipantDto {
-  username: string;
-  role?: ParticipantRole;
-}
-
-export interface CreateMessageDto {
-  content?: string;
-  type?: MessageType;
-  replyToId?: string;
-}
-
-export interface UpdateMessageDto {
-  content?: string;
-}
-
-export interface AddReactionDto {
-  emoji: string;
 }
 
 export interface VotePollDto {
@@ -456,12 +406,7 @@ export interface AdInteractionDto {
   type: AdInteractionType;
 }
 
-export interface DecryptMessageDto {
-  password: string;
-}
-
 // WebSocket event types
-
 export interface SocketEventPayload<T> {
   event: string;
   data: T;

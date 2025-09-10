@@ -12,6 +12,7 @@ import {
   RemoteAttachmentCodec,
 } from "@xmtp/content-type-remote-attachment";
 import { ReplyCodec } from "@xmtp/content-type-reply";
+import { useUpdateProfile } from "@/data/use-backend";
 interface XmtpContextType {
   client: Client<string | any | Reaction> | null;
   identifier: Identifier | null;
@@ -27,19 +28,6 @@ interface XmtpProviderProps {
   children: ReactNode;
 }
 
-const ethersSigner = (client?: WalletClient) => {
-  if (!client) return undefined;
-
-  const { account, chain, transport } = client;
-  const network = {
-    chainId: chain.id,
-    name: chain.name,
-    ensAddress: chain.contracts?.ensRegistry?.address,
-  };
-  const provider = new BrowserProvider(transport as any, network);
-  return new JsonRpcSigner(provider, account.address);
-};
-
 export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   const { address } = useAccount();
   const { data: walletClient } = useWalletClient();
@@ -51,11 +39,9 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   );
   const [identifier, setIdentifier] = useState<Identifier | null>(null);
 
-  useEffect(() => {
-    disconnect();
-  }, [address]);
+  const updateProfileMutation = useUpdateProfile();
 
-  const signer = ethersSigner(walletClient);
+  useEffect(() => disconnect(), [address]);
 
   const connect = async () => {
     try {
@@ -75,34 +61,37 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
         identifierKind: "Ethereum",
       });
 
-      setClient(
-        await Client.create(
-          {
-            type: "SCW",
-            getIdentifier: () => ({
-              identifier: address.toLowerCase(),
-              identifierKind: "Ethereum",
-            }),
-            signMessage: async (message) => {
-              return toBytes(await signer.signMessage(message));
-            },
-            getChainId: () => BigInt(mainnet.id),
+      const xmtpClient = await Client.create(
+        {
+          type: "SCW",
+          getIdentifier: () => ({
+            identifier: address.toLowerCase(),
+            identifierKind: "Ethereum",
+          }),
+          signMessage: async (message) => {
+            return toBytes(
+              await walletClient.signMessage({ message, account: address })
+            );
           },
-          {
-            env: "dev",
-            appVersion: "nomee-app/1.0",
-            dbEncryptionKey: new Uint8Array(
-              import.meta.env.VITE_DB_ENCRYPTION_KEY.split(",").map(Number)
-            ),
-            codecs: [
-              new ReplyCodec(),
-              new ReactionCodec(),
-              new AttachmentCodec(),
-              new RemoteAttachmentCodec(),
-            ],
-          }
-        )
+          getChainId: () => BigInt(mainnet.id),
+        },
+        {
+          env: "dev",
+          appVersion: "nomee-app/1.0",
+          dbEncryptionKey: new Uint8Array(
+            import.meta.env.VITE_DB_ENCRYPTION_KEY.split(",").map(Number)
+          ),
+          codecs: [
+            new ReplyCodec(),
+            new ReactionCodec(),
+            new AttachmentCodec(),
+            new RemoteAttachmentCodec(),
+          ],
+        }
       );
+
+      setClient(xmtpClient);
+      updateProfileMutation.mutate({ inboxId: xmtpClient.inboxId });
 
       setIsLoading(false);
     } catch (error) {
