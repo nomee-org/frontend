@@ -63,6 +63,7 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [replyToId, setReplyToId] = useState<string | undefined>();
+  const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
   const [showMembers, setShowMembers] = useState(false);
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
@@ -91,8 +92,6 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     error: membersError,
     refetch: refetchMembers,
   } = useGetConversationMembers(conversation, 50);
-
-  const currentMember = membersData?.find((m) => m.inboxId === client.inboxId);
 
   const {
     containerRef,
@@ -327,7 +326,10 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
                     ).getTime()
                 ) ?? []
               }
-              onReply={(messageId) => setReplyToId(messageId)}
+              onReply={(message) => {
+                setReplyToId(message.id);
+                setReplyToInboxId(message.senderInboxId);
+              }}
               onReplyClick={scrollToMessage}
               pinnedMessages={pinnedMessages}
             />
@@ -356,6 +358,7 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
       <MessageInput
         conversation={conversation}
         replyToId={replyToId}
+        replyToInboxId={replyToInboxId}
         onCancelReply={() => setReplyToId(undefined)}
         members={membersData ?? []}
         onRecording={(typing) => {

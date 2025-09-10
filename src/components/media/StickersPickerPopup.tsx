@@ -29,7 +29,7 @@ import { Sticker } from "@/types/backend";
 interface StickersPickerPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  onStickerSelected: (stickerId: string) => void;
+  onStickerSelected: (sticker: Sticker) => void;
   embedded?: boolean;
 }
 
@@ -62,10 +62,9 @@ export function StickersPickerPopup({
     isError: recentError,
   } = useGetRecentStickers(20);
 
-  const handleStickerClick = (stickerId: string) => {
-    onStickerSelected(stickerId);
+  const handleStickerClick = (sticker: Sticker) => {
+    onStickerSelected(sticker);
     onClose();
-    toast.success("Sticker sent!");
   };
 
   const StickerGrid = ({
@@ -121,7 +120,7 @@ export function StickersPickerPopup({
             key={sticker.id}
             variant="ghost"
             className="h-16 w-16 p-2 hover:bg-muted rounded-xl transition-transform hover:scale-105"
-            onClick={() => handleStickerClick(sticker.id)}
+            onClick={() => handleStickerClick(sticker)}
           >
             <img
               src={sticker.url}

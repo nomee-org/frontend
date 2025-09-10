@@ -51,7 +51,7 @@ interface MessageBubbleProps {
   isOwn: boolean;
   showAvatar: boolean;
   showTail: boolean;
-  onReply?: (messageId: string) => void;
+  onReply?: (message: DecodedMessage) => void;
   onPin?: (messageId: string) => void;
   onReaction?: (messageId: string, emoji: string) => void;
   onUnpin?: (messageId: string) => void;
@@ -72,7 +72,6 @@ export function MessageBubble({
   isPinned,
   reactions,
 }: MessageBubbleProps) {
-  const { client } = useXmtp();
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [showReplyIcon, setShowReplyIcon] = useState(false);
@@ -122,7 +121,7 @@ export function MessageBubble({
     }
 
     if (!isOwn && dragOffset > 50 && onReply) {
-      onReply(message.id);
+      onReply(message);
     }
 
     setIsDragging(false);
@@ -148,7 +147,7 @@ export function MessageBubble({
     }
   };
 
-  const renderRichContent = (content: string) => {
+  const renderRichContent = (content?: string) => {
     if (!content) return "";
 
     // Convert newlines to <br> tags
@@ -180,118 +179,116 @@ export function MessageBubble({
 
   const renderMessageContent = () => {
     if (message.contentType.sameAs(ContentTypeRemoteAttachment)) {
-      <>
-        {async () => {
-          const attachment: RemoteAttachment = await RemoteAttachmentCodec.load(
-            message.content as any,
-            client
-          );
+      return (
+        <>
+          {(() => {
+            const attachment: RemoteAttachment = message.content as any;
 
-          if (attachment.url.includes("/images/")) {
+            if (attachment.filename.includes("image/")) {
+              return (
+                <div className="space-y-2">
+                  {attachment.url && (
+                    <img
+                      src={attachment.url}
+                      alt="Shared image"
+                      className="max-w-[min(100%,320px)] rounded-lg cursor-pointer"
+                      onClick={() => window.open(attachment.url, "_blank")}
+                    />
+                  )}
+                  {message.content && (
+                    <div
+                      className="text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: renderRichContent(attachment.filename),
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            }
+
+            if (attachment.filename.includes("video/")) {
+              return (
+                <div className="space-y-2">
+                  {attachment.url && (
+                    <video
+                      src={attachment.url}
+                      controls
+                      className="max-w-[min(100%,320px)] rounded-lg"
+                    />
+                  )}
+                  {message.content && (
+                    <div
+                      className="text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: renderRichContent(attachment.filename),
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            }
+
+            if (attachment.filename.includes("audio/")) {
+              return (
+                <div className="space-y-2">
+                  {attachment.url && (
+                    <audio
+                      src={attachment.url}
+                      controls
+                      className="max-w-[min(100%,320px)] rounded-lg"
+                    />
+                  )}
+                  {message.content && (
+                    <div
+                      className="text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: renderRichContent(attachment.filename),
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            }
+            if (attachment.filename.includes("sticker/")) {
+              return (
+                <div className="w-32 h-32">
+                  {attachment.url && (
+                    <img
+                      src={attachment.url}
+                      alt="Sticker"
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  )}
+                </div>
+              );
+            }
+
             return (
-              <div className="space-y-2">
-                {attachment.url && (
-                  <img
-                    src={attachment.url}
-                    alt="Shared image"
-                    className="max-w-[min(100%,320px)] rounded-lg cursor-pointer"
-                    onClick={() => window.open(attachment.url, "_blank")}
-                  />
-                )}
-                {message.content && (
-                  <div
-                    className="text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: renderRichContent(attachment.filename),
-                    }}
-                  />
-                )}
+              <div className="flex items-center space-x-3 bg-black/10 p-3 rounded-lg">
+                <div className="p-2 bg-white/10 rounded">
+                  <User className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{attachment.filename}</p>
+                  <p className="text-xs opacity-70">Document</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => window.open(attachment.url, "_blank")}
+                >
+                  Download
+                </Button>
               </div>
             );
-          }
-
-          if (attachment.url.includes("/videos/")) {
-            return (
-              <div className="space-y-2">
-                {attachment.url && (
-                  <video
-                    src={attachment.url}
-                    controls
-                    className="max-w-[min(100%,320px)] rounded-lg"
-                  />
-                )}
-                {message.content && (
-                  <div
-                    className="text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: renderRichContent(attachment.filename),
-                    }}
-                  />
-                )}
-              </div>
-            );
-          }
-
-          if (attachment.url.includes("/audios/")) {
-            return (
-              <div className="space-y-2">
-                {attachment.url && (
-                  <audio
-                    src={attachment.url}
-                    controls
-                    className="max-w-[min(100%,320px)] rounded-lg"
-                  />
-                )}
-                {message.content && (
-                  <div
-                    className="text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: renderRichContent(attachment.filename),
-                    }}
-                  />
-                )}
-              </div>
-            );
-          }
-
-          if (attachment.url.includes("/stickers/")) {
-            return (
-              <div className="w-32 h-32">
-                {attachment.url && (
-                  <img
-                    src={attachment.url}
-                    alt="Sticker"
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                )}
-              </div>
-            );
-          }
-
-          return (
-            <div className="flex items-center space-x-3 bg-black/10 p-3 rounded-lg">
-              <div className="p-2 bg-white/10 rounded">
-                <User className="h-4 w-4" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{attachment.filename}</p>
-                <p className="text-xs opacity-70">Document</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs"
-                onClick={() => window.open(attachment.url, "_blank")}
-              >
-                Download
-              </Button>
-            </div>
-          );
-        }}
-      </>;
+          })()}
+        </>
+      );
     } else if (message.contentType.sameAs(ContentTypeReaction)) {
       <>
-        {() => {
+        {(() => {
           const reaction: Reaction = message.content as any;
 
           return (
@@ -302,9 +299,9 @@ export function MessageBubble({
               }}
             />
           );
-        }}
+        })()}
       </>;
-    } else {
+    } else if (message.content) {
       return (
         <div
           className="text-sm leading-relaxed break-words whitespace-pre-wrap"
@@ -313,6 +310,8 @@ export function MessageBubble({
           }}
         />
       );
+    } else {
+      return null;
     }
   };
 
@@ -447,7 +446,7 @@ export function MessageBubble({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem onClick={() => onReply?.(message.id)}>
+                  <DropdownMenuItem onClick={() => onReply?.(message)}>
                     <Reply className="h-4 w-4 mr-2" />
                     Reply
                   </DropdownMenuItem>

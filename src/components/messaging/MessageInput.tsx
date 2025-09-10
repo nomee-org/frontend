@@ -24,16 +24,17 @@ import { useXmtp } from "@/contexts/XmtpContext";
 import {
   AttachmentCodec,
   ContentTypeRemoteAttachment,
-  RemoteAttachment,
   RemoteAttachmentCodec,
 } from "@xmtp/content-type-remote-attachment";
 import { backendService } from "@/services/backend/backendservice";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
+import { Sticker } from "@/types/backend";
 
 interface MessageInputProps {
   placeHolder?: string;
   conversation: Conversation;
   replyToId?: string;
+  replyToInboxId?: string;
   onCancelReply?: () => void;
   onSendSuccess?: () => void;
   onRecording?: (isRecording: boolean) => void;
@@ -44,6 +45,7 @@ export function MessageInput({
   placeHolder,
   conversation,
   replyToId,
+  replyToInboxId,
   onCancelReply,
   onSendSuccess,
   onRecording,
@@ -239,8 +241,7 @@ export function MessageInput({
           nonce: encryptedEncoded.nonce,
           secret: encryptedEncoded.secret,
           scheme: "https://",
-          filename: attachment.filename,
-          text: message,
+          filename: `${attachment.filename} - ${attachment.mimeType}`,
           contentLength: attachment.data.byteLength,
         };
 
@@ -252,9 +253,10 @@ export function MessageInput({
         const reply: Reply = {
           content: message,
           reference: replyToId,
-          referenceInboxId: "",
+          referenceInboxId: replyToInboxId,
           contentType: ContentTypeReply,
         };
+
         sendMessageMutation.mutate({
           content: reply,
           contentType: ContentTypeReply as any,
@@ -276,7 +278,7 @@ export function MessageInput({
   const handleVoiceRecorded = async (audioBlob: Blob, duration: number) => {
     try {
       const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, {
-        type: audioBlob.type,
+        type: "audio/webm",
       });
 
       const data: ArrayBuffer = await new Promise((resolve, reject) => {
@@ -311,10 +313,7 @@ export function MessageInput({
         nonce: encryptedEncoded.nonce,
         secret: encryptedEncoded.secret,
         scheme: "https://",
-        filename: attachment.filename,
-        text: `Voice message (${Math.floor(duration / 60)}:${(duration % 60)
-          .toString()
-          .padStart(2, "0")})`,
+        filename: `${attachment.filename} - ${attachment.mimeType}`,
         contentLength: attachment.data.byteLength,
       };
 
@@ -338,11 +337,34 @@ export function MessageInput({
     setSelectedMedia(files);
   };
 
-  const handleStickerSelected = async (stickerId: string) => {
+  const handleStickerSelected = async (sticker: Sticker) => {
     try {
-      // This would need to be implemented with the backend service
-      console.log("Sending sticker:", stickerId);
-      toast.success("Sticker sent!");
+      const attachment = {
+        filename: `${sticker.name}`,
+        mimeType: "sticker/nomee",
+        data: Uint8Array.from(sticker.url),
+      };
+
+      const encryptedEncoded = await RemoteAttachmentCodec.encodeEncrypted(
+        attachment,
+        new AttachmentCodec()
+      );
+
+      const remoteAttachment = {
+        url: sticker.url,
+        contentDigest: encryptedEncoded.digest,
+        salt: encryptedEncoded.salt,
+        nonce: encryptedEncoded.nonce,
+        secret: encryptedEncoded.secret,
+        scheme: "https://",
+        filename: `${attachment.filename} - ${attachment.mimeType}`,
+        contentLength: attachment.data.byteLength,
+      };
+
+      sendMessageMutation.mutate({
+        content: remoteAttachment,
+        contentType: ContentTypeRemoteAttachment as any,
+      });
 
       onSendSuccess?.();
       onCancelReply?.();

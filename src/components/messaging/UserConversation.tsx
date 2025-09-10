@@ -72,6 +72,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const isMobile = useIsMobile();
   const [showBidPopup, setShowBidPopup] = useState(false);
   const [replyToId, setReplyToId] = useState<string | undefined>();
+  const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
 
@@ -122,7 +123,6 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     error: messagesError,
     refetch: refetchMessages,
   } = useGetMessages(createConversation?.data, 50, activeUsername);
-  console.log(messagesData);
 
   const {
     containerRef,
@@ -344,7 +344,10 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
                     ).getTime()
                 ) ?? []
               }
-              onReply={(messageId) => setReplyToId(messageId)}
+              onReply={(message) => {
+                setReplyToId(message.id);
+                setReplyToInboxId(message.senderInboxId);
+              }}
               onReplyClick={scrollToMessage}
               pinnedMessages={pinnedMessages}
             />
@@ -374,6 +377,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
         placeHolder={initMessage || ""}
         conversation={createConversation?.data}
         replyToId={replyToId}
+        replyToInboxId={replyToInboxId}
         onCancelReply={() => setReplyToId(undefined)}
         onRecording={(recording) => {
           if (recording) {

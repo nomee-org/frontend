@@ -1366,14 +1366,7 @@ export function useDeleteNotification() {
 }
 
 export function useUploadMedia() {
-  return useMutation<
-    {
-      files: MediaUploadResponse[];
-      count: number;
-    },
-    Error,
-    { files: File[] }
-  >({
+  return useMutation<string[], Error, { files: File[] }>({
     mutationFn: ({ files }) => backendService.uploadMultipleFiles(files),
   });
 }

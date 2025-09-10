@@ -18,7 +18,7 @@ import { ContentTypeReply } from "@xmtp/content-type-reply";
 interface MessageListProps {
   conversation: Conversation;
   messages: DecodedMessage[];
-  onReply?: (messageId: string) => void;
+  onReply?: (message: DecodedMessage) => void;
   onPin?: (messageId: string) => void;
   onUnpin?: (messageId: string) => void;
   onDelete?: (messageId: string) => void;
