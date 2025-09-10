@@ -55,7 +55,6 @@ import { useHelper } from "@/hooks/use-helper";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { modal } from "@/configs/reown";
@@ -79,7 +78,7 @@ const Settings = () => {
   const { addresses } = useAccount();
   const { walletInfo } = useWalletInfo();
   const { trimAddress } = useHelper();
-  const { activeUsername, profile } = useUsername();
+  const { activeUsername, profile, refetchProfile } = useUsername();
   const isMobile = useIsMobile();
 
   const updateProfileMutation = useUpdateProfile();
@@ -163,6 +162,8 @@ const Settings = () => {
             await updateProfileMutation.mutateAsync({ fcmToken: token });
             toast.success("Push notifications enabled successfully");
           }
+
+          refetchProfile();
         } catch (error) {
           console.error("Error getting FCM token:", error);
           toast.error("Failed to setup push notifications");
@@ -219,6 +220,8 @@ const Settings = () => {
         await updateProfileMutation.mutateAsync({ fcmToken: token });
         toast.success("FCM token generated and saved successfully");
         setShowFcmDialog(false);
+
+        refetchProfile();
       } else {
         toast.error("Failed to generate FCM token");
       }
@@ -229,10 +232,6 @@ const Settings = () => {
       setIsGeneratingToken(false);
     }
   };
-
-  // Check if user has notification permission granted
-  const hasNotificationPermissionGranted =
-    permissionStatus.pushNotifications === "granted";
 
   return (
     <div className="max-w-7xl mx-auto p-content space-content">

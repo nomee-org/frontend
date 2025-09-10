@@ -1,7 +1,6 @@
 importScripts("https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js");
 
-// Initialize the Firebase app in the service worker
 firebase.initializeApp({
     apiKey: "AIzaSyAaPUnX7EIs6ny0FQAUwzXyV-eIZ18YzFc",
     authDomain: "nomee-91730.firebaseapp.com",
@@ -19,6 +18,6 @@ messaging.onBackgroundMessage((payload) => {
 
     self.registration.showNotification(payload.notification.title, {
         body: payload.notification.body,
-        icon: "/logo192.png", // adjust if needed
+        icon: "/images/logo.png",
     });
 });
