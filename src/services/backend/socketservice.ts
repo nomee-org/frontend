@@ -14,6 +14,7 @@ export interface WebSocketConfig {
   url: string;
   token?: string;
   username?: string;
+  address?: string;
   autoReconnect?: boolean;
   reconnectAttempts?: number;
   reconnectDelay?: number;
@@ -48,14 +49,14 @@ export interface WebSocketEventHandlers {
   onNewFollower?: (follower: IUserBasic) => void;
   onFollowingStatusUpdate?: (update: { username: string }) => void;
 
-  onUserTyping?: (data: { inboxId: string; conversationId: string }) => void;
+  onUserTyping?: (data: { address: string; conversationId: string }) => void;
   onUserStoppedTyping?: (data: {
-    inboxId: string;
+    address: string;
     conversationId: string;
   }) => void;
-  onUserRecording?: (data: { inboxId: string; conversationId: string }) => void;
+  onUserRecording?: (data: { address: string; conversationId: string }) => void;
   onUserStoppedRecording?: (data: {
-    inboxId: string;
+    address: string;
     conversationId: string;
   }) => void;
 
@@ -205,7 +206,7 @@ class WebSocketService {
     if (this.socket && this.isAuthenticated) {
       this.socket.emit("typing-start", {
         conversationId,
-        username: this.config.username,
+        address: this.config.address,
       });
     }
   }
@@ -214,7 +215,7 @@ class WebSocketService {
     if (this.socket && this.isAuthenticated) {
       this.socket.emit("typing-stop", {
         conversationId,
-        username: this.config.username,
+        address: this.config.address,
       });
     }
   }
@@ -223,7 +224,7 @@ class WebSocketService {
     if (this.socket && this.isAuthenticated) {
       this.socket.emit("recording-start", {
         conversationId,
-        username: this.config.username,
+        address: this.config.address,
       });
     }
   }
@@ -232,7 +233,7 @@ class WebSocketService {
     if (this.socket && this.isAuthenticated) {
       this.socket.emit("recording-stop", {
         conversationId,
-        username: this.config.username,
+        address: this.config.address,
       });
     }
   }
@@ -348,28 +349,28 @@ class WebSocketService {
 
     this.socket.on(
       "user-typing",
-      (data: { inboxId: string; conversationId: string }) => {
+      (data: { address: string; conversationId: string }) => {
         this.handlers.forEach((handler) => handler.onUserTyping?.(data));
       }
     );
 
     this.socket.on(
       "user-stopped-typing",
-      (data: { inboxId: string; conversationId: string }) => {
+      (data: { address: string; conversationId: string }) => {
         this.handlers.forEach((handler) => handler.onUserStoppedTyping?.(data));
       }
     );
 
     this.socket.on(
       "user-recording",
-      (data: { inboxId: string; conversationId: string }) => {
+      (data: { address: string; conversationId: string }) => {
         this.handlers.forEach((handler) => handler.onUserRecording?.(data));
       }
     );
 
     this.socket.on(
       "user-stopped-recording",
-      (data: { inboxId: string; conversationId: string }) => {
+      (data: { address: string; conversationId: string }) => {
         this.handlers.forEach((handler) =>
           handler.onUserStoppedRecording?.(data)
         );

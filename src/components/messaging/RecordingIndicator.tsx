@@ -1,16 +1,24 @@
+import { useNameResolver } from "@/contexts/NicknameContext";
+
 interface RecordingIndicatorProps {
-  usernames: string[];
+  addresses: string[];
 }
 
-export function RecordingIndicator({ usernames }: RecordingIndicatorProps) {
-  if (usernames.length === 0) return null;
+export function RecordingIndicator({ addresses }: RecordingIndicatorProps) {
+  const { nickname } = useNameResolver();
+
+  if (addresses.length === 0) return null;
 
   const displayText =
-    usernames.length === 1
-      ? `${usernames[0]} is recording...`
-      : usernames.length === 2
-      ? `${usernames[0]} and ${usernames[1]} are recording...`
-      : `${usernames[0]} and ${usernames.length - 1} others are recording...`;
+    addresses.length === 1
+      ? `${nickname(addresses[0])} is recording...`
+      : addresses.length === 2
+      ? `${nickname(addresses[0])} and ${nickname(
+          addresses[1]
+        )} are recording...`
+      : `${nickname(addresses[0])} and ${
+          addresses.length - 1
+        } others are recording...`;
 
   return (
     <div className="flex items-center space-x-2 px-4 py-2 text-muted-foreground">

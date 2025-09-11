@@ -60,6 +60,7 @@ const GroupConversation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { address: myAddress } = useAccount();
   const [replyToId, setReplyToId] = useState<string | undefined>();
   const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
   const [showMembers, setShowMembers] = useState(false);
@@ -143,34 +144,34 @@ const GroupConversation = () => {
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "group-conversations",
-      onUserTyping: ({ inboxId, conversationId }) => {
-        if (conversationId === conversation?.id && inboxId !== client.inboxId) {
+      onUserTyping: ({ address, conversationId }) => {
+        if (conversationId === conversation?.id && address !== myAddress) {
           setTypingUsers((prev) => {
-            if (!prev.includes(inboxId)) {
-              return [...prev, inboxId];
+            if (!prev.includes(address)) {
+              return [...prev, address];
             }
             return prev;
           });
         }
       },
-      onUserStoppedTyping: ({ inboxId, conversationId }) => {
+      onUserStoppedTyping: ({ address, conversationId }) => {
         if (conversationId === conversation?.id) {
-          setTypingUsers((prev) => prev.filter((u) => u !== inboxId));
+          setTypingUsers((prev) => prev.filter((u) => u !== address));
         }
       },
-      onUserRecording: ({ inboxId, conversationId }) => {
-        if (conversationId === conversation?.id && inboxId !== client.inboxId) {
+      onUserRecording: ({ address, conversationId }) => {
+        if (conversationId === conversation?.id && address !== myAddress) {
           setRecordingUsers((prev) => {
-            if (!prev.includes(inboxId)) {
-              return [...prev, inboxId];
+            if (!prev.includes(address)) {
+              return [...prev, address];
             }
             return prev;
           });
         }
       },
-      onUserStoppedRecording: ({ inboxId, conversationId }) => {
+      onUserStoppedRecording: ({ address, conversationId }) => {
         if (conversationId === conversation?.id) {
-          setRecordingUsers((prev) => prev.filter((u) => u !== inboxId));
+          setRecordingUsers((prev) => prev.filter((u) => u !== address));
         }
       },
     };
@@ -347,10 +348,10 @@ const GroupConversation = () => {
         )}
 
         {/* Typing Indicator */}
-        <TypingIndicator usernames={typingUsers} />
+        <TypingIndicator addresses={typingUsers} />
 
         {/* Recording Indicator */}
-        <RecordingIndicator usernames={recordingUsers} />
+        <RecordingIndicator addresses={recordingUsers} />
 
         {/* Scroll to bottom button */}
         {!isNearBottom && (
