@@ -272,8 +272,7 @@ export function MessageInput({
 
       await conversation.publishMessages();
     } catch (error) {
-      console.log(error);
-      toast.error(error?.message ?? "Failed to send message");
+      // toast.error(error?.message ?? "Failed to send message");
     } finally {
       setIsSending(false);
     }

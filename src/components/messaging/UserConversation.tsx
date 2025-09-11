@@ -63,7 +63,9 @@ const UserConversation = () => {
 
   const initMessage = params.get("message");
 
-  const { username } = useParams<{ username: string }>();
+  const { username: usernameOrAddressOrConverationId } = useParams<{
+    username: string;
+  }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -72,10 +74,7 @@ const UserConversation = () => {
   const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
-  const [peerInboxId, setPeerInboxId] = useState<string | undefined>(undefined);
-  const [otherAddress, setOtherAddress] = useState<string | undefined>(
-    undefined
-  );
+  const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
 
   const { client, newMessage, clearNewMessage } = useXmtp();
   const { nickname, setNickname } = useNameResolver();
@@ -92,31 +91,38 @@ const UserConversation = () => {
     undefined
   );
 
-  const createConversation = async () => {
+  const getOrCreateConversation = async (inboxId: string, address?: string) => {
     setIsLoading(true);
 
     try {
-      let dm = await client.conversations.getDmByInboxId(peerInboxId);
+      let dm: Dm | undefined = undefined;
 
-      if (!dm) {
-        dm = await client.conversations.newDm(peerInboxId);
+      if (inboxId) {
+        dm = await client.conversations.getDmByInboxId(inboxId);
       }
 
-      // dm.send("Test");
+      if (!dm) {
+        if (address) {
+          const canMessage = await client.canMessage([
+            {
+              identifier: address.toLowerCase(),
+              identifierKind: "Ethereum",
+            },
+          ]);
+
+          if (!canMessage.get(address.toLowerCase())) {
+            throw new Error("Cannot message.");
+          }
+        }
+
+        dm = await client.conversations.newDm(inboxId);
+      }
 
       setConversation(dm);
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (peerInboxId) {
-      createConversation();
-    }
-  }, [peerInboxId]);
 
   useEffect(() => {
     if (newMessage && newMessage.conversationId === conversation?.id) {
@@ -141,44 +147,49 @@ const UserConversation = () => {
     }
   }, [conversation]);
 
-  const getPeerInboxId = async () => {
+  const init = async () => {
     try {
-      if (username.includes(".")) {
-        const otherName = await dataService.getName({ name: username });
-        const otherAddress = parseCAIP10(otherName.claimedBy).address;
-
-        const canMessage = await client.canMessage([
-          {
-            identifier: otherAddress.toLowerCase(),
-            identifierKind: "Ethereum",
-          },
-        ]);
-
-        if (!canMessage.get(otherAddress.toLowerCase())) {
-          throw new Error("Cannot message.");
-        }
+      if (usernameOrAddressOrConverationId.includes(".")) {
+        const otherName = await dataService.getName({
+          name: usernameOrAddressOrConverationId,
+        });
+        const peerAddress = parseCAIP10(otherName.claimedBy).address;
 
         const inboxId = await client.findInboxIdByIdentifier({
-          identifier: otherAddress.toLowerCase(),
+          identifier: peerAddress.toLowerCase(),
           identifierKind: "Ethereum",
         });
 
-        setNickname(inboxId, username);
-        setOtherAddress(otherAddress);
-        setPeerInboxId(inboxId);
+        setNickname(inboxId, usernameOrAddressOrConverationId);
+
+        await getOrCreateConversation(inboxId);
+      } else if (usernameOrAddressOrConverationId.startsWith("0x")) {
+        const inboxId = await client.findInboxIdByIdentifier({
+          identifier: usernameOrAddressOrConverationId.toLowerCase(),
+          identifierKind: "Ethereum",
+        });
+
+        await getOrCreateConversation(
+          inboxId,
+          usernameOrAddressOrConverationId
+        );
       } else {
-        setPeerInboxId(username);
+        setConversation(
+          await client.conversations.getConversationById(
+            usernameOrAddressOrConverationId
+          )
+        );
       }
     } catch (error) {
       toast.error(error?.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (username && client?.inboxId) {
-      getPeerInboxId();
-    }
-  }, [username, client?.inboxId]);
+    if (client?.inboxId) init();
+  }, [usernameOrAddressOrConverationId, client?.inboxId]);
 
   const {
     containerRef,
@@ -209,40 +220,34 @@ const UserConversation = () => {
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "user-conversations",
-      onUserTyping: ({ username, conversationId }) => {
-        if (
-          conversationId === conversation?.id &&
-          username !== client.inboxId
-        ) {
+      onUserTyping: ({ inboxId, conversationId }) => {
+        if (conversationId === conversation?.id && inboxId !== client.inboxId) {
           setTypingUsers((prev) => {
-            if (!prev.includes(username)) {
-              return [...prev, username];
+            if (!prev.includes(inboxId)) {
+              return [...prev, inboxId];
             }
             return prev;
           });
         }
       },
-      onUserStoppedTyping: ({ username, conversationId }) => {
+      onUserStoppedTyping: ({ inboxId, conversationId }) => {
         if (conversationId === conversation?.id) {
-          setTypingUsers((prev) => prev.filter((u) => u !== username));
+          setTypingUsers((prev) => prev.filter((u) => u !== inboxId));
         }
       },
-      onUserRecording: ({ username, conversationId }) => {
-        if (
-          conversationId === conversation?.id &&
-          username !== client.inboxId
-        ) {
+      onUserRecording: ({ inboxId, conversationId }) => {
+        if (conversationId === conversation?.id && inboxId !== client.inboxId) {
           setRecordingUsers((prev) => {
-            if (!prev.includes(username)) {
-              return [...prev, username];
+            if (!prev.includes(inboxId)) {
+              return [...prev, inboxId];
             }
             return prev;
           });
         }
       },
-      onUserStoppedRecording: ({ username, conversationId }) => {
+      onUserStoppedRecording: ({ inboxId, conversationId }) => {
         if (conversationId === conversation?.id) {
-          setRecordingUsers((prev) => prev.filter((u) => u !== username));
+          setRecordingUsers((prev) => prev.filter((u) => u !== inboxId));
         }
       },
     };
@@ -265,7 +270,7 @@ const UserConversation = () => {
     );
   }
 
-  if (!peerInboxId) {
+  if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
@@ -305,13 +310,13 @@ const UserConversation = () => {
           >
             <div className="relative">
               <DomainAvatar
-                domain={nickname(peerInboxId ?? username)}
+                domain={nickname(peerAddress)}
                 className="h-8 w-8 md:h-10 md:w-10"
               />
             </div>
             <div>
               <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
-                {nickname(peerInboxId ?? username) || "Unknown User"}
+                {nickname(peerAddress)}
               </h3>
               <OnlineStatus isOnline={true} className="mt-0.5" />
             </div>
@@ -460,12 +465,12 @@ const UserConversation = () => {
       />
 
       {/* Bid Message Popup */}
-      {otherAddress && conversation && (
+      {peerAddress && conversation && (
         <BidMessagePopup
           conversation={conversation}
           isOpen={showBidPopup}
           onClose={() => setShowBidPopup(false)}
-          recipientAddress={otherAddress}
+          recipientAddress={peerAddress}
         />
       )}
 

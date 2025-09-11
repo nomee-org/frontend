@@ -21,24 +21,25 @@ export function useNameResolver() {
   }, [users]);
 
   const nickname = React.useCallback(
-    (inboxId: string): string => {
-      if (inboxId?.toLowerCase() === client?.inboxId?.toLowerCase())
+    (address?: string): string => {
+      if (!address) return "Unkwown";
+      if (address?.toLowerCase() === client?.inboxId?.toLowerCase())
         return "You";
-      return users[inboxId] ?? inboxId;
+      return users[address] ?? address;
     },
     [client?.inboxId, users]
   );
 
-  const setNickname = React.useCallback((inboxId: string, name: string) => {
+  const setNickname = React.useCallback((address: string, name: string) => {
     setUsers((prev) => ({
       ...prev,
-      [inboxId]: name,
+      [address]: name,
     }));
   }, []);
 
-  const clearNickname = React.useCallback((inboxId: string) => {
+  const clearNickname = React.useCallback((address: string) => {
     setUsers((prev) => {
-      const { [inboxId]: _, ...rest } = prev;
+      const { [address]: _, ...rest } = prev;
       return rest;
     });
   }, []);

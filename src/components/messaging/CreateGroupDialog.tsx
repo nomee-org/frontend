@@ -94,10 +94,10 @@ export function CreateGroupDialog({
 
   const addUser = async (username: string) => {
     const otherName = await dataService.getName({ name: username });
-    const otherAddress = parseCAIP10(otherName.claimedBy).address;
+    const peerAddress = parseCAIP10(otherName.claimedBy).address;
 
     const inboxId = await client.findInboxIdByIdentifier({
-      identifier: otherAddress,
+      identifier: peerAddress,
       identifierKind: "Ethereum",
     });
 

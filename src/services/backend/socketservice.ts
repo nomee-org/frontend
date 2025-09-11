@@ -48,17 +48,14 @@ export interface WebSocketEventHandlers {
   onNewFollower?: (follower: IUserBasic) => void;
   onFollowingStatusUpdate?: (update: { username: string }) => void;
 
-  onUserTyping?: (data: { username: string; conversationId: string }) => void;
+  onUserTyping?: (data: { inboxId: string; conversationId: string }) => void;
   onUserStoppedTyping?: (data: {
-    username: string;
+    inboxId: string;
     conversationId: string;
   }) => void;
-  onUserRecording?: (data: {
-    username: string;
-    conversationId: string;
-  }) => void;
+  onUserRecording?: (data: { inboxId: string; conversationId: string }) => void;
   onUserStoppedRecording?: (data: {
-    username: string;
+    inboxId: string;
     conversationId: string;
   }) => void;
 
@@ -351,28 +348,28 @@ class WebSocketService {
 
     this.socket.on(
       "user-typing",
-      (data: { username: string; conversationId: string }) => {
+      (data: { inboxId: string; conversationId: string }) => {
         this.handlers.forEach((handler) => handler.onUserTyping?.(data));
       }
     );
 
     this.socket.on(
       "user-stopped-typing",
-      (data: { username: string; conversationId: string }) => {
+      (data: { inboxId: string; conversationId: string }) => {
         this.handlers.forEach((handler) => handler.onUserStoppedTyping?.(data));
       }
     );
 
     this.socket.on(
       "user-recording",
-      (data: { username: string; conversationId: string }) => {
+      (data: { inboxId: string; conversationId: string }) => {
         this.handlers.forEach((handler) => handler.onUserRecording?.(data));
       }
     );
 
     this.socket.on(
       "user-stopped-recording",
-      (data: { username: string; conversationId: string }) => {
+      (data: { inboxId: string; conversationId: string }) => {
         this.handlers.forEach((handler) =>
           handler.onUserStoppedRecording?.(data)
         );

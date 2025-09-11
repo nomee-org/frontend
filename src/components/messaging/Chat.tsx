@@ -18,21 +18,25 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
   const [lastMessageAt, setLastMessageAt] = useState<Date | undefined>(
     undefined
   );
-  const [peerInboxId, setPeerInboxId] = useState<string | undefined>(undefined);
+  const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
 
   const navigate = useNavigate();
 
   const isSelected =
     conversation.metadata.conversationType === "group"
       ? location.pathname.includes(`/messages/groups/${conversation?.id}`)
-      : peerInboxId &&
-        location.pathname.includes(`/messages/${nickname(peerInboxId)}`);
+      : peerAddress &&
+        location.pathname.includes(
+          `/messages/${peerAddress ? nickname(peerAddress) : conversation.id}`
+        );
 
   const handleConversationClick = (conversation: Conversation) => {
     if (conversation.metadata.conversationType === "group") {
       navigate(`/groups/${conversation.id}`);
-    } else if (peerInboxId) {
-      navigate(`/messages/${nickname(peerInboxId)}`);
+    } else {
+      navigate(
+        `/messages/${peerAddress ? nickname(peerAddress) : conversation.id}`
+      );
     }
   };
 
@@ -104,13 +108,22 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
     }
   }, [newMessage]);
 
-  const getLastMessages = async () => {
+  const getPeerAddress = async () => {
     try {
       if (conversation.metadata.conversationType === "dm") {
         const peerInboxId = await (conversation as Dm).peerInboxId();
-        setPeerInboxId(peerInboxId);
+        const state = await client.preferences.inboxStateFromInboxIds([
+          peerInboxId,
+        ]);
+        setPeerAddress(state?.[0]?.identifiers?.[0]?.identifier);
       }
+    } catch (error) {
+      setPeerAddress(undefined);
+    }
+  };
 
+  const getLastMessages = async () => {
+    try {
       const messages = await conversation.messages();
       if (messages?.length) {
         const latestMessage = Array.from(messages).reverse();
@@ -124,6 +137,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
   };
 
   useEffect(() => {
+    getPeerAddress();
     getLastMessages();
   }, [conversation]);
 
@@ -144,7 +158,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
           ) : (
             <div className="relative">
               <DomainAvatar
-                domain={nickname(peerInboxId ?? conversation.id)}
+                domain={nickname(peerAddress)}
                 className="h-12 w-12 ring-2 ring-background shadow-sm"
               />
               {/* {otherUser?.isOnline && (
@@ -160,7 +174,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
               <h3 className="font-semibold text-sm truncate text-foreground max-w-40">
                 {conversation.metadata.conversationType === "group"
                   ? (conversation as Group).name
-                  : nickname(peerInboxId ?? conversation.id)}
+                  : nickname(peerAddress)}
               </h3>
               {/* {otherUser?.isOnline && (
                                 <span className="text-xs text-green-600 font-medium">

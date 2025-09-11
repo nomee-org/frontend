@@ -110,8 +110,7 @@ export const MessageList = ({
 
       await conversation.publishMessages();
     } catch (error) {
-      console.error("Failed to react to message:", error);
-      toast.error("Failed to react to message");
+      // toast.error("Failed to react to message");
     }
   };
 

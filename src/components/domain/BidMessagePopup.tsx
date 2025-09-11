@@ -113,12 +113,11 @@ const BidMessagePopup = ({
 
       await conversation.publishMessages();
     } catch (error) {
-      console.error("Error sending bid message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to send bid message. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to send bid message. Please try again.",
+      //   variant: "destructive",
+      // });
     } finally {
       setIsSubmitting(false);
     }

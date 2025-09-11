@@ -165,10 +165,10 @@ export function OfferPopup({
 
         if (message.trim()) {
           const otherName = await dataService.getName({ name: domainName });
-          const otherAddress = parseCAIP10(otherName.claimedBy).address;
+          const peerAddress = parseCAIP10(otherName.claimedBy).address;
 
           const inboxId = await xmtpClient.findInboxIdByIdentifier({
-            identifier: otherAddress,
+            identifier: peerAddress,
             identifierKind: "Ethereum",
           });
 
@@ -192,7 +192,7 @@ export function OfferPopup({
         }
       }
     } catch (error) {
-      toast.error(error?.message);
+      // toast.error(error?.message);
     }
   };
 

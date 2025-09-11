@@ -34,7 +34,6 @@ import { MuteConversationPopup } from "@/components/messaging/MuteConversationPo
 import { PinnedMessagesBar } from "@/components/messaging/PinnedMessagesBar";
 
 // Hook imports
-import { useUsername } from "@/hooks/use-username";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMessageScroll } from "@/hooks/use-message-scroll";
 import { usePinnedMessagesVisibility } from "@/hooks/use-pinned-messages-visibility";
@@ -55,6 +54,7 @@ import { useXmtp } from "@/contexts/XmtpContext";
 import { DecodedMessage, Group } from "@xmtp/browser-sdk";
 import { MembersDialog } from "./MembersDialog";
 import { formatUnits } from "viem";
+import { useAccount } from "wagmi";
 
 const GroupConversation = () => {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +65,6 @@ const GroupConversation = () => {
   const [showMembers, setShowMembers] = useState(false);
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
-  const { activeUsername } = useUsername();
   const { client, newMessage, clearNewMessage } = useXmtp();
 
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -81,7 +80,7 @@ const GroupConversation = () => {
     data: conversation,
     isLoading: conversationLoading,
     error: conversationError,
-  } = useGetConversation(client, id, undefined, activeUsername);
+  } = useGetConversation(client, id, undefined);
 
   const {
     data: membersData,
@@ -142,40 +141,34 @@ const GroupConversation = () => {
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "group-conversations",
-      onUserTyping: ({ username, conversationId }) => {
-        if (
-          conversationId === conversation?.id &&
-          username !== activeUsername
-        ) {
+      onUserTyping: ({ inboxId, conversationId }) => {
+        if (conversationId === conversation?.id && inboxId !== client.inboxId) {
           setTypingUsers((prev) => {
-            if (!prev.includes(username)) {
-              return [...prev, username];
+            if (!prev.includes(inboxId)) {
+              return [...prev, inboxId];
             }
             return prev;
           });
         }
       },
-      onUserStoppedTyping: ({ username, conversationId }) => {
+      onUserStoppedTyping: ({ inboxId, conversationId }) => {
         if (conversationId === conversation?.id) {
-          setTypingUsers((prev) => prev.filter((u) => u !== username));
+          setTypingUsers((prev) => prev.filter((u) => u !== inboxId));
         }
       },
-      onUserRecording: ({ username, conversationId }) => {
-        if (
-          conversationId === conversation?.id &&
-          username !== activeUsername
-        ) {
+      onUserRecording: ({ inboxId, conversationId }) => {
+        if (conversationId === conversation?.id && inboxId !== client.inboxId) {
           setRecordingUsers((prev) => {
-            if (!prev.includes(username)) {
-              return [...prev, username];
+            if (!prev.includes(inboxId)) {
+              return [...prev, inboxId];
             }
             return prev;
           });
         }
       },
-      onUserStoppedRecording: ({ username, conversationId }) => {
+      onUserStoppedRecording: ({ inboxId, conversationId }) => {
         if (conversationId === conversation?.id) {
-          setRecordingUsers((prev) => prev.filter((u) => u !== username));
+          setRecordingUsers((prev) => prev.filter((u) => u !== inboxId));
         }
       },
     };

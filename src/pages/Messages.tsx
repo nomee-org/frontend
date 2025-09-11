@@ -51,6 +51,8 @@ const Messages = () => {
     Error | undefined
   >(undefined);
 
+  useEffect(() => navigate("/"), [client?.inboxId]);
+
   useEffect(() => {
     let streamController: AsyncIterator<any, any, any> | undefined;
 
