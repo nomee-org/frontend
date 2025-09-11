@@ -247,7 +247,10 @@ export function MessageInput({
           contentLength: attachment.data.byteLength,
         };
 
-        await conversation.send(remoteAttachment, ContentTypeRemoteAttachment);
+        await conversation.sendOptimistic(
+          remoteAttachment,
+          ContentTypeRemoteAttachment
+        );
       } else if (replyToId) {
         const reply: Reply = {
           content: message,
@@ -256,9 +259,9 @@ export function MessageInput({
           contentType: ContentTypeReply,
         };
 
-        await conversation.send(reply, ContentTypeReply);
+        await conversation.sendOptimistic(reply, ContentTypeReply);
       } else {
-        await conversation.send(message, ContentTypeText);
+        await conversation.sendOptimistic(message, ContentTypeText);
       }
 
       setMessage("");
@@ -266,10 +269,11 @@ export function MessageInput({
       handleTypingStop(); // Stop typing when message is sent
       onSendSuccess?.();
       onCancelReply?.();
+
+      await conversation.publishMessages();
     } catch (error) {
       console.log(error);
-
-      // toast.error(error?.message ?? "Failed to send message");
+      toast.error(error?.message ?? "Failed to send message");
     } finally {
       setIsSending(false);
     }
@@ -317,10 +321,15 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      await conversation.send(remoteAttachment, ContentTypeRemoteAttachment);
+      await conversation.sendOptimistic(
+        remoteAttachment,
+        ContentTypeRemoteAttachment
+      );
 
       onSendSuccess?.();
       onCancelReply?.();
+
+      await conversation.publishMessages();
     } catch (error) {
       // toast.error("Failed to send voice message");
     }
@@ -358,10 +367,15 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      await conversation.send(remoteAttachment, ContentTypeRemoteAttachment);
+      await conversation.sendOptimistic(
+        remoteAttachment,
+        ContentTypeRemoteAttachment
+      );
 
       onSendSuccess?.();
       onCancelReply?.();
+
+      await conversation.publishMessages();
     } catch (error) {
       // toast.error("Failed to send sticker");
     }

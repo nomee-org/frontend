@@ -182,10 +182,14 @@ export function OfferPopup({
             (await xmtpClient.conversations.getDmByInboxId(inboxId)) ??
             (await xmtpClient.conversations.newDm(inboxId));
 
-          await conversation.send(message, ContentTypeText);
-        }
+          await conversation.sendOptimistic(message, ContentTypeText);
 
-        onClose();
+          onClose();
+
+          await conversation.publishMessages();
+        } else {
+          onClose();
+        }
       }
     } catch (error) {
       toast.error(error?.message);

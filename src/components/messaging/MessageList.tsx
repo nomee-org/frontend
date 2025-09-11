@@ -104,8 +104,11 @@ export const MessageList = ({
         schema: "unicode",
       };
 
-      await conversation.send(reaction, ContentTypeReaction);
+      await conversation.sendOptimistic(reaction, ContentTypeReaction);
+
       onReaction?.(messageId, emoji);
+
+      await conversation.publishMessages();
     } catch (error) {
       console.error("Failed to react to message:", error);
       toast.error("Failed to react to message");

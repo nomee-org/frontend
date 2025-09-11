@@ -96,7 +96,7 @@ const BidMessagePopup = ({
     try {
       const richMessage = formatBidMessage();
 
-      await conversation.send(richMessage, ContentTypeText);
+      await conversation.sendOptimistic(richMessage, ContentTypeText);
 
       toast({
         title: "Success",
@@ -110,6 +110,8 @@ const BidMessagePopup = ({
       setDurationDays("7");
 
       onClose();
+
+      await conversation.publishMessages();
     } catch (error) {
       console.error("Error sending bid message:", error);
       toast({

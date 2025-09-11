@@ -102,6 +102,8 @@ const UserConversation = () => {
         dm = await client.conversations.newDm(peerInboxId);
       }
 
+      // dm.send("Test");
+
       setConversation(dm);
     } catch (error) {
       console.log(error);
@@ -145,8 +147,19 @@ const UserConversation = () => {
         const otherName = await dataService.getName({ name: username });
         const otherAddress = parseCAIP10(otherName.claimedBy).address;
 
+        const canMessage = await client.canMessage([
+          {
+            identifier: otherAddress.toLowerCase(),
+            identifierKind: "Ethereum",
+          },
+        ]);
+
+        if (!canMessage.get(otherAddress.toLowerCase())) {
+          throw new Error("Cannot message.");
+        }
+
         const inboxId = await client.findInboxIdByIdentifier({
-          identifier: otherAddress,
+          identifier: otherAddress.toLowerCase(),
           identifierKind: "Ethereum",
         });
 
