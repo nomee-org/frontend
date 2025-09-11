@@ -32,10 +32,10 @@ import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
 import {
   ContentTypeRemoteAttachment,
   RemoteAttachment,
-  RemoteAttachmentCodec,
 } from "@xmtp/content-type-remote-attachment";
-import { useXmtp } from "@/contexts/XmtpContext";
 import { formatUnits } from "viem";
+import { ContentTypeText } from "@xmtp/content-type-text";
+import { useNameResolver } from "@/hooks/use-name-resolver";
 
 const reactions = [
   { emoji: "❤️", icon: Heart, name: "heart" },
@@ -82,6 +82,7 @@ export function MessageBubble({
   const startX = useRef(0);
   const currentX = useRef(0);
   const longPressTimer = useRef<NodeJS.Timeout>();
+  const { nickname } = useNameResolver();
 
   const handleLongPress = () => {
     setIsLongPressed(true);
@@ -301,7 +302,7 @@ export function MessageBubble({
           );
         })()}
       </>;
-    } else if (message.content) {
+    } else if (message.contentType.sameAs(ContentTypeText)) {
       return (
         <div
           className="text-sm leading-relaxed break-words whitespace-pre-wrap"
@@ -406,7 +407,7 @@ export function MessageBubble({
             {/* Username for group chats */}
             {!isOwn && showAvatar && (
               <p className="text-xs font-medium mb-1 opacity-70">
-                {message.senderInboxId}
+                {nickname(message.senderInboxId)}
               </p>
             )}
 

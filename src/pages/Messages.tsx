@@ -27,11 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 // Type imports
 import { useXmtp } from "@/contexts/XmtpContext";
-import {
-  Conversation,
-  ConversationType,
-  DecodedMessage,
-} from "@xmtp/browser-sdk";
+import { Conversation } from "@xmtp/browser-sdk";
 import { Chat } from "@/components/messaging/Chat";
 
 const Messages = () => {
@@ -81,10 +77,7 @@ const Messages = () => {
   const getConversations = async () => {
     try {
       if (client?.inboxId) {
-        const r = await client.conversations.list();
-        console.log({ r });
-
-        setConversations(r);
+        setConversations(await client.conversations.list());
       } else {
         setConversations([]);
       }
@@ -96,21 +89,8 @@ const Messages = () => {
   };
 
   useEffect(() => {
-    console.log("da");
-
     getConversations();
   }, [client?.inboxId]);
-
-  const handleConversationClick = (conversation: Conversation) => {
-    if (
-      conversation.metadata.conversationType ===
-      ConversationType.Group.toString()
-    ) {
-      navigate(`/groups/${conversation.id}`);
-    } else {
-      navigate(`/messages/${conversation.id}`);
-    }
-  };
 
   useEffect(() => {
     const wasSelected = isConversationSelected;
@@ -209,23 +189,8 @@ const Messages = () => {
             ) : (
               <div className="space-y-3 p-4">
                 {conversations?.map((conversation) => {
-                  const isSelected =
-                    conversation.metadata.conversationType ===
-                    ConversationType.Group.toString()
-                      ? location.pathname.includes(
-                          `/messages/groups/${conversation?.id}`
-                        )
-                      : location.pathname.includes(
-                          `/messages/${conversation.id}`
-                        );
-
                   return (
-                    <Chat
-                      key={conversation.id}
-                      isSelected={isSelected}
-                      handleConversationClick={handleConversationClick}
-                      conversation={conversation}
-                    />
+                    <Chat key={conversation.id} conversation={conversation} />
                   );
                 })}
               </div>

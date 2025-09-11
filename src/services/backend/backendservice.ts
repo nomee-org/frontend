@@ -13,7 +13,6 @@ import {
   AuthResponse,
   RefreshTokenDto,
   PaginatedResponse,
-  MediaUploadResponse,
   UploadProgress,
   CreatePostDto,
   UpdatePostDto,
@@ -660,46 +659,6 @@ class BackendService {
     }>(`/media/info?url=${encodeURIComponent(fileUrl)}`);
   }
 
-  async muteConversation(conversationId: string): Promise<{ message: string }> {
-    return this.apiClient.post<{ message: string }>(
-      `/conversations/${conversationId}/mute`
-    );
-  }
-
-  async unmuteConversation(
-    conversationId: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.delete<{ message: string }>(
-      `/conversations/${conversationId}/mute`
-    );
-  }
-
-  async subscribeToConversation(
-    conversationId: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.post<{ message: string }>(
-      `/messages/subscribe/${conversationId}`
-    );
-  }
-
-  async unSubscribeFromConversation(
-    conversationId: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.post<{ message: string }>(
-      `/messages/unsubscribe/${conversationId}`
-    );
-  }
-
-  async onMessageSent(
-    conversationId: string,
-    fromInboxId: string
-  ): Promise<{ message: string }> {
-    return this.apiClient.post<{ message: string }>(
-      `/messages/onsent/${conversationId}`,
-      { fromInboxId }
-    );
-  }
-
   async getStickerPacks(
     page: number = 1,
     limit: number = 20
@@ -777,34 +736,6 @@ class BackendService {
 
   async resumeAd(adId: string): Promise<ISponsoredAd> {
     return this.apiClient.put<ISponsoredAd>(`/ads/${adId}/resume`);
-  }
-
-  async getUserKeyPair(): Promise<{ hasEncryption: boolean; keyPair?: any }> {
-    return this.apiClient.get<{ hasEncryption: boolean; keyPair?: any }>(
-      "/encryption/keypair"
-    );
-  }
-
-  async generateKeyPair(): Promise<{
-    publicKey: string;
-    privateKey: string;
-    algorithm: string;
-    message: string;
-  }> {
-    return this.apiClient.post<{
-      publicKey: string;
-      privateKey: string;
-      algorithm: string;
-      message: string;
-    }>("/encryption/generate-keypair");
-  }
-
-  async rotateConversationKeys(
-    conversationId: string
-  ): Promise<{ message: string; keyVersion: number }> {
-    return this.apiClient.post<{ message: string; keyVersion: number }>(
-      `/encryption/rotate-keys/${conversationId}`
-    );
   }
 
   getAccessToken(): string | null {

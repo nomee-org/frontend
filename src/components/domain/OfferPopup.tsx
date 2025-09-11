@@ -42,6 +42,7 @@ import { Textarea } from "../ui/textarea";
 import { backendService } from "@/services/backend/backendservice";
 import { dataService } from "@/services/doma/dataservice";
 import { useXmtp } from "@/contexts/XmtpContext";
+import { ContentTypeText } from "@xmtp/content-type-text";
 interface OfferPopupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -181,7 +182,7 @@ export function OfferPopup({
             (await xmtpClient.conversations.getDmByInboxId(inboxId)) ??
             (await xmtpClient.conversations.newDm(inboxId));
 
-          await conversation.send(message);
+          await conversation.send(message, ContentTypeText);
         }
 
         onClose();

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +23,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { DollarSign, Clock, TrendingUp, AlertCircle, Send } from "lucide-react";
+import { DollarSign, TrendingUp, AlertCircle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSendMessage } from "@/data/use-backend";
 import { Conversation } from "@xmtp/browser-sdk";
 import { useOwnedNames } from "@/data/use-doma";
+import { ContentTypeText } from "@xmtp/content-type-text";
 
 interface BidMessagePopupProps {
   conversation: Conversation;
@@ -54,8 +54,6 @@ const BidMessagePopup = ({
 
   const [domainName, setDomainName] = useState("");
   const { data: namesData } = useOwnedNames(recipientAddress, 50, []);
-
-  const sendMessageMutation = useSendMessage(conversation);
 
   useEffect(() => {
     setDomainName(namesData?.pages?.[0]?.items?.[0]?.name ?? "");
@@ -98,9 +96,7 @@ const BidMessagePopup = ({
     try {
       const richMessage = formatBidMessage();
 
-      await sendMessageMutation.mutateAsync({
-        content: richMessage,
-      });
+      await conversation.send(richMessage, ContentTypeText);
 
       toast({
         title: "Success",

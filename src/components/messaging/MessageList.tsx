@@ -3,11 +3,7 @@ import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { useUsername } from "@/hooks/use-username";
 import { Badge } from "@/components/ui/badge";
 import moment from "moment";
-import {
-  usePinMessage,
-  useSendMessage,
-  useUnpinMessage,
-} from "@/data/use-backend";
+import { usePinMessage, useUnpinMessage } from "@/data/use-backend";
 import { toast } from "sonner";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { useXmtp } from "@/contexts/XmtpContext";
@@ -76,7 +72,6 @@ export const MessageList = ({
 
   const pinMessage = usePinMessage(conversation);
   const unpinMessage = useUnpinMessage(conversation);
-  const sendMessage = useSendMessage(conversation);
 
   const handlePin = async (messageId: string) => {
     try {
@@ -102,15 +97,17 @@ export const MessageList = ({
 
   const handleReaction = async (messageId: string, emoji: string) => {
     try {
-      await sendMessage.mutateAsync({
-        content: {
-          reference: messageId,
-          action: "added",
-          content: emoji,
-        } as Reaction,
-        contentType: ContentTypeReaction as any,
-      });
+      const reaction: Reaction = {
+        reference: messageId,
+        action: "added",
+        content: emoji,
+        schema: "unicode",
+      };
+
+      await conversation.send(reaction, ContentTypeReaction);
       onReaction?.(messageId, emoji);
+
+      await conversation.sync();
     } catch (error) {
       console.error("Failed to react to message:", error);
       toast.error("Failed to react to message");
@@ -190,7 +187,7 @@ export const MessageList = ({
           <DateSeparator label={group.dateLabel} />
           <div className="space-y-1">
             {group.messages.map((message, index) => {
-              const isOwn = message.senderInboxId === client.inboxId;
+              const isOwn = message.senderInboxId === client?.inboxId;
               const showAvatar = shouldShowAvatar(
                 message,
                 index,

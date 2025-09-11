@@ -1,10 +1,7 @@
 export interface IUser {
   id?: string;
   username: string;
-  inboxId?: string;
   email?: string;
-  firstName?: string;
-  lastName?: string;
   bio?: string;
   avatarUrl?: string;
   isVerified: boolean;
@@ -26,11 +23,8 @@ export interface IUserProfile extends IUser {
 
 export interface IUserBasic {
   username: string;
-  inboxId?: string;
   avatarUrl?: string;
   isVerified: boolean;
-  isOnline?: boolean;
-  lastSeenAt?: Date;
 }
 
 export interface IPost {
@@ -355,7 +349,6 @@ export interface UpdateProfileDto {
   bio?: string;
   avatarUrl?: string;
   fcmToken?: string;
-  inboxId?: string;
 }
 
 export interface DeleteAccountDto {

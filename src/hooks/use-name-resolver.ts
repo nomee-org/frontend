@@ -1,50 +1,52 @@
 import { useXmtp } from "@/contexts/XmtpContext";
-import { useGetUsersByInboxIds } from "@/data/use-backend";
-import { IUserBasic } from "@/types/backend";
-import React, { useEffect } from "react";
+import React from "react";
+
+const STORAGE_KEY = import.meta.env.VITE_NOMEE_NICKNAMES;
 
 export function useNameResolver() {
-  const [inboxIds, setInboxIds] = React.useState<Set<string>>(new Set());
-  const [users, setUsers] = React.useState<Record<string, IUserBasic>>({});
-
-  const { data, refetch } = useGetUsersByInboxIds(Array.from(inboxIds));
   const { client } = useXmtp();
 
-  useEffect(() => {
-    console.log(data);
+  const [users, setUsers] = React.useState<Record<string, string>>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      console.warn("Failed to parse stored nicknames");
+      return {};
+    }
+  });
 
-    if (!data) return;
+  React.useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+  }, [users]);
 
-    const map = data.reduce<Record<string, IUserBasic>>((acc, user) => {
-      acc[user.inboxId] = user;
-      return acc;
-    }, {});
+  const nickname = React.useCallback(
+    (inboxId: string): string => {
+      if (inboxId?.toLowerCase() === client?.inboxId?.toLowerCase())
+        return "You";
+      return users[inboxId] ?? inboxId;
+    },
+    [client?.inboxId, users]
+  );
 
-    setUsers((prev) => ({ ...prev, ...map }));
-  }, [data]);
+  const setNickname = React.useCallback((inboxId: string, name: string) => {
+    setUsers((prev) => ({
+      ...prev,
+      [inboxId]: name,
+    }));
+  }, []);
 
-  const resolveUsername = (inboxId: string): string => {
-    if (inboxId === client?.inboxId) return "You";
-    return users[inboxId]?.username ?? inboxId;
-  };
-
-  const loadResolveableIds = (ids: string[] | string) => {
-    console.log({ ids });
-
-    setInboxIds((prev) => {
-      const next = new Set(prev);
-      if (Array.isArray(ids)) {
-        ids.forEach((id) => next.add(id));
-      } else {
-        next.add(ids);
-      }
-      return next;
+  const clearNickname = React.useCallback((inboxId: string) => {
+    setUsers((prev) => {
+      const { [inboxId]: _, ...rest } = prev;
+      return rest;
     });
-    refetch();
-  };
+  }, []);
 
   return {
-    loadResolveableIds,
-    resolveUsername,
+    users,
+    nickname,
+    setNickname,
+    clearNickname,
   };
 }

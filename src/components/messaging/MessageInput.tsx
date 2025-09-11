@@ -15,7 +15,6 @@ import {
 } from "@/components/media/MediaPickerPopup";
 import { StickersPickerPopup } from "@/components/media/StickersPickerPopup";
 import { MemberTaggingPopup } from "@/components/messaging/MemberTaggingPopup";
-import { useSendMessage } from "@/data/use-backend";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { webSocketService } from "@/services/backend/socketservice";
@@ -29,6 +28,7 @@ import {
 import { backendService } from "@/services/backend/backendservice";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { Sticker } from "@/types/backend";
+import { ContentTypeText } from "@xmtp/content-type-text";
 
 interface MessageInputProps {
   placeHolder?: string;
@@ -66,12 +66,12 @@ export function MessageInput({
 
   // Typing status
   const [isTyping, setIsTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
   const { client } = useXmtp();
-  const sendMessageMutation = useSendMessage(conversation);
 
   // Track recording state
   useEffect(() => {
@@ -204,6 +204,8 @@ export function MessageInput({
   const handleSendMessage = async () => {
     if (!message.trim() && selectedMedia.length === 0) return;
 
+    setIsSending(true);
+
     try {
       // Send new message
       if (selectedMedia?.length) {
@@ -245,10 +247,7 @@ export function MessageInput({
           contentLength: attachment.data.byteLength,
         };
 
-        await sendMessageMutation.mutateAsync({
-          content: remoteAttachment,
-          contentType: ContentTypeRemoteAttachment as any,
-        });
+        await conversation.send(remoteAttachment, ContentTypeRemoteAttachment);
       } else if (replyToId) {
         const reply: Reply = {
           content: message,
@@ -257,12 +256,9 @@ export function MessageInput({
           contentType: ContentTypeReply,
         };
 
-        await sendMessageMutation.mutateAsync({
-          content: reply,
-          contentType: ContentTypeReply as any,
-        });
+        await conversation.send(reply, ContentTypeReply);
       } else {
-        await sendMessageMutation.mutateAsync({ content: message });
+        await conversation.send(message, ContentTypeText);
       }
 
       setMessage("");
@@ -271,9 +267,13 @@ export function MessageInput({
       onSendSuccess?.();
       onCancelReply?.();
 
-      await conversation.publishMessages();
+      await conversation.sync();
     } catch (error) {
+      console.log(error);
+
       // toast.error(error?.message ?? "Failed to send message");
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -319,15 +319,12 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      await sendMessageMutation.mutateAsync({
-        content: remoteAttachment,
-        contentType: ContentTypeRemoteAttachment as any,
-      });
+      await conversation.send(remoteAttachment, ContentTypeRemoteAttachment);
 
       onSendSuccess?.();
       onCancelReply?.();
 
-      await conversation.publishMessages();
+      await conversation.sync();
     } catch (error) {
       // toast.error("Failed to send voice message");
     }
@@ -365,15 +362,12 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      await sendMessageMutation.mutateAsync({
-        content: remoteAttachment,
-        contentType: ContentTypeRemoteAttachment as any,
-      });
+      await conversation.send(remoteAttachment, ContentTypeRemoteAttachment);
 
       onSendSuccess?.();
       onCancelReply?.();
 
-      await conversation.publishMessages();
+      await conversation.sync();
     } catch (error) {
       // toast.error("Failed to send sticker");
     }
@@ -562,11 +556,11 @@ export function MessageInput({
         {message.trim() || selectedMedia.length > 0 ? (
           <Button
             onClick={handleSendMessage}
-            disabled={sendMessageMutation.isPending}
+            disabled={isSending}
             size="sm"
             className="rounded-full h-10 w-10 p-0 flex-shrink-0"
           >
-            {sendMessageMutation.isPending ? (
+            {isSending ? (
               <Loader className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />

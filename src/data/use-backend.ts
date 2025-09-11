@@ -18,7 +18,6 @@ import {
   IFollowSuggestion,
   AuthResponse,
   RefreshTokenDto,
-  MediaUploadResponse,
   UploadProgress,
   CreatePostDto,
   UpdatePostDto,
@@ -1443,25 +1442,6 @@ export function useGetConversation(
   });
 }
 
-export function useCreateDmConversation(client: Client) {
-  const queryClient = useQueryClient();
-
-  return useMutation<Dm, Error, { inboxId?: string; conversation?: Dm }>({
-    mutationFn: async ({ inboxId, conversation }) => {
-      if (conversation) return conversation;
-      return (
-        (await client.conversations.getDmByInboxId(inboxId)) ??
-        (await client.conversations.newDm(inboxId))
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [queryKeys.conversations.all],
-      });
-    },
-  });
-}
-
 export function useCreateGroupConversation(client: Client) {
   const queryClient = useQueryClient();
 
@@ -1532,40 +1512,6 @@ export function useAddMember(group: Group) {
   });
 }
 
-export function useMuteConversation() {
-  const queryClient = useQueryClient();
-
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: (conversationId) =>
-      backendService.muteConversation(conversationId),
-    onSuccess: (_, conversationId) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.byId(conversationId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [queryKeys.conversations.all],
-      });
-    },
-  });
-}
-
-export function useUnmuteConversation() {
-  const queryClient = useQueryClient();
-
-  return useMutation<{ message: string }, Error, string>({
-    mutationFn: (conversationId) =>
-      backendService.unmuteConversation(conversationId),
-    onSuccess: (_, conversationId) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.conversations.byId(conversationId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [queryKeys.conversations.all],
-      });
-    },
-  });
-}
-
 export function useGetMessages(
   conversation?: Conversation,
   limit: number = 50,
@@ -1580,31 +1526,6 @@ export function useGetMessages(
     ),
     queryFn: () => conversation?.messages({ limit: BigInt(limit) }),
     enabled: !!conversation,
-  });
-}
-
-export function useSendMessage(conversation: Conversation) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    string,
-    Error,
-    {
-      content: string | RemoteAttachment | Reaction | Reply;
-      contentType?: ContentTypeId;
-    }
-  >({
-    mutationFn: ({ content, contentType }) =>
-      conversation.sendOptimistic(content, contentType as any),
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.messages.byConversation(conversation?.id, 1, 50),
-      });
-      queryClient.invalidateQueries({
-        queryKey: [queryKeys.conversations.all],
-      });
-    },
   });
 }
 
@@ -1796,30 +1717,6 @@ export function useGetAdAnalytics(
   >({
     queryKey: queryKeys.ads.analytics(adId),
     queryFn: () => backendService.getAdAnalytics(adId),
-    ...options,
-  });
-}
-
-export function useGenerateKeyPair(activeUsername?: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation<{ publicKey: string; privateKey: string }, Error, void>({
-    mutationFn: () => backendService.generateKeyPair(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.encryption.keyPair(activeUsername),
-      });
-    },
-  });
-}
-
-export function useUserKeyPair(
-  options?: UseQueryOptions<{ hasEncryption: boolean; keyPair?: any }, Error>,
-  activeUsername?: string
-) {
-  return useQuery<{ hasEncryption: boolean; keyPair?: any }, Error>({
-    queryKey: queryKeys.encryption.keyPair(activeUsername),
-    queryFn: () => backendService.getUserKeyPair(),
     ...options,
   });
 }

@@ -57,8 +57,7 @@ export const ConversationInfoModal = ({
   const [activeTab, setActiveTab] = useState<"info" | "members">("info");
 
   const isGroupConversation =
-    conversation.metadata.conversationType ===
-    ConversationType.Group.toString();
+    conversation.metadata.conversationType === "group";
 
   const otherMember = members.find((m) => m.inboxId !== client.inboxId);
 

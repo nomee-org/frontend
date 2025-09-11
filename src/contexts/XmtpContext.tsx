@@ -2,19 +2,19 @@
 import { Client, DecodedMessage, Identifier } from "@xmtp/browser-sdk";
 import React, { createContext, ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { toBytes, WalletClient } from "viem";
+import { toBytes } from "viem";
 import { useAccount, useWalletClient } from "wagmi";
-import { BrowserProvider, JsonRpcSigner } from "ethers";
-import { mainnet } from "viem/chains";
 import { Reaction, ReactionCodec } from "@xmtp/content-type-reaction";
 import {
   AttachmentCodec,
+  RemoteAttachment,
   RemoteAttachmentCodec,
 } from "@xmtp/content-type-remote-attachment";
-import { ReplyCodec } from "@xmtp/content-type-reply";
-import { useUpdateProfile } from "@/data/use-backend";
+import { Reply, ReplyCodec } from "@xmtp/content-type-reply";
+import { TextCodec } from "@xmtp/content-type-text";
+
 interface XmtpContextType {
-  client: Client<string | any | Reaction> | null;
+  client: Client<string | any | Reply | RemoteAttachment | Reaction> | null;
   identifier: Identifier | null;
   isLoading: boolean;
   error: Error | null;
@@ -71,8 +71,6 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     };
   }, [client?.inboxId]);
 
-  const updateProfileMutation = useUpdateProfile();
-
   useEffect(() => {
     if (address && walletClient) {
       connect();
@@ -92,41 +90,53 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
 
       setIsLoading(true);
 
-      setIdentifier({
+      const identifier: Identifier = {
         identifier: address.toLowerCase(),
         identifierKind: "Ethereum",
-      });
+      };
 
-      const xmtpClient = await Client.create(
-        {
-          type: "EOA",
-          getIdentifier: () => ({
-            identifier: address.toLowerCase(),
-            identifierKind: "Ethereum",
-          }),
-          signMessage: async (message) => {
-            return toBytes(
-              await walletClient.signMessage({ message, account: address })
-            );
-          },
-        },
-        {
+      setIdentifier(identifier);
+
+      const canMessage = await Client.canMessage([identifier]);
+
+      if (canMessage.get(address.toLowerCase())) {
+        const xmtpClient = await Client.build(identifier, {
           env: "dev",
           appVersion: "nomee-app/1.0",
-          dbEncryptionKey: new Uint8Array(
-            import.meta.env.VITE_DB_ENCRYPTION_KEY.split(",").map(Number)
-          ),
           codecs: [
             new ReplyCodec(),
             new ReactionCodec(),
             new AttachmentCodec(),
             new RemoteAttachmentCodec(),
+            new TextCodec(),
           ],
-        }
-      );
-
-      setClient(xmtpClient);
-      updateProfileMutation.mutate({ inboxId: xmtpClient.inboxId });
+        });
+        setClient(xmtpClient);
+      } else {
+        const xmtpClient = await Client.create(
+          {
+            type: "EOA",
+            getIdentifier: () => identifier,
+            signMessage: async (message) => {
+              return toBytes(
+                await walletClient.signMessage({ message, account: address })
+              );
+            },
+          },
+          {
+            env: "dev",
+            appVersion: "nomee-app/1.0",
+            codecs: [
+              new ReplyCodec(),
+              new ReactionCodec(),
+              new AttachmentCodec(),
+              new RemoteAttachmentCodec(),
+              new TextCodec(),
+            ],
+          }
+        );
+        setClient(xmtpClient);
+      }
 
       setIsLoading(false);
     } catch (error) {
@@ -136,7 +146,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   };
 
   const disconnect = () => {
-    client?.close();
+    // client?.close();
     setIsLoading(false);
     setError(null);
     setClient(null);

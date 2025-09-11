@@ -68,6 +68,8 @@ export function CreateGroupDialog({
     }
 
     try {
+      setSelectedInboxIds([...selectedInboxIds, client?.inboxId]);
+
       const result = await createConversationMutation.mutateAsync({
         name: groupName.trim(),
         description: description?.trim(),
@@ -84,7 +86,9 @@ export function CreateGroupDialog({
       setSelectedInboxIds([]);
       setSearchQuery("");
     } catch (error) {
-      toast.error("Failed to create group");
+      // toast.error("Failed to create group");
+    } finally {
+      onClose();
     }
   };
 

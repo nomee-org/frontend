@@ -43,7 +43,6 @@ import { useMessageScroll } from "@/hooks/use-message-scroll";
 import { usePinnedMessagesVisibility } from "@/hooks/use-pinned-messages-visibility";
 
 // Service/data imports
-import { useCreateDmConversation } from "@/data/use-backend";
 import {
   webSocketService,
   WebSocketEventHandlers,
@@ -54,8 +53,10 @@ import { RecordingIndicator } from "./RecordingIndicator";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { dataService } from "@/services/doma/dataservice";
 import { useHelper } from "@/hooks/use-helper";
-import { DecodedMessage, Dm } from "@xmtp/browser-sdk";
+import { Conversation, DecodedMessage, Dm } from "@xmtp/browser-sdk";
 import { formatUnits } from "viem";
+import { useNameResolver } from "@/hooks/use-name-resolver";
+import { toast } from "sonner";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -65,36 +66,58 @@ const UserConversation = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [isLoading, setIsLoading] = useState(true);
   const [showBidPopup, setShowBidPopup] = useState(false);
   const [replyToId, setReplyToId] = useState<string | undefined>();
   const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
-  const [otherInboxId, setOtherInboxId] = useState<string | undefined>(
-    undefined
-  );
+  const [peerInboxId, setPeerInboxId] = useState<string | undefined>(undefined);
   const [otherAddress, setOtherAddress] = useState<string | undefined>(
     undefined
   );
 
   const { client, newMessage, clearNewMessage } = useXmtp();
+  const { nickname, setNickname } = useNameResolver();
   const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
 
+  const [conversation, setConversation] = useState<Conversation | undefined>(
+    undefined
+  );
   const [messages, setMessages] = useState<DecodedMessage[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesError, setMessagesError] = useState<Error | undefined>(
     undefined
   );
 
-  const createConversation = useCreateDmConversation(client);
+  const createConversation = async () => {
+    setIsLoading(true);
+
+    try {
+      let dm = await client.conversations.getDmByInboxId(peerInboxId);
+
+      if (!dm) {
+        dm = await client.conversations.newDm(peerInboxId);
+      }
+
+      setConversation(dm);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (
-      newMessage &&
-      newMessage.conversationId === createConversation?.data?.id
-    ) {
+    if (peerInboxId) {
+      createConversation();
+    }
+  }, [peerInboxId]);
+
+  useEffect(() => {
+    if (newMessage && newMessage.conversationId === conversation?.id) {
       setMessages((prev) => [newMessage, ...prev]);
       clearNewMessage();
     }
@@ -102,7 +125,7 @@ const UserConversation = () => {
 
   const getMessages = async () => {
     try {
-      setMessages(await createConversation.data.messages());
+      setMessages(await conversation.messages());
     } catch (error) {
       // setMessagesError(error);
     } finally {
@@ -111,13 +134,13 @@ const UserConversation = () => {
   };
 
   useEffect(() => {
-    if (createConversation?.data) {
+    if (conversation) {
       getMessages();
-      createConversation.data.sync();
+      conversation.sync();
     }
-  }, [createConversation?.data]);
+  }, [conversation]);
 
-  const initConversation = async () => {
+  const getPeerInboxId = async () => {
     try {
       if (username.includes(".")) {
         const otherName = await dataService.getName({ name: username });
@@ -128,28 +151,20 @@ const UserConversation = () => {
           identifierKind: "Ethereum",
         });
 
+        setNickname(inboxId, username);
         setOtherAddress(otherAddress);
-        setOtherInboxId(inboxId);
-
-        if (inboxId) {
-          createConversation.mutate({ inboxId });
-        }
+        setPeerInboxId(inboxId);
       } else {
-        const conversation = await client.conversations.getConversationById(
-          username
-        );
-
-        setOtherInboxId(username);
-        createConversation.mutate({ conversation: conversation as Dm });
+        setPeerInboxId(username);
       }
     } catch (error) {
-      // toast.error(error?.message);
+      toast.error(error?.message);
     }
   };
 
   useEffect(() => {
     if (username && client?.inboxId) {
-      initConversation();
+      getPeerInboxId();
     }
   }, [username, client?.inboxId]);
 
@@ -174,17 +189,17 @@ const UserConversation = () => {
   });
 
   useEffect(() => {
-    if (createConversation?.data?.id) {
-      webSocketService.joinConversation(createConversation.data.id);
+    if (conversation?.id) {
+      webSocketService.joinConversation(conversation.id);
     }
-  }, [createConversation?.data]);
+  }, [conversation]);
 
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "user-conversations",
       onUserTyping: ({ username, conversationId }) => {
         if (
-          conversationId === createConversation?.data?.id &&
+          conversationId === conversation?.id &&
           username !== client.inboxId
         ) {
           setTypingUsers((prev) => {
@@ -196,13 +211,13 @@ const UserConversation = () => {
         }
       },
       onUserStoppedTyping: ({ username, conversationId }) => {
-        if (conversationId === createConversation?.data?.id) {
+        if (conversationId === conversation?.id) {
           setTypingUsers((prev) => prev.filter((u) => u !== username));
         }
       },
       onUserRecording: ({ username, conversationId }) => {
         if (
-          conversationId === createConversation?.data?.id &&
+          conversationId === conversation?.id &&
           username !== client.inboxId
         ) {
           setRecordingUsers((prev) => {
@@ -214,7 +229,7 @@ const UserConversation = () => {
         }
       },
       onUserStoppedRecording: ({ username, conversationId }) => {
-        if (conversationId === createConversation?.data?.id) {
+        if (conversationId === conversation?.id) {
           setRecordingUsers((prev) => prev.filter((u) => u !== username));
         }
       },
@@ -225,9 +240,9 @@ const UserConversation = () => {
     return () => {
       webSocketService.removeEventHandlers(handlers);
     };
-  }, [createConversation?.data]);
+  }, [conversation]);
 
-  if (createConversation.isPending || createConversation.isIdle) {
+  if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
@@ -238,7 +253,7 @@ const UserConversation = () => {
     );
   }
 
-  if (!otherInboxId) {
+  if (!peerInboxId) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
@@ -278,13 +293,13 @@ const UserConversation = () => {
           >
             <div className="relative">
               <DomainAvatar
-                domain={username}
+                domain={nickname(peerInboxId ?? username)}
                 className="h-8 w-8 md:h-10 md:w-10"
               />
             </div>
             <div>
               <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
-                {username || "Unknown User"}
+                {nickname(peerInboxId ?? username) || "Unknown User"}
               </h3>
               <OnlineStatus isOnline={true} className="mt-0.5" />
             </div>
@@ -337,9 +352,9 @@ const UserConversation = () => {
       </div>
 
       {/* Pinned Messages Bar */}
-      {createConversation?.data && (
+      {conversation && (
         <PinnedMessagesBar
-          conversation={createConversation?.data}
+          conversation={conversation}
           pinnedMessages={pinnedMessages}
           isVisible={isPinnedBarVisible}
           containerRef={containerRef}
@@ -372,7 +387,7 @@ const UserConversation = () => {
         ) : (
           <div className="space-y-0 px-2 md:px-0">
             <MessageList
-              conversation={createConversation?.data}
+              conversation={conversation}
               messages={
                 messages?.sort(
                   (a, b) =>
@@ -415,15 +430,15 @@ const UserConversation = () => {
       {/* Message Input */}
       <MessageInput
         placeHolder={initMessage || ""}
-        conversation={createConversation?.data}
+        conversation={conversation}
         replyToId={replyToId}
         replyToInboxId={replyToInboxId}
         onCancelReply={() => setReplyToId(undefined)}
         onRecording={(recording) => {
           if (recording) {
-            webSocketService.startRecording(createConversation?.data?.id);
+            webSocketService.startRecording(conversation?.id);
           } else {
-            webSocketService.stopRecording(createConversation?.data?.id);
+            webSocketService.stopRecording(conversation?.id);
           }
         }}
         onSendSuccess={() => {
@@ -433,9 +448,9 @@ const UserConversation = () => {
       />
 
       {/* Bid Message Popup */}
-      {otherAddress && createConversation?.data && (
+      {otherAddress && conversation && (
         <BidMessagePopup
-          conversation={createConversation?.data}
+          conversation={conversation}
           isOpen={showBidPopup}
           onClose={() => setShowBidPopup(false)}
           recipientAddress={otherAddress}
@@ -443,9 +458,9 @@ const UserConversation = () => {
       )}
 
       {/* Conversation Info Modal */}
-      {createConversation?.data && (
+      {conversation && (
         <ConversationInfoModal
-          conversation={createConversation?.data}
+          conversation={conversation}
           members={[]}
           messages={messages ?? []}
           isOpen={showConversationInfo}
@@ -458,7 +473,7 @@ const UserConversation = () => {
         isOpen={showMuteDialog}
         onClose={() => setShowMuteDialog(false)}
         isMuted={currentParticipant?.isMuted || false}
-        conversationId={createConversation?.data?.id || ""}
+        conversationId={conversation?.id || ""}
         conversationName={username || "user"}
       /> */}
     </div>

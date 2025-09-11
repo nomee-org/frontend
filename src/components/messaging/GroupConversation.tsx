@@ -43,7 +43,6 @@ import { usePinnedMessagesVisibility } from "@/hooks/use-pinned-messages-visibil
 import {
   useGetConversation,
   useGetConversationMembers,
-  useGetMessages,
 } from "@/data/use-backend";
 import {
   webSocketService,
@@ -53,10 +52,9 @@ import {
 // Type imports
 import { RecordingIndicator } from "./RecordingIndicator";
 import { useXmtp } from "@/contexts/XmtpContext";
-import { Group } from "@xmtp/browser-sdk";
+import { DecodedMessage, Group } from "@xmtp/browser-sdk";
 import { MembersDialog } from "./MembersDialog";
 import { formatUnits } from "viem";
-import { backendService } from "@/services/backend/backendservice";
 
 const GroupConversation = () => {
   const { id } = useParams<{ id: string }>();
@@ -68,10 +66,16 @@ const GroupConversation = () => {
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const { activeUsername } = useUsername();
-  const { client } = useXmtp();
+  const { client, newMessage, clearNewMessage } = useXmtp();
 
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
+
+  const [messages, setMessages] = useState<DecodedMessage[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [messagesError, setMessagesError] = useState<Error | undefined>(
+    undefined
+  );
 
   const {
     data: conversation,
@@ -80,18 +84,35 @@ const GroupConversation = () => {
   } = useGetConversation(client, id, undefined, activeUsername);
 
   const {
-    data: messagesData,
-    isLoading: messagesLoading,
-    error: messagesError,
-    refetch: refetchMessages,
-  } = useGetMessages(conversation, 50, activeUsername);
-
-  const {
     data: membersData,
     isLoading: membersLoading,
     error: membersError,
     refetch: refetchMembers,
   } = useGetConversationMembers(conversation, 50);
+
+  useEffect(() => {
+    if (newMessage && newMessage.conversationId === conversation?.id) {
+      setMessages((prev) => [newMessage, ...prev]);
+      clearNewMessage();
+    }
+  }, [newMessage]);
+
+  const getMessages = async () => {
+    try {
+      setMessages(await conversation.messages());
+      conversation.sync();
+    } catch (error) {
+      // setMessagesError(error);
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (conversation) {
+      getMessages();
+    }
+  }, [conversation]);
 
   const {
     containerRef,
@@ -101,9 +122,9 @@ const GroupConversation = () => {
     scrollToMessage,
   } = useMessageScroll({
     hasNextPage: false,
-    fetchNextPage: () => refetchMessages(),
+    fetchNextPage: () => {},
     isFetchingNextPage: false,
-    messages: messagesData ?? [],
+    messages: messages ?? [],
     newMessageCount: 0,
   });
 
@@ -115,7 +136,6 @@ const GroupConversation = () => {
 
   useEffect(() => {
     if (conversation?.id) {
-      backendService.subscribeToConversation(conversation?.id);
       webSocketService.joinConversation(conversation.id);
     }
   }, [conversation]);
@@ -298,7 +318,7 @@ const GroupConversation = () => {
           <div className="text-center text-red-500 text-xs md:text-sm">
             Failed to load messages
           </div>
-        ) : (messagesData?.length ?? 0) === 0 ? (
+        ) : (messages?.length ?? 0) === 0 ? (
           <div className="text-center text-muted-foreground">
             <div className="space-y-1 md:space-y-2">
               <p className="text-xs md:text-sm">No messages yet</p>
@@ -312,7 +332,7 @@ const GroupConversation = () => {
             <MessageList
               conversation={conversation}
               messages={
-                messagesData?.sort(
+                messages?.sort(
                   (a, b) =>
                     new Date(
                       Math.ceil(Number(formatUnits(a.sentAtNs, 6)))
@@ -367,13 +387,6 @@ const GroupConversation = () => {
         onSendSuccess={() => {
           setReplyToId(undefined);
           scrollToBottom();
-
-          setTimeout(() => {
-            refetchMessages();
-            backendService.onMessageSent(conversation?.id, client.inboxId);
-          }, 2000);
-
-          setTimeout(() => refetchMessages(), 5000);
         }}
       />
 
@@ -393,7 +406,7 @@ const GroupConversation = () => {
         <ConversationInfoModal
           conversation={conversation}
           members={membersData ?? []}
-          messages={messagesData ?? []}
+          messages={messages ?? []}
           isOpen={showConversationInfo}
           onClose={() => setShowConversationInfo(false)}
         />
