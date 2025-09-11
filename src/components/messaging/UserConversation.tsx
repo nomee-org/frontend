@@ -58,6 +58,7 @@ import { formatUnits } from "viem";
 import { toast } from "sonner";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { useAccount } from "wagmi";
+import { useName } from "@/data/use-doma";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -92,6 +93,13 @@ const UserConversation = () => {
   const [messagesError, setMessagesError] = useState<Error | undefined>(
     undefined
   );
+
+  const {
+    data: nameData,
+    isLoading: isNameLoading,
+    isRefetching,
+    isEnabled,
+  } = useName(dmId);
 
   const getOrCreateConversation = async (
     inboxId: string,
@@ -158,9 +166,8 @@ const UserConversation = () => {
         setConversation(
           await getOrCreateConversation(client?.inboxId, myAddress)
         );
-      } else if (dmId.includes(".")) {
-        const otherName = await dataService.getName({ name: dmId });
-        const address = parseCAIP10(otherName.claimedBy).address;
+      } else if (nameData?.claimedBy && dmId.includes(".")) {
+        const address = parseCAIP10(nameData.claimedBy).address;
 
         setPeerAddress(address);
         setConversation(
@@ -196,7 +203,7 @@ const UserConversation = () => {
 
   useEffect(() => {
     if (client?.inboxId) init();
-  }, [dmId, client?.inboxId]);
+  }, [dmId, client?.inboxId, nameData]);
 
   const {
     containerRef,
@@ -266,7 +273,7 @@ const UserConversation = () => {
     };
   }, [conversation]);
 
-  if (isLoading) {
+  if (isLoading || (isEnabled && (isNameLoading || isRefetching))) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">

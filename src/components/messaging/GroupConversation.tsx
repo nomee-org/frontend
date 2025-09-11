@@ -83,7 +83,7 @@ const GroupConversation = () => {
     isFetching,
     isRefetching,
     error: conversationError,
-  } = useGetConversation(client, id, undefined);
+  } = useGetConversation(client, id);
 
   const {
     data: membersData,

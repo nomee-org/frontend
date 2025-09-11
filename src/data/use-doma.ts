@@ -83,6 +83,7 @@ export function useName(name: string) {
   return useQuery({
     queryKey: queryKeys.single(name),
     queryFn: () => dataService.getName({ name }),
+    enabled: name.includes("."),
   });
 }
 
