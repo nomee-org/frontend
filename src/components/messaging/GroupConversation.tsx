@@ -79,6 +79,8 @@ const GroupConversation = () => {
   const {
     data: conversation,
     isLoading: conversationLoading,
+    isFetching,
+    isRefetching,
     error: conversationError,
   } = useGetConversation(client, id, undefined);
 
@@ -191,7 +193,7 @@ const GroupConversation = () => {
     );
   }
 
-  if (conversationError || !conversation) {
+  if (conversationError || isFetching || isRefetching) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">

@@ -9,6 +9,7 @@ import { wagmiAdapter } from "./configs/reown";
 import { AppRoutes } from "./Routes";
 import { UsernameProvider } from "./contexts/UsernameContext";
 import { XmtpProvider } from "./contexts/XmtpContext";
+import { NameResolverProvider } from "./contexts/NicknameContext";
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -21,7 +22,9 @@ const App = () => {
             <Sonner />
             <UsernameProvider>
               <XmtpProvider>
-                <AppRoutes />
+                <NameResolverProvider>
+                  <AppRoutes />
+                </NameResolverProvider>
               </XmtpProvider>
             </UsernameProvider>
           </TooltipProvider>

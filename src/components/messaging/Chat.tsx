@@ -5,11 +5,11 @@ import { DomainAvatar } from "../domain/DomainAvatar";
 import { Badge, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ContentTypeRemoteAttachment } from "@xmtp/content-type-remote-attachment";
-import { useNameResolver } from "@/hooks/use-name-resolver";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { formatUnits } from "viem";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { useNavigate } from "react-router-dom";
+import { useNameResolver } from "@/contexts/NicknameContext";
 
 export const Chat = ({ conversation }: { conversation: Conversation }) => {
   const { client, newMessage } = useXmtp();
@@ -174,7 +174,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
               <h3 className="font-semibold text-sm truncate text-foreground max-w-40">
                 {conversation.metadata.conversationType === "group"
                   ? (conversation as Group).name
-                  : nickname(peerAddress)}
+                  : nickname(peerAddress, 6)}
               </h3>
               {/* {otherUser?.isOnline && (
                                 <span className="text-xs text-green-600 font-medium">

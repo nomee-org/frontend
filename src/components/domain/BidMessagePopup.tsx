@@ -23,7 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DollarSign, TrendingUp, AlertCircle, Send } from "lucide-react";
+import {
+  DollarSign,
+  TrendingUp,
+  AlertCircle,
+  Send,
+  AtSign,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Conversation } from "@xmtp/browser-sdk";
@@ -140,7 +146,7 @@ const BidMessagePopup = ({
                   return (
                     <SelectItem value={name.name}>
                       <div className="flex items-center space-x-2">
-                        <DollarSign className="h-4 w-4" />
+                        <AtSign className="h-4 w-4" />
                         <span>{name.name}</span>
                       </div>
                     </SelectItem>

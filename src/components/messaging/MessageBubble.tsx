@@ -35,7 +35,7 @@ import {
 } from "@xmtp/content-type-remote-attachment";
 import { formatUnits } from "viem";
 import { ContentTypeText } from "@xmtp/content-type-text";
-import { useNameResolver } from "@/hooks/use-name-resolver";
+import { useNameResolver } from "@/contexts/NicknameContext";
 
 const reactions = [
   { emoji: "❤️", icon: Heart, name: "heart" },
@@ -407,7 +407,7 @@ export function MessageBubble({
             {/* Username for group chats */}
             {!isOwn && showAvatar && (
               <p className="text-xs font-medium mb-1 opacity-70">
-                {nickname(message.senderInboxId)}
+                {nickname(message.senderInboxId, 6)}
               </p>
             )}
 

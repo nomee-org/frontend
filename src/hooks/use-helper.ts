@@ -9,9 +9,10 @@ export const useHelper = () => {
     return { namespace, chainId, address };
   };
 
-  const trimAddress = (address: string): string => {
-    return `${address.substring(0, 4)}...${address.substring(
-      address.length - 4,
+  const trimAddress = (address: string, lenght = 4): string => {
+    if (address.length <= lenght * 2) return address;
+    return `${address.substring(0, lenght)}...${address.substring(
+      address.length - lenght,
       address.length
     )}`;
   };

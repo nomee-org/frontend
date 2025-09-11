@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,8 @@ import {
   UserPlus,
   Crown,
   Shield,
+  AtSign,
+  Check,
 } from "lucide-react";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { OnlineStatus } from "@/components/messaging/OnlineStatus";
@@ -29,19 +31,28 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import moment from "moment";
 import {
   Conversation,
-  ConversationType,
   DecodedMessage,
   Group,
   PermissionLevel,
   SafeGroupMember,
 } from "@xmtp/browser-sdk";
-import { useXmtp } from "@/contexts/XmtpContext";
+import { useOwnedNames } from "@/data/use-doma";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "../ui/label";
+import { useNameResolver } from "@/contexts/NicknameContext";
 
 interface ConversationInfoModalProps {
   conversation: Conversation;
   members: SafeGroupMember[];
   messages: DecodedMessage[];
   isOpen: boolean;
+  peerAddress?: string;
   onClose: () => void;
 }
 
@@ -51,15 +62,27 @@ export const ConversationInfoModal = ({
   messages,
   isOpen,
   onClose,
+  peerAddress,
 }: ConversationInfoModalProps) => {
   const isMobile = useIsMobile();
-  const { client } = useXmtp();
   const [activeTab, setActiveTab] = useState<"info" | "members">("info");
 
   const isGroupConversation =
     conversation.metadata.conversationType === "group";
 
-  const otherMember = members.find((m) => m.inboxId !== client.inboxId);
+  const { nickname, setNickname } = useNameResolver();
+  const [domainName, setDomainName] = useState("");
+  const { data: namesData } = useOwnedNames(peerAddress, 50, []);
+
+  useEffect(() => {
+    setDomainName(namesData?.pages?.[0]?.items?.[0]?.name ?? "");
+  }, [namesData]);
+
+  const handleSetNickname = () => {
+    if (domainName && peerAddress) {
+      setNickname(peerAddress, domainName);
+    }
+  };
 
   const renderContent = () => (
     <div className="space-y-6">
@@ -73,14 +96,17 @@ export const ConversationInfoModal = ({
               </div>
             </Avatar>
           ) : (
-            <DomainAvatar domain={otherMember?.inboxId} className="h-20 w-20" />
+            <DomainAvatar
+              domain={nickname(peerAddress)}
+              className="h-20 w-20"
+            />
           )}
         </div>
         <div>
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold ">
             {isGroupConversation
               ? (conversation as Group).name || "Group Chat"
-              : otherMember?.inboxId}
+              : nickname(peerAddress, 12)}
           </h2>
           {isGroupConversation ? (
             <p className="text-muted-foreground">
@@ -123,6 +149,42 @@ export const ConversationInfoModal = ({
       {/* Content */}
       {activeTab === "info" && (
         <div className="space-y-4">
+          {/* Domain Info */}
+          {namesData?.pages?.length && (
+            <div className="space-y-2">
+              <Label>Set a nickname</Label>
+              <div className="flex items-center gap-2">
+                <Select value={domainName} onValueChange={setDomainName}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {namesData?.pages
+                      ?.flatMap((p) => p.items)
+                      ?.map((name) => {
+                        return (
+                          <SelectItem value={name.name}>
+                            <div className="flex items-center space-x-2">
+                              <AtSign className="h-4 w-4" />
+                              <span>{name.name}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  className="h-10 w-10"
+                  variant="outline"
+                  onClick={handleSetNickname}
+                >
+                  <Check />
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Conversation Details */}
           <div className="space-y-3">
             <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">

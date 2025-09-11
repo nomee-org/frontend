@@ -46,12 +46,10 @@ const Messages = () => {
   const [isConversationSelected, setIsConversationSelected] = useState(false);
   const [isClosingConversation, setIsClosingConversation] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
   const [conversationsError, setConversationsError] = useState<
     Error | undefined
   >(undefined);
-
-  useEffect(() => navigate("/"), [client?.inboxId]);
 
   useEffect(() => {
     let streamController: AsyncIterator<any, any, any> | undefined;

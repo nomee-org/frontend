@@ -55,15 +55,15 @@ import { dataService } from "@/services/doma/dataservice";
 import { useHelper } from "@/hooks/use-helper";
 import { Conversation, DecodedMessage, Dm } from "@xmtp/browser-sdk";
 import { formatUnits } from "viem";
-import { useNameResolver } from "@/hooks/use-name-resolver";
 import { toast } from "sonner";
+import { useNameResolver } from "@/contexts/NicknameContext";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
 
   const initMessage = params.get("message");
 
-  const { username: usernameOrAddressOrConverationId } = useParams<{
+  const { username: dmId } = useParams<{
     username: string;
   }>();
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ const UserConversation = () => {
   const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
 
   const { client, newMessage, clearNewMessage } = useXmtp();
-  const { nickname, setNickname } = useNameResolver();
+  const { nickname } = useNameResolver();
   const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
@@ -149,36 +149,34 @@ const UserConversation = () => {
 
   const init = async () => {
     try {
-      if (usernameOrAddressOrConverationId.includes(".")) {
+      setIsLoading(true);
+      setPeerAddress(undefined);
+
+      if (dmId.includes(".")) {
         const otherName = await dataService.getName({
-          name: usernameOrAddressOrConverationId,
+          name: dmId,
         });
-        const peerAddress = parseCAIP10(otherName.claimedBy).address;
+        const address = parseCAIP10(otherName.claimedBy).address;
+
+        setPeerAddress(address);
 
         const inboxId = await client.findInboxIdByIdentifier({
-          identifier: peerAddress.toLowerCase(),
+          identifier: address.toLowerCase(),
           identifierKind: "Ethereum",
         });
 
-        setNickname(inboxId, usernameOrAddressOrConverationId);
+        await getOrCreateConversation(inboxId, peerAddress);
+      } else if (dmId.startsWith("0x")) {
+        setPeerAddress(dmId);
 
-        await getOrCreateConversation(inboxId);
-      } else if (usernameOrAddressOrConverationId.startsWith("0x")) {
         const inboxId = await client.findInboxIdByIdentifier({
-          identifier: usernameOrAddressOrConverationId.toLowerCase(),
+          identifier: dmId.toLowerCase(),
           identifierKind: "Ethereum",
         });
 
-        await getOrCreateConversation(
-          inboxId,
-          usernameOrAddressOrConverationId
-        );
+        await getOrCreateConversation(inboxId, dmId);
       } else {
-        setConversation(
-          await client.conversations.getConversationById(
-            usernameOrAddressOrConverationId
-          )
-        );
+        setConversation(await client.conversations.getConversationById(dmId));
       }
     } catch (error) {
       toast.error(error?.message);
@@ -189,7 +187,7 @@ const UserConversation = () => {
 
   useEffect(() => {
     if (client?.inboxId) init();
-  }, [usernameOrAddressOrConverationId, client?.inboxId]);
+  }, [dmId, client?.inboxId]);
 
   const {
     containerRef,
@@ -316,7 +314,7 @@ const UserConversation = () => {
             </div>
             <div>
               <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
-                {nickname(peerAddress)}
+                {nickname(peerAddress, 8)}
               </h3>
               <OnlineStatus isOnline={true} className="mt-0.5" />
             </div>
@@ -324,15 +322,17 @@ const UserConversation = () => {
         </div>
 
         <div className="flex items-center space-x-1 lg:space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBidPopup(true)}
-            className="text-primary border-primary hover:bg-primary hover:text-primary-foreground text-xs lg:text-sm h-7 md:h-8"
-          >
-            <Send className="h-2 w-2 md:h-3 lg:h-4 md:w-3 lg:w-4 mr-0.5 md:mr-1" />
-            Offer
-          </Button>
+          {peerAddress && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBidPopup(true)}
+              className="text-primary border-primary hover:bg-primary hover:text-primary-foreground text-xs lg:text-sm h-7 md:h-8"
+            >
+              <Send className="h-2 w-2 md:h-3 lg:h-4 md:w-3 lg:w-4 mr-0.5 md:mr-1" />
+              Offer
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -482,6 +482,7 @@ const UserConversation = () => {
           messages={messages ?? []}
           isOpen={showConversationInfo}
           onClose={() => setShowConversationInfo(false)}
+          peerAddress={peerAddress}
         />
       )}
 
