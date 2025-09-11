@@ -24,6 +24,7 @@ import {
   Shield,
   AtSign,
   Check,
+  User,
 } from "lucide-react";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { OnlineStatus } from "@/components/messaging/OnlineStatus";
@@ -46,6 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "../ui/label";
 import { useNameResolver } from "@/contexts/NicknameContext";
+import { useAccount } from "wagmi";
 
 interface ConversationInfoModalProps {
   conversation: Conversation;
@@ -65,6 +67,7 @@ export const ConversationInfoModal = ({
   peerAddress,
 }: ConversationInfoModalProps) => {
   const isMobile = useIsMobile();
+  const { address } = useAccount();
   const [activeTab, setActiveTab] = useState<"info" | "members">("info");
 
   const isGroupConversation =
@@ -159,6 +162,15 @@ export const ConversationInfoModal = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    {peerAddress?.toLowerCase() === address?.toLowerCase() && (
+                      <SelectItem value={"You"}>
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4" />
+                          <span>{"You"}</span>
+                        </div>
+                      </SelectItem>
+                    )}
+
                     {namesData?.pages
                       ?.flatMap((p) => p.items)
                       ?.map((name) => {

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { useHelper } from "@/hooks/use-helper";
+import { useAccount } from "wagmi";
 
 const STORAGE_KEY = import.meta.env.VITE_NOMEE_NICKNAMES;
 
@@ -25,6 +26,7 @@ export const NameResolverProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { client } = useXmtp();
+  const { address: myAddress } = useAccount();
   const { trimAddress } = useHelper();
 
   const [users, setUsers] = useState<Record<string, string>>(() => {
@@ -44,13 +46,14 @@ export const NameResolverProvider: React.FC<{ children: React.ReactNode }> = ({
   const nickname = useCallback(
     (address?: string, length?: number): string => {
       if (!address) return "Unknown";
-      if (address?.toLowerCase() === client?.inboxId?.toLowerCase()) {
+
+      const lookUp = users[address.toLowerCase()];
+
+      if (!lookUp && address?.toLowerCase() === myAddress?.toLowerCase()) {
         return "You";
       }
-      return (
-        users[address.toLowerCase()] ??
-        (length ? trimAddress(address, length) : address)
-      );
+
+      return lookUp ?? (length ? trimAddress(address, length) : address);
     },
     [client?.inboxId, users, trimAddress]
   );

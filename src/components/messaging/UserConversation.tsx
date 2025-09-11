@@ -57,6 +57,7 @@ import { Conversation, DecodedMessage, Dm } from "@xmtp/browser-sdk";
 import { formatUnits } from "viem";
 import { toast } from "sonner";
 import { useNameResolver } from "@/contexts/NicknameContext";
+import { useAccount } from "wagmi";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -68,6 +69,7 @@ const UserConversation = () => {
   }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { address: myAddress } = useAccount();
   const [isLoading, setIsLoading] = useState(true);
   const [showBidPopup, setShowBidPopup] = useState(false);
   const [replyToId, setReplyToId] = useState<string | undefined>();
@@ -91,9 +93,10 @@ const UserConversation = () => {
     undefined
   );
 
-  const getOrCreateConversation = async (inboxId: string, address?: string) => {
-    setIsLoading(true);
-
+  const getOrCreateConversation = async (
+    inboxId: string,
+    address?: string
+  ): Promise<Dm | undefined> => {
     try {
       let dm: Dm | undefined = undefined;
 
@@ -110,17 +113,15 @@ const UserConversation = () => {
             },
           ]);
 
-          if (!canMessage.get(address.toLowerCase())) {
-            throw new Error("Cannot message.");
-          }
+          if (!canMessage.get(address.toLowerCase())) return undefined;
         }
 
         dm = await client.conversations.newDm(inboxId);
       }
 
-      setConversation(dm);
+      return dm;
     } catch (error) {
-      console.log(error);
+      return undefined;
     }
   };
 
@@ -152,30 +153,38 @@ const UserConversation = () => {
       setIsLoading(true);
       setPeerAddress(undefined);
 
-      if (dmId.includes(".")) {
-        const otherName = await dataService.getName({
-          name: dmId,
-        });
+      if (dmId?.toLowerCase() === "you") {
+        setPeerAddress(myAddress);
+        setConversation(
+          await getOrCreateConversation(client?.inboxId, myAddress)
+        );
+      } else if (dmId.includes(".")) {
+        const otherName = await dataService.getName({ name: dmId });
         const address = parseCAIP10(otherName.claimedBy).address;
 
         setPeerAddress(address);
-
-        const inboxId = await client.findInboxIdByIdentifier({
-          identifier: address.toLowerCase(),
-          identifierKind: "Ethereum",
-        });
-
-        await getOrCreateConversation(inboxId, peerAddress);
+        setConversation(
+          await getOrCreateConversation(
+            await client.findInboxIdByIdentifier({
+              identifier: address.toLowerCase(),
+              identifierKind: "Ethereum",
+            }),
+            peerAddress
+          )
+        );
       } else if (dmId.startsWith("0x")) {
         setPeerAddress(dmId);
-
-        const inboxId = await client.findInboxIdByIdentifier({
-          identifier: dmId.toLowerCase(),
-          identifierKind: "Ethereum",
-        });
-
-        await getOrCreateConversation(inboxId, dmId);
+        setConversation(
+          await getOrCreateConversation(
+            await client.findInboxIdByIdentifier({
+              identifier: dmId.toLowerCase(),
+              identifierKind: "Ethereum",
+            }),
+            dmId
+          )
+        );
       } else {
+        setPeerAddress(undefined);
         setConversation(await client.conversations.getConversationById(dmId));
       }
     } catch (error) {
@@ -271,7 +280,7 @@ const UserConversation = () => {
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <UserRoundX className="w-8 h-8 mx-auto mb-2" />
           <p className="text-muted-foreground">
             User is not registered on XTMP.
