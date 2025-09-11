@@ -1587,17 +1587,16 @@ export function useSendMessage(conversation: Conversation) {
   const queryClient = useQueryClient();
 
   return useMutation<
-    void,
+    string,
     Error,
     {
       content: string | RemoteAttachment | Reaction | Reply;
       contentType?: ContentTypeId;
     }
   >({
-    mutationFn: ({ content, contentType }) => {
-      conversation.sendOptimistic(content, contentType as any);
-      return conversation.publishMessages();
-    },
+    mutationFn: ({ content, contentType }) =>
+      conversation.sendOptimistic(content, contentType as any),
+
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.messages.byConversation(conversation?.id, 1, 50),

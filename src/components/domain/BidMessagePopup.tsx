@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,26 +27,21 @@ import { DollarSign, Clock, TrendingUp, AlertCircle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSendMessage } from "@/data/use-backend";
-import { useXmtp } from "@/contexts/XmtpContext";
 import { Conversation } from "@xmtp/browser-sdk";
+import { useOwnedNames } from "@/data/use-doma";
 
 interface BidMessagePopupProps {
   conversation: Conversation;
   isOpen: boolean;
   onClose: () => void;
-  recipientName: string;
-  recipientId: string;
-  domainName: string;
-  conversationId?: string;
+  recipientAddress: string;
 }
 
 const BidMessagePopup = ({
   conversation,
   isOpen,
   onClose,
-  recipientName,
-  domainName,
-  conversationId,
+  recipientAddress,
 }: BidMessagePopupProps) => {
   const [bidAmount, setBidAmount] = useState("");
   const [bidCurrency, setBidCurrency] = useState("USDC");
@@ -57,7 +52,14 @@ const BidMessagePopup = ({
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  const [domainName, setDomainName] = useState("");
+  const { data: namesData } = useOwnedNames(recipientAddress, 50, []);
+
   const sendMessageMutation = useSendMessage(conversation);
+
+  useEffect(() => {
+    setDomainName(namesData?.pages?.[0]?.items?.[0]?.name ?? "");
+  }, [namesData]);
 
   const currencies = [
     { value: "USDC", label: "USDC" },
@@ -74,11 +76,11 @@ const BidMessagePopup = ({
 
     return `${bidTypeText}${durationText}
 
-🌐 Domain: ${domainName}
-💵 Amount: ${bidAmount} ${bidCurrency}
+    🌐 Domain: ${domainName}
+    💵 Amount: ${bidAmount} ${bidCurrency}
 
-💬 Message:
-${message}`;
+    💬 Message:
+    ${message}`;
   };
 
   const handleSubmitBid = async () => {
@@ -86,15 +88,6 @@ ${message}`;
       toast({
         title: "Error",
         description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!conversationId) {
-      toast({
-        title: "Error",
-        description: "Conversation not available. Please try again.",
         variant: "destructive",
       });
       return;
@@ -137,15 +130,27 @@ ${message}`;
     <>
       <div className="space-y-6 flex-1 overflow-y-auto">
         {/* Domain Info */}
-        <div className="bg-accent/50 p-2 md:p-4 rounded-lg">
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-sm">From</span>
-            <Badge variant="outline">{domainName}</Badge>
-          </div>
-          <div className="flex items-center justify-between mt-2">
-            <span className="font-medium text-sm">Recipient</span>
-            <span className="text-sm">{recipientName}</span>
-          </div>
+        <div className="space-y-2">
+          <Label>Domain</Label>
+          <Select value={domainName} onValueChange={setDomainName}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {namesData?.pages
+                ?.flatMap((p) => p.items)
+                ?.map((name) => {
+                  return (
+                    <SelectItem value={name.name}>
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="h-4 w-4" />
+                        <span>{name.name}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Bid Type */}
@@ -285,7 +290,7 @@ ${message}`;
               Send Offer Message
             </DrawerTitle>
             <p className="text-sm text-muted-foreground">
-              Send a proposal to {recipientName} from {domainName}
+              Send an offer to {domainName}
             </p>
           </DrawerHeader>
           <div className="p-4 flex flex-col flex-1 overflow-hidden">
@@ -304,7 +309,7 @@ ${message}`;
             Send Offer Message
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Send a bidding proposal to {recipientName} for {domainName}
+            Send an offer to {domainName}
           </p>
         </DialogHeader>
         <div className="flex flex-col overflow-hidden">{content}</div>

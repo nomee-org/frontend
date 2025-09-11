@@ -19,28 +19,13 @@ import { useUsername } from "./contexts/UsernameContext";
 export const AppRoutes = () => {
   const { activeUsername } = useUsername();
 
-  const { refetch: refetchConversationsData } = useUserConversations(
-    50,
-    activeUsername
-  );
-
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route path="/" element={<Messages />}>
-            <Route
-              path="messages/:username"
-              element={
-                <UserConversation onRefresh={refetchConversationsData} />
-              }
-            />
-            <Route
-              path="groups/:id"
-              element={
-                <GroupConversation onRefresh={refetchConversationsData} />
-              }
-            />
+            <Route path="messages/:username" element={<UserConversation />} />
+            <Route path="groups/:id" element={<GroupConversation />} />
           </Route>
           <Route path="feeds" element={<Community />} />
           <Route path="discover" element={<DomainSearch />} />

@@ -58,7 +58,7 @@ import { MembersDialog } from "./MembersDialog";
 import { formatUnits } from "viem";
 import { backendService } from "@/services/backend/backendservice";
 
-const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
+const GroupConversation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -123,10 +123,6 @@ const GroupConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "group-conversations",
-      onMessageChanged: () => {
-        refetchMessages();
-        onRefresh();
-      },
       onUserTyping: ({ username, conversationId }) => {
         if (
           conversationId === conversation?.id &&

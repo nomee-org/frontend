@@ -48,7 +48,6 @@ export interface WebSocketEventHandlers {
   onNewFollower?: (follower: IUserBasic) => void;
   onFollowingStatusUpdate?: (update: { username: string }) => void;
 
-  onMessageChanged?: () => void;
   onUserTyping?: (data: { username: string; conversationId: string }) => void;
   onUserStoppedTyping?: (data: {
     username: string;
@@ -348,10 +347,6 @@ class WebSocketService {
       this.handlers.forEach((handler) =>
         handler.onFollowingStatusUpdate?.(update)
       );
-    });
-
-    this.socket.on("message-changed", () => {
-      this.handlers.forEach((handler) => handler.onMessageChanged?.());
     });
 
     this.socket.on(

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useUsername } from "@/contexts/UsernameContext";
 import Nomee from "../common/Nomee";
+import { useXmtp } from "@/contexts/XmtpContext";
 
 const navigationItems = [
   { title: "Messages", url: "/", icon: MessageSquare },
@@ -37,6 +38,7 @@ const settingsItems = [{ title: "Settings", url: "/settings", icon: Settings }];
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { newMessage } = useXmtp();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -105,7 +107,7 @@ export function AppSidebar() {
                               }`}
                             >
                               <item.icon className="h-5 w-5" />
-                              {item.title === "Messages" && (
+                              {item.title === "Messages" && newMessage && (
                                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                               )}
                             </div>
@@ -120,7 +122,7 @@ export function AppSidebar() {
                       {isCollapsed && (
                         <TooltipContent side="right" className="font-medium">
                           {item.title}
-                          {item.title === "Messages" && (
+                          {item.title === "Messages" && newMessage && (
                             <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
                           )}
                         </TooltipContent>

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Client, Identifier } from "@xmtp/browser-sdk";
+import { Client, DecodedMessage, Identifier } from "@xmtp/browser-sdk";
 import React, { createContext, ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { toBytes, WalletClient } from "viem";
@@ -20,6 +20,8 @@ interface XmtpContextType {
   error: Error | null;
   connect: () => Promise<void>;
   disconnect: () => void;
+  newMessage: DecodedMessage | undefined;
+  clearNewMessage: () => void;
 }
 
 const XmtpContext = createContext<XmtpContextType | undefined>(undefined);
@@ -38,10 +40,46 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     null
   );
   const [identifier, setIdentifier] = useState<Identifier | null>(null);
+  const [newMessage, setNewMessage] = useState<DecodedMessage | undefined>(
+    undefined
+  );
+
+  const clearNewMessage = () => {
+    setNewMessage(undefined);
+  };
+
+  useEffect(() => {
+    let streamController: AsyncIterator<any, any, any> | undefined;
+
+    if (client?.inboxId) {
+      (async () => {
+        streamController = await client.conversations.streamAllMessages({
+          onValue: (value) => {
+            setNewMessage(value);
+          },
+          onError: (error) => {
+            // setConversationsError(error);
+          },
+        });
+      })();
+    }
+
+    return () => {
+      if (streamController && typeof streamController.return === "function") {
+        streamController.return();
+      }
+    };
+  }, [client?.inboxId]);
 
   const updateProfileMutation = useUpdateProfile();
 
-  useEffect(() => disconnect(), [address]);
+  useEffect(() => {
+    if (address && walletClient) {
+      connect();
+    } else {
+      disconnect();
+    }
+  }, [address, walletClient]);
 
   const connect = async () => {
     try {
@@ -54,8 +92,6 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
 
       setIsLoading(true);
 
-      await walletClient.switchChain({ id: mainnet.id });
-
       setIdentifier({
         identifier: address.toLowerCase(),
         identifierKind: "Ethereum",
@@ -63,7 +99,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
 
       const xmtpClient = await Client.create(
         {
-          type: "SCW",
+          type: "EOA",
           getIdentifier: () => ({
             identifier: address.toLowerCase(),
             identifierKind: "Ethereum",
@@ -73,7 +109,6 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
               await walletClient.signMessage({ message, account: address })
             );
           },
-          getChainId: () => BigInt(mainnet.id),
         },
         {
           env: "dev",
@@ -115,6 +150,8 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     error,
     connect,
     disconnect,
+    newMessage,
+    clearNewMessage,
   };
 
   return <XmtpContext.Provider value={value}>{children}</XmtpContext.Provider>;

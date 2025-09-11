@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // React imports
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 // Third-party imports
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -10,32 +11,28 @@ import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { QueryListLoader } from "@/components/ui/query-loader";
 import { QueryError } from "@/components/ui/query-error";
 
 // Icon imports
-import { Search, MessageSquare, Plus, Users } from "lucide-react";
+import { Search, MessageSquare, Plus } from "lucide-react";
 
 // Local component imports
 import { CreateGroupDialog } from "@/components/messaging/CreateGroupDialog";
 import { ConnectWallet } from "@/components/common/ConnectWallet";
-import { BuyDomain } from "@/components/domain/BuyDomain";
-import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { SEO } from "@/components/seo/SEO";
 
 // Hook imports
-import { useUsername } from "@/hooks/use-username";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-// Service/data imports
-import { useUserConversations } from "@/data/use-backend";
 
 // Type imports
 import { useXmtp } from "@/contexts/XmtpContext";
-import { InitXmtp } from "@/components/domain/InitXmtp";
-import { Conversation, ConversationType, Dm, Group } from "@xmtp/browser-sdk";
-import { useNameResolver } from "@/hooks/use-name-resolver";
+import {
+  Conversation,
+  ConversationType,
+  DecodedMessage,
+} from "@xmtp/browser-sdk";
+import { Chat } from "@/components/messaging/Chat";
 
 const Messages = () => {
   // Navigation and routing states
@@ -43,25 +40,66 @@ const Messages = () => {
   const location = useLocation();
 
   // User and account states
-  const { activeUsername } = useUsername();
   const { address } = useAccount();
   const isMobile = useIsMobile();
   const { client } = useXmtp();
-  const { resolveUsername } = useNameResolver();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [isConversationSelected, setIsConversationSelected] = useState(false);
   const [isClosingConversation, setIsClosingConversation] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [conversationsError, setConversationsError] = useState<
+    Error | undefined
+  >(undefined);
 
-  // Data fetching states
-  const {
-    data: conversationsData,
-    isLoading: conversationsLoading,
-    error: conversationsError,
-    refetch: refetchConversationsData,
-  } = useUserConversations(client, 50, activeUsername);
+  useEffect(() => {
+    let streamController: AsyncIterator<any, any, any> | undefined;
+
+    if (client?.inboxId) {
+      (async () => {
+        streamController = await client.conversations.stream({
+          onValue: (value) => {
+            setConversations((prev) => [value, ...prev]);
+          },
+          onError: (error) => {
+            // setConversationsError(error);
+          },
+        });
+      })();
+    }
+
+    return () => {
+      if (streamController && typeof streamController.return === "function") {
+        streamController.return();
+      }
+    };
+  }, [client?.inboxId]);
+
+  const getConversations = async () => {
+    try {
+      if (client?.inboxId) {
+        const r = await client.conversations.list();
+        console.log({ r });
+
+        setConversations(r);
+      } else {
+        setConversations([]);
+      }
+    } catch (error) {
+      //  setConversationsError(error);
+    } finally {
+      setConversationsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    console.log("da");
+
+    getConversations();
+  }, [client?.inboxId]);
 
   const handleConversationClick = (conversation: Conversation) => {
     if (
@@ -95,16 +133,6 @@ const Messages = () => {
   if (!address) {
     return (
       <ConnectWallet description="Connect your wallet to access messaging features and start conversations with other users." />
-    );
-  }
-
-  if (!activeUsername) {
-    return <BuyDomain description="No active username." />;
-  }
-
-  if (!client) {
-    return (
-      <InitXmtp description="Confirm and continue using XMTP dev network." />
     );
   }
 
@@ -163,13 +191,13 @@ const Messages = () => {
               <div className="p-4">
                 <QueryError
                   error={conversationsError}
-                  onRetry={refetchConversationsData}
+                  onRetry={() => {}}
                   message="Failed to load conversations"
                 />
               </div>
             ) : conversationsLoading ? (
               <QueryListLoader />
-            ) : conversationsData?.length === 0 ? (
+            ) : conversations?.length === 0 ? (
               <div className="p-content text-center text-muted-foreground">
                 <div className="space-y-1 md:space-y-2">
                   <p className="text-xs md:text-sm">No conversations found</p>
@@ -180,7 +208,7 @@ const Messages = () => {
               </div>
             ) : (
               <div className="space-y-3 p-4">
-                {conversationsData?.map((conversation) => {
+                {conversations?.map((conversation) => {
                   const isSelected =
                     conversation.metadata.conversationType ===
                     ConversationType.Group.toString()
@@ -192,72 +220,12 @@ const Messages = () => {
                         );
 
                   return (
-                    <div
+                    <Chat
                       key={conversation.id}
-                      onClick={() => handleConversationClick(conversation)}
-                      className={`p-3 cursor-pointer transition-all duration-200 hover:bg-accent/80 rounded-xl border border-transparent ${
-                        isSelected
-                          ? "bg-accent border-primary/20 shadow-sm"
-                          : "hover:shadow-sm"
-                      }`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className="relative flex-shrink-0">
-                          {conversation.metadata.conversationType ===
-                          ConversationType.Group.toString() ? (
-                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center border-2 border-primary/10">
-                              <Users className="h-5 w-5 text-primary" />
-                            </div>
-                          ) : (
-                            <div className="relative">
-                              <DomainAvatar
-                                domain={conversation.id}
-                                className="h-12 w-12 ring-2 ring-background shadow-sm"
-                              />
-                              {/* {otherUser?.isOnline && (
-                                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full"></div>
-                              )} */}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-1">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm truncate text-foreground">
-                                {conversation.metadata.conversationType ===
-                                ConversationType.Group.toString()
-                                  ? (conversation as Group).name
-                                  : resolveUsername(conversation.id)}
-                              </h3>
-                              {/* {otherUser?.isOnline && (
-                                <span className="text-xs text-green-600 font-medium">
-                                  Online
-                                </span>
-                              )} */}
-                            </div>
-                            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-                              <span className="text-xs text-muted-foreground font-medium">
-                                {moment(conversation.createdAt).format("HH:mm")}
-                              </span>
-                              {/* {conversation?.unreadCount > 0 && (
-                                <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center rounded-full">
-                                  {(conversation?.unreadCount ?? 0) > 99
-                                    ? "99+"
-                                    : conversation?.unreadCount}
-                                </Badge>
-                              )} */}
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {/* <p className="text-sm text-muted-foreground truncate flex-1 max-w-44">
-                              {conversation.lastMessage?.content ||
-                                "No messages yet"}
-                            </p> */}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                      isSelected={isSelected}
+                      handleConversationClick={handleConversationClick}
+                      conversation={conversation}
+                    />
                   );
                 })}
               </div>
@@ -301,7 +269,6 @@ const Messages = () => {
           onSuccess={(conversationId) => {
             navigate(`/messages/groups/${conversationId}`);
             setShowCreateGroup(false);
-            refetchConversationsData();
           }}
         />
       </div>

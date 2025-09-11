@@ -81,7 +81,10 @@ function AppLayoutContent() {
                   </h1>
                 )}
 
-                {activeUsername && <UsernameSelector />}
+                {location.pathname !== "/" &&
+                  !location.pathname.startsWith("/messages") &&
+                  !location.pathname.startsWith("/group") &&
+                  activeUsername && <UsernameSelector />}
               </div>
               <div className="flex items-center gap-3 md:gap-2">
                 <NotificationPopover />

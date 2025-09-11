@@ -22,10 +22,8 @@ import {
   Loader,
   ChevronDown,
   ArrowLeft,
-  Trash2,
-  VolumeX,
-  Volume2,
   Send,
+  UserRoundX,
 } from "lucide-react";
 
 // Local component imports
@@ -40,13 +38,12 @@ import { MuteConversationPopup } from "@/components/messaging/MuteConversationPo
 import { PinnedMessagesBar } from "@/components/messaging/PinnedMessagesBar";
 
 // Hook imports
-import { useUsername } from "@/hooks/use-username";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMessageScroll } from "@/hooks/use-message-scroll";
 import { usePinnedMessagesVisibility } from "@/hooks/use-pinned-messages-visibility";
 
 // Service/data imports
-import { useGetMessages, useCreateDmConversation } from "@/data/use-backend";
+import { useCreateDmConversation } from "@/data/use-backend";
 import {
   webSocketService,
   WebSocketEventHandlers,
@@ -57,12 +54,10 @@ import { RecordingIndicator } from "./RecordingIndicator";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { dataService } from "@/services/doma/dataservice";
 import { useHelper } from "@/hooks/use-helper";
-import { Dm } from "@xmtp/browser-sdk";
-import { toast } from "sonner";
+import { DecodedMessage, Dm } from "@xmtp/browser-sdk";
 import { formatUnits } from "viem";
-import { backendService } from "@/services/backend/backendservice";
 
-const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
+const UserConversation = () => {
   const [params] = useSearchParams();
 
   const initMessage = params.get("message");
@@ -75,14 +70,52 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
   const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
+  const [otherInboxId, setOtherInboxId] = useState<string | undefined>(
+    undefined
+  );
+  const [otherAddress, setOtherAddress] = useState<string | undefined>(
+    undefined
+  );
 
-  const { activeUsername } = useUsername();
-  const { client } = useXmtp();
+  const { client, newMessage, clearNewMessage } = useXmtp();
   const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
 
+  const [messages, setMessages] = useState<DecodedMessage[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [messagesError, setMessagesError] = useState<Error | undefined>(
+    undefined
+  );
+
   const createConversation = useCreateDmConversation(client);
+
+  useEffect(() => {
+    if (
+      newMessage &&
+      newMessage.conversationId === createConversation?.data?.id
+    ) {
+      setMessages((prev) => [newMessage, ...prev]);
+      clearNewMessage();
+    }
+  }, [newMessage]);
+
+  const getMessages = async () => {
+    try {
+      setMessages(await createConversation.data.messages());
+    } catch (error) {
+      // setMessagesError(error);
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (createConversation?.data) {
+      getMessages();
+      createConversation.data.sync();
+    }
+  }, [createConversation?.data]);
 
   const initConversation = async () => {
     try {
@@ -95,34 +128,30 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
           identifierKind: "Ethereum",
         });
 
-        if (!inboxId) {
-          return toast.error("Recipient is not yet on XMTP.");
-        }
+        setOtherAddress(otherAddress);
+        setOtherInboxId(inboxId);
 
-        createConversation.mutate({ inboxId });
+        if (inboxId) {
+          createConversation.mutate({ inboxId });
+        }
       } else {
         const conversation = await client.conversations.getConversationById(
           username
         );
+
+        setOtherInboxId(username);
         createConversation.mutate({ conversation: conversation as Dm });
       }
     } catch (error) {
-      toast.error(error?.message);
+      // toast.error(error?.message);
     }
   };
 
   useEffect(() => {
-    if (username) {
+    if (username && client?.inboxId) {
       initConversation();
     }
-  }, [username]);
-
-  const {
-    data: messagesData,
-    isLoading: messagesLoading,
-    error: messagesError,
-    refetch: refetchMessages,
-  } = useGetMessages(createConversation?.data, 50, activeUsername);
+  }, [username, client?.inboxId]);
 
   const {
     containerRef,
@@ -132,9 +161,9 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     scrollToMessage,
   } = useMessageScroll({
     hasNextPage: false,
-    fetchNextPage: () => refetchMessages(),
+    fetchNextPage: () => {},
     isFetchingNextPage: false,
-    messages: messagesData ?? [],
+    messages: messages ?? [],
     newMessageCount: 0,
   });
 
@@ -146,22 +175,17 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
 
   useEffect(() => {
     if (createConversation?.data?.id) {
-      backendService.subscribeToConversation(createConversation?.data?.id);
       webSocketService.joinConversation(createConversation.data.id);
     }
-  }, [createConversation]);
+  }, [createConversation?.data]);
 
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "user-conversations",
-      onMessageChanged: () => {
-        refetchMessages();
-        onRefresh();
-      },
       onUserTyping: ({ username, conversationId }) => {
         if (
           conversationId === createConversation?.data?.id &&
-          username !== activeUsername
+          username !== client.inboxId
         ) {
           setTypingUsers((prev) => {
             if (!prev.includes(username)) {
@@ -179,7 +203,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
       onUserRecording: ({ username, conversationId }) => {
         if (
           conversationId === createConversation?.data?.id &&
-          username !== activeUsername
+          username !== client.inboxId
         ) {
           setRecordingUsers((prev) => {
             if (!prev.includes(username)) {
@@ -201,14 +225,30 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
     return () => {
       webSocketService.removeEventHandlers(handlers);
     };
-  }, [createConversation]);
+  }, [createConversation?.data]);
 
-  if (createConversation.isPending) {
+  if (createConversation.isPending || createConversation.isIdle) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center">
           <Loader className="w-8 h-8 animate-spin mx-auto mb-2" />
           <p className="text-muted-foreground">Loading conversation...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!otherInboxId) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="text-center">
+          <UserRoundX className="w-8 h-8 mx-auto mb-2" />
+          <p className="text-muted-foreground">
+            User is not registered on XTMP.
+          </p>
+          <Button size="sm" variant="outline">
+            Invite them
+          </Button>
         </div>
       </div>
     );
@@ -320,7 +360,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
           <div className="text-center text-red-500 text-xs md:text-sm">
             Failed to load messages
           </div>
-        ) : messagesData?.length === 0 ? (
+        ) : messages?.length === 0 ? (
           <div className="text-center text-muted-foreground">
             <div className="space-y-1 md:space-y-2">
               <p className="text-xs md:text-sm">No messages yet</p>
@@ -334,7 +374,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
             <MessageList
               conversation={createConversation?.data}
               messages={
-                messagesData?.sort(
+                messages?.sort(
                   (a, b) =>
                     new Date(
                       Math.ceil(Number(formatUnits(a.sentAtNs, 6)))
@@ -389,29 +429,16 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
         onSendSuccess={() => {
           setReplyToId(undefined);
           scrollToBottom();
-
-          setTimeout(() => {
-            refetchMessages();
-            backendService.onMessageSent(
-              createConversation?.data?.id,
-              client.inboxId
-            );
-          }, 2000);
-
-          setTimeout(() => refetchMessages(), 5000);
         }}
       />
 
       {/* Bid Message Popup */}
-      {username && createConversation?.data && (
+      {otherAddress && createConversation?.data && (
         <BidMessagePopup
           conversation={createConversation?.data}
           isOpen={showBidPopup}
           onClose={() => setShowBidPopup(false)}
-          recipientId={username}
-          recipientName={username}
-          domainName={activeUsername || ""}
-          conversationId={createConversation?.data?.id}
+          recipientAddress={otherAddress}
         />
       )}
 
@@ -420,7 +447,7 @@ const UserConversation = ({ onRefresh }: { onRefresh: () => void }) => {
         <ConversationInfoModal
           conversation={createConversation?.data}
           members={[]}
-          messages={messagesData ?? []}
+          messages={messages ?? []}
           isOpen={showConversationInfo}
           onClose={() => setShowConversationInfo(false)}
         />

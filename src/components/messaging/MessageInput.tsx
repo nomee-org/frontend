@@ -245,7 +245,7 @@ export function MessageInput({
           contentLength: attachment.data.byteLength,
         };
 
-        sendMessageMutation.mutate({
+        await sendMessageMutation.mutateAsync({
           content: remoteAttachment,
           contentType: ContentTypeRemoteAttachment as any,
         });
@@ -257,12 +257,12 @@ export function MessageInput({
           contentType: ContentTypeReply,
         };
 
-        sendMessageMutation.mutate({
+        await sendMessageMutation.mutateAsync({
           content: reply,
           contentType: ContentTypeReply as any,
         });
       } else {
-        sendMessageMutation.mutate({ content: message });
+        await sendMessageMutation.mutateAsync({ content: message });
       }
 
       setMessage("");
@@ -270,8 +270,10 @@ export function MessageInput({
       handleTypingStop(); // Stop typing when message is sent
       onSendSuccess?.();
       onCancelReply?.();
+
+      await conversation.publishMessages();
     } catch (error) {
-      toast.error(error?.message ?? "Failed to send message");
+      // toast.error(error?.message ?? "Failed to send message");
     }
   };
 
@@ -317,15 +319,17 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      sendMessageMutation.mutate({
+      await sendMessageMutation.mutateAsync({
         content: remoteAttachment,
         contentType: ContentTypeRemoteAttachment as any,
       });
 
       onSendSuccess?.();
       onCancelReply?.();
+
+      await conversation.publishMessages();
     } catch (error) {
-      toast.error("Failed to send voice message");
+      // toast.error("Failed to send voice message");
     }
   };
 
@@ -361,15 +365,17 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      sendMessageMutation.mutate({
+      await sendMessageMutation.mutateAsync({
         content: remoteAttachment,
         contentType: ContentTypeRemoteAttachment as any,
       });
 
       onSendSuccess?.();
       onCancelReply?.();
+
+      await conversation.publishMessages();
     } catch (error) {
-      toast.error("Failed to send sticker");
+      // toast.error("Failed to send sticker");
     }
   };
 
