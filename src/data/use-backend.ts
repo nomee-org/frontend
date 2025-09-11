@@ -429,15 +429,6 @@ export function useGetUserByUsername(
   });
 }
 
-export function useGetUsersByInboxIds(inboxIds: string[]) {
-  return useQuery<IUserBasic[], Error>({
-    queryKey: queryKeys.users.byInboxIds(inboxIds.sort()),
-    queryFn: () => backendService.getUsersByInboxIds(inboxIds),
-    staleTime: 5 * 60 * 1000,
-    initialData: [],
-  });
-}
-
 export function useFollowUser(activeUsername?: string) {
   const queryClient = useQueryClient();
 
