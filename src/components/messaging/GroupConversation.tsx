@@ -100,7 +100,6 @@ const GroupConversation = () => {
   const getMessages = async () => {
     try {
       setMessages(await conversation.messages());
-      conversation.sync();
     } catch (error) {
       // setMessagesError(error);
     } finally {

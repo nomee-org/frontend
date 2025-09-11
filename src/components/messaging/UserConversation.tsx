@@ -136,7 +136,6 @@ const UserConversation = () => {
   useEffect(() => {
     if (conversation) {
       getMessages();
-      conversation.sync();
     }
   }, [conversation]);
 

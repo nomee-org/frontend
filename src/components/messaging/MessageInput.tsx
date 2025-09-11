@@ -266,8 +266,6 @@ export function MessageInput({
       handleTypingStop(); // Stop typing when message is sent
       onSendSuccess?.();
       onCancelReply?.();
-
-      await conversation.sync();
     } catch (error) {
       console.log(error);
 
@@ -323,8 +321,6 @@ export function MessageInput({
 
       onSendSuccess?.();
       onCancelReply?.();
-
-      await conversation.sync();
     } catch (error) {
       // toast.error("Failed to send voice message");
     }
@@ -366,8 +362,6 @@ export function MessageInput({
 
       onSendSuccess?.();
       onCancelReply?.();
-
-      await conversation.sync();
     } catch (error) {
       // toast.error("Failed to send sticker");
     }

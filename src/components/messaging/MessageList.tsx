@@ -106,8 +106,6 @@ export const MessageList = ({
 
       await conversation.send(reaction, ContentTypeReaction);
       onReaction?.(messageId, emoji);
-
-      await conversation.sync();
     } catch (error) {
       console.error("Failed to react to message:", error);
       toast.error("Failed to react to message");
