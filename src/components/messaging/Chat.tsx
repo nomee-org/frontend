@@ -18,6 +18,7 @@ import { ContentTypeText } from "@xmtp/content-type-text";
 import { useNavigate } from "react-router-dom";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
+import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
 
 export const Chat = ({ conversation }: { conversation: Conversation }) => {
   const { client, newMessage } = useXmtp();
@@ -75,6 +76,10 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
               }
             } else if (message.contentType.sameAs(ContentTypeText)) {
               setLastMessage(message.content as any);
+            } else if (message.contentType.sameAs(ContentTypeReaction)) {
+              setLastMessage(
+                `You reacted ${(message.content as Reaction).content}`
+              );
             }
           } else {
             if (message.contentType.sameAs(ContentTypeRemoteAttachment)) {
@@ -97,6 +102,10 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
               }
             } else if (message.contentType.sameAs(ContentTypeText)) {
               setLastMessage(message.content as any);
+            } else if (message.contentType.sameAs(ContentTypeReaction)) {
+              setLastMessage(
+                `Received a react ${(message.content as Reaction).content}`
+              );
             }
           }
           setLastMessageAt(

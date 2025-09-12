@@ -97,7 +97,7 @@ export const MessageList = ({
     }
   };
 
-  const handleReaction = async (messageId: string, emoji: string) => {
+  const handleAddReaction = async (messageId: string, emoji: string) => {
     try {
       const reaction: Reaction = {
         reference: messageId,
@@ -112,7 +112,26 @@ export const MessageList = ({
 
       conversation.publishMessages();
     } catch (error) {
-      // toast.error("Failed to react to message");
+      console.log(error);
+    }
+  };
+
+  const handleRemoveReaction = async (messageId: string, emoji: string) => {
+    try {
+      const reaction: Reaction = {
+        reference: messageId,
+        action: "removed",
+        content: emoji,
+        schema: "unicode",
+      };
+
+      await conversation.sendOptimistic(reaction, ContentTypeReaction);
+
+      onReaction?.(messageId, emoji);
+
+      conversation.publishMessages();
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -212,17 +231,25 @@ export const MessageList = ({
                   showAvatar={showAvatar}
                   showTail={showTail}
                   onReply={onReply}
+                  replyTo={replyTo}
                   onPin={
                     isPinned
                       ? (messageId) => handleUnpin(messageId)
                       : (messageId) => handlePin(messageId)
                   }
                   onReaction={(messageId, emoji) =>
-                    handleReaction(messageId, emoji)
+                    handleAddReaction(messageId, emoji)
+                  }
+                  onRemoveReaction={(messageId, emoji) =>
+                    handleRemoveReaction(messageId, emoji)
                   }
                   onReplyClick={onReplyClick}
                   isPinned={isPinned}
-                  reactions={[]}
+                  reactions={messages?.filter(
+                    (m) =>
+                      m.contentType.sameAs(ContentTypeReaction) &&
+                      (m.content as Reaction).reference === message.id
+                  )}
                   isSeen={isSeen}
                 />
               );

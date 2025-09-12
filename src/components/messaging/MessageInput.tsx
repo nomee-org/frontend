@@ -15,7 +15,6 @@ import {
 } from "@/components/media/MediaPickerPopup";
 import { StickersPickerPopup } from "@/components/media/StickersPickerPopup";
 import { MemberTaggingPopup } from "@/components/messaging/MemberTaggingPopup";
-import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { webSocketService } from "@/services/backend/socketservice";
 import { Conversation, SafeGroupMember } from "@xmtp/browser-sdk";
@@ -272,7 +271,7 @@ export function MessageInput({
 
       conversation.publishMessages();
     } catch (error) {
-      // toast.error(error?.message ?? "Failed to send message");
+      console.log(error);
     } finally {
       setIsSending(false);
     }

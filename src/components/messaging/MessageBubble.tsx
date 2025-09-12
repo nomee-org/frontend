@@ -23,6 +23,8 @@ import {
   ThumbsDown,
   Angry,
   Check,
+  Smile,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import moment from "moment";
@@ -36,8 +38,9 @@ import {
 import { formatUnits } from "viem";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { useNameResolver } from "@/contexts/NicknameContext";
+import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 
-const reactions = [
+const emojis = [
   { emoji: "❤️", icon: Heart, name: "heart" },
   { emoji: "😂", icon: Laugh, name: "laugh" },
   { emoji: "👍", icon: ThumbsUp, name: "thumbs_up" },
@@ -54,10 +57,12 @@ interface MessageBubbleProps {
   onReply?: (message: DecodedMessage) => void;
   onPin?: (messageId: string) => void;
   onReaction?: (messageId: string, emoji: string) => void;
+  onRemoveReaction?: (messageId: string, emoji: string) => void;
   onUnpin?: (messageId: string) => void;
   onReplyClick?: (messageId: string) => void;
   isPinned?: boolean;
-  reactions: Reaction[];
+  reactions: DecodedMessage[];
+  replyTo?: DecodedMessage;
   isSeen: boolean;
 }
 
@@ -68,10 +73,12 @@ export function MessageBubble({
   showTail,
   onReply,
   onReaction,
+  onRemoveReaction,
   onPin,
   onUnpin,
   isPinned,
   reactions,
+  replyTo,
   isSeen = false,
 }: MessageBubbleProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -80,6 +87,8 @@ export function MessageBubble({
   const [showReactions, setShowReactions] = useState(false);
   const [isLongPressed, setIsLongPressed] = useState(false);
   const [showReactionUsers, setShowReactionUsers] = useState(false);
+  const [selectedReactionEmoji, setSelectedReactionEmoji] =
+    useState<string>("");
   const messageRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
   const currentX = useRef(0);
@@ -108,8 +117,8 @@ export function MessageBubble({
     currentX.current = e.touches[0].clientX;
     const diff = currentX.current - startX.current;
 
-    // Allow swipe-to-reply only on other users' messages
-    if (!isOwn && diff > 0 && diff <= 100) {
+    // Allow swipe-to-reply
+    if (diff > 0 && diff <= 100) {
       setDragOffset(diff);
       setShowReplyIcon(diff > 30);
     }
@@ -123,7 +132,7 @@ export function MessageBubble({
       clearTimeout(longPressTimer.current);
     }
 
-    if (!isOwn && dragOffset > 50 && onReply) {
+    if (dragOffset > 50 && onReply) {
       onReply(message);
     }
 
@@ -140,9 +149,9 @@ export function MessageBubble({
     }
   };
 
-  const handleReaction = async (emoji: string) => {
+  const handleReaction = async (reaction: { emoji: string; name: string }) => {
     try {
-      onReaction(message.id, emoji);
+      onReaction(message.id, reaction.emoji);
       setShowReactions(false);
       setIsLongPressed(false);
     } catch (error) {
@@ -194,7 +203,7 @@ export function MessageBubble({
                     <img
                       src={attachment.url}
                       alt="Shared image"
-                      className="w-full h-[320px] rounded-lg cursor-pointer"
+                      className="max-w-full object-contain h-[220px] md:h-[320px] rounded-lg cursor-pointer"
                       onClick={() => window.open(attachment.url, "_blank")}
                     />
                   )}
@@ -217,7 +226,7 @@ export function MessageBubble({
                     <video
                       src={attachment.url}
                       controls
-                      className="w-full h-[320px] rounded-lg"
+                      className="max-w-full object-contain h-[220px] md:h-[320px]  rounded-lg"
                     />
                   )}
                   {message.content && (
@@ -326,6 +335,9 @@ export function MessageBubble({
     };
   }, []);
 
+  if (message.contentType.sameAs(ContentTypeReaction)) return null;
+  if (message.contentType.sameAs(ContentTypeReadReceipt)) return null;
+
   return (
     <div
       className={cn("mb-1", isOwn ? "ml-12" : "mr-12")}
@@ -395,6 +407,33 @@ export function MessageBubble({
             </div>
           )}
 
+          {/* Reply-to message */}
+          {replyTo && (
+            <div
+              className={cn(
+                "mb-2 p-2 rounded-lg border-l-4 bg-muted/30 text-sm max-w-xs",
+                isOwn ? "border-l-primary ml-auto" : "border-l-secondary"
+              )}
+            >
+              <p className="text-muted-foreground text-xs font-medium">
+                {replyTo.senderInboxId || "User"}
+              </p>
+              <p className="text-foreground truncate text-xs">
+                {(() => {
+                  if (replyTo.contentType.sameAs(ContentTypeText)) {
+                    return String(replyTo.content);
+                  } else if (
+                    replyTo.contentType.sameAs(ContentTypeRemoteAttachment)
+                  ) {
+                    return "An attachment";
+                  } else {
+                    return "A message";
+                  }
+                })()}
+              </p>
+            </div>
+          )}
+
           {/* Main bubble */}
           <div
             className={cn(
@@ -457,6 +496,10 @@ export function MessageBubble({
                     <Reply className="h-4 w-4 mr-2" />
                     Reply
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowReactions(true)}>
+                    <Smile className="h-4 w-4 mr-2" />
+                    React
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() =>
                       navigator.clipboard.writeText(message.content as any)
@@ -487,25 +530,69 @@ export function MessageBubble({
             </div>
           </div>
 
+          {/* Reactions positioned at opposite end from tail */}
+          {reactions?.length > 0 && (
+            <div
+              className={cn(
+                "absolute -bottom-2 z-10",
+                // Position reactions opposite to tail
+                isOwn ? "left-0" : "right-0"
+              )}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-xs rounded-full bg-background border shadow-sm hover:bg-muted transition-colors"
+                onClick={() => {
+                  setSelectedReactionEmoji("");
+                  setShowReactionUsers(true);
+                }}
+              >
+                {/* Show first 2 unique emojis */}
+                {Array.from(
+                  new Set(reactions.map((r) => (r.content as Reaction).content))
+                )
+                  .slice(0, 2)
+                  .join("")}
+                {/* Show count - if more than 2 unique emojis, show +X format */}
+                {Array.from(
+                  new Set(reactions.map((r) => (r.content as Reaction).content))
+                ).length > 2
+                  ? ` +${
+                      Array.from(
+                        new Set(
+                          reactions.map((r) => (r.content as Reaction).content)
+                        )
+                      ).length - 2
+                    }`
+                  : ` ${reactions.length}`}
+              </Button>
+            </div>
+          )}
+
           {/* Reaction selector */}
           {showReactions && (
             <div
               className={cn(
-                "absolute -top-12 transform -translate-x-1/2 bg-popover border rounded-full p-1 flex space-x-1 shadow-lg z-20 animate-scale-in",
-                isOwn ? "right-0 translate-x-1/4" : "left-1/2"
+                "absolute top-3 transform bg-popover border rounded-full p-1 flex items-center space-x-1 shadow-lg z-20 animate-scale-in",
+                isOwn ? "right-3" : "left-3"
               )}
             >
-              {reactions?.map((reaction, index) => (
+              {emojis?.map((emoji, index) => (
                 <Button
                   key={index}
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-lg hover:bg-accent rounded-full"
-                  onClick={() => handleReaction(reaction.content)}
+                  onClick={() => handleReaction(emoji)}
                 >
-                  {reaction.content}
+                  {emoji.emoji}
                 </Button>
               ))}
+              <X
+                className="cursor-pointer"
+                onClick={() => setShowReactions(false)}
+              />
             </div>
           )}
 
@@ -551,6 +638,7 @@ export function MessageBubble({
         isOpen={showReactionUsers}
         onClose={() => setShowReactionUsers(false)}
         reactions={reactions || []}
+        onRemoveReaction={onRemoveReaction}
       />
     </div>
   );

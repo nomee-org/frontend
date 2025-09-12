@@ -12,12 +12,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { X } from "lucide-react";
 import { Reaction } from "@xmtp/content-type-reaction";
 import { useXmtp } from "@/contexts/XmtpContext";
+import { DecodedMessage } from "@xmtp/browser-sdk";
 
 interface ReactionUsersPopupProps {
   isOpen: boolean;
   onClose: () => void;
-  reactions: Reaction[];
-  onRemoveReaction?: (reactionId: string) => void;
+  reactions: DecodedMessage[];
+  onRemoveReaction?: (messageId: string, emoji: string) => void;
 }
 
 export function ReactionUsersPopup({
@@ -31,12 +32,13 @@ export function ReactionUsersPopup({
 
   // Group reactions by emoji
   const groupedReactions = reactions.reduce((acc, reaction) => {
-    if (!acc[reaction.content]) {
-      acc[reaction.content] = [];
+    const content = (reaction.content as Reaction).content;
+    if (!acc[content]) {
+      acc[content] = [];
     }
-    acc[reaction.content].push(reaction);
+    acc[content].push(reaction as DecodedMessage);
     return acc;
-  }, {} as Record<string, Reaction[]>);
+  }, {} as Record<string, DecodedMessage[]>);
 
   const ReactionContent = () => (
     <div className="space-y-4">
@@ -67,13 +69,16 @@ export function ReactionUsersPopup({
                 className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors ml-6"
               >
                 <DomainAvatar
-                  domain={reaction.referenceInboxId || "unknown"}
+                  domain={
+                    reaction.senderInboxId === client.inboxId ? "You" : "They"
+                  }
                   size="sm"
                   className="h-8 w-8"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">
-                    {reaction.referenceInboxId || "Unknown User"}
+                    {reaction.senderInboxId === client.inboxId ? "You" : "They"}{" "}
+                    ({(reaction.content as Reaction).action})
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Reacted with {emojiKey}
@@ -81,13 +86,19 @@ export function ReactionUsersPopup({
                 </div>
 
                 {/* Show remove button only for current user's reactions */}
-                {reaction.referenceInboxId === client.inboxId &&
+                {(reaction.content as Reaction).action === "added" &&
+                  reaction.senderInboxId === client.inboxId &&
                   onRemoveReaction && (
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => onRemoveReaction(reaction.reference)}
+                      onClick={() =>
+                        onRemoveReaction(
+                          (reaction.content as Reaction).reference,
+                          (reaction.content as Reaction).content
+                        )
+                      }
                     >
                       <X className="h-4 w-4" />
                     </Button>

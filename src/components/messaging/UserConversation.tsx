@@ -547,7 +547,10 @@ const UserConversation = () => {
         conversation={conversation}
         replyToId={replyToId}
         replyToInboxId={replyToInboxId}
-        onCancelReply={() => setReplyToId(undefined)}
+        onCancelReply={() => {
+          setReplyToId(undefined);
+          setReplyToInboxId(undefined);
+        }}
         onRecording={(recording) => {
           if (recording) {
             webSocketService.startRecording(conversation?.id);
@@ -557,6 +560,7 @@ const UserConversation = () => {
         }}
         onSendSuccess={() => {
           setReplyToId(undefined);
+          setReplyToInboxId(undefined);
           scrollToBottom(conversation);
         }}
       />
