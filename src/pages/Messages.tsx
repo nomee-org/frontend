@@ -51,7 +51,7 @@ const Messages = () => {
   // User and account states
   const { address } = useAccount();
   const isMobile = useIsMobile();
-  const { client } = useXmtp();
+  const { identifier, client } = useXmtp();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,7 +67,7 @@ const Messages = () => {
   useEffect(() => {
     let streamController: AsyncIterator<any, any, any> | undefined;
 
-    if (client?.inboxId) {
+    if (client) {
       (async () => {
         streamController = await client.conversations.stream({
           onValue: (value) => {
@@ -85,11 +85,11 @@ const Messages = () => {
         streamController.return();
       }
     };
-  }, [client?.inboxId]);
+  }, [identifier, client]);
 
   const getConversations = async () => {
     try {
-      if (client?.inboxId) {
+      if (client) {
         setConversations(await client.conversations.list());
       } else {
         setConversations([]);
@@ -108,8 +108,10 @@ const Messages = () => {
   };
 
   useEffect(() => {
-    getConversations();
-  }, [client?.inboxId]);
+    if (identifier && client) {
+      getConversations();
+    }
+  }, [identifier, client]);
 
   useEffect(() => {
     const wasSelected = isConversationSelected;

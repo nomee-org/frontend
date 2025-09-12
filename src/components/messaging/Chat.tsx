@@ -106,7 +106,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
         }
       }
     },
-    [client?.inboxId]
+    [client]
   );
 
   useEffect(() => {

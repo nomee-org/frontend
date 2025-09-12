@@ -94,7 +94,7 @@ const UserConversation = () => {
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
 
-  const { client, newMessage, clearNewMessage } = useXmtp();
+  const { identifier, client, newMessage, clearNewMessage } = useXmtp();
   const { nickname, setNickname } = useNameResolver();
   const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -262,8 +262,10 @@ const UserConversation = () => {
   };
 
   useEffect(() => {
-    if (client?.inboxId) init();
-  }, [dmId, client?.inboxId, nameData]);
+    if (client) {
+      init();
+    }
+  }, [dmId, identifier, client, nameData]);
 
   const {
     containerRef,

@@ -55,7 +55,7 @@ export const NameResolverProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return lookUp ?? (length ? trimAddress(address, length) : address);
     },
-    [client?.inboxId, users, trimAddress]
+    [client, users, trimAddress]
   );
 
   const setNickname = useCallback((address: string, name: string) => {

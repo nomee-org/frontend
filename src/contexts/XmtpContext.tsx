@@ -73,7 +73,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
         streamController.return();
       }
     };
-  }, [client?.inboxId]);
+  }, [client]);
 
   useEffect(() => {
     if (address && walletClient) {

@@ -67,24 +67,15 @@ export function QueryCardLoader({ className }: { className?: string }) {
 export function QueryListLoader({ className }: { className?: string }) {
   return (
     <div className={`space-y-4 p-4 ${className}`}>
-      <div className="flex justify-center mb-4">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Card key={i} className="p-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i}>
           <div className="flex space-x-3">
-            <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+            <Skeleton className="h-14 w-14 rounded-sm shrink-0" />
             <div className="space-y-3 flex-1">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-16 w-full" />
-              <div className="flex space-x-4">
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-8 w-16" />
-              </div>
+              <Skeleton className="h-14 w-full" />
             </div>
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   );
