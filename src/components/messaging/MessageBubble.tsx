@@ -174,7 +174,7 @@ export function MessageBubble({
     const mentionRegex = /(?!<[^>]*>)@([a-zA-Z0-9._-]+)(?![^<]*<\/a>)/g;
     richContent = richContent.replace(
       mentionRegex,
-      '<a href="/names/$1" class="text-accent hover:text-accent/80 hover:underline font-medium" onclick="event.stopPropagation()">@$1</a>'
+      '<a href="/names/$1" target="_blank" class="text-accent hover:text-accent/80 hover:underline font-medium" onclick="event.stopPropagation()">@$1</a>'
     );
 
     return richContent;
