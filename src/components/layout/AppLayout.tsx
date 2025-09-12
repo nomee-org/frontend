@@ -18,7 +18,7 @@ import Nomee from "../common/Nomee";
 function AppLayoutContent() {
   const location = useLocation();
   const { theme } = useTheme();
-  const { address } = useAccount();
+  const { address, isConnecting, isReconnecting } = useAccount();
   const { trimAddress } = useHelper();
   const { activeUsername } = useUsername();
   const [sidebarDefaultOpen, setSidebarDefaultOpen] = useState(true);
@@ -92,6 +92,7 @@ function AppLayoutContent() {
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={isConnecting || isReconnecting}
                   onClick={() => modal.open()}
                   className="text-caption h-8 lg:h-9"
                 >

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Wallet } from "lucide-react";
+import { Loader, Wallet } from "lucide-react";
 import { useAccount } from "wagmi";
 import { modal } from "@/configs/reown";
 import { useHelper } from "@/hooks/use-helper";
@@ -13,7 +13,7 @@ export function ConnectWallet({
   title = "Connect Your Wallet",
   description,
 }: ConnectWalletProps) {
-  const { address } = useAccount();
+  const { address, isConnecting, isReconnecting } = useAccount();
   const { trimAddress } = useHelper();
 
   return (
@@ -24,7 +24,7 @@ export function ConnectWallet({
         </div>
         <div>
           <h2 className="text-lg md:text-2xl font-bold font-grotesk">
-            {title}
+            {isConnecting || isReconnecting ? "Connecting to Wallet" : title}
           </h2>
           <p className="text-muted-foreground mt-2 max-w-md text-sm md:text-base">
             {description}
@@ -33,9 +33,13 @@ export function ConnectWallet({
         <Button
           variant="outline"
           size="sm"
+          disabled={isConnecting || isReconnecting}
           onClick={() => modal.open()}
           className="text-xs md:text-sm"
         >
+          {(isConnecting || isReconnecting) && (
+            <Loader className="animate-spin" />
+          )}
           <span className="hidden sm:inline">
             {address ? trimAddress(address) : "Connect Wallet"}
           </span>
