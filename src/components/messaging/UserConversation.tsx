@@ -26,6 +26,7 @@ import {
   UserRoundX,
   RefreshCcw,
   VolumeX,
+  HandCoins,
 } from "lucide-react";
 
 // Local component imports
@@ -60,13 +61,14 @@ import {
   DecodedMessage,
   Dm,
 } from "@xmtp/browser-sdk";
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits } from "viem";
 import { toast } from "sonner";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { useAccount } from "wagmi";
-import { useName } from "@/data/use-doma";
+import { useName, useOwnedNames } from "@/data/use-doma";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { ContentTypeReaction } from "@xmtp/content-type-reaction";
+import { TradeOptionPopup } from "./TradeOptionsPopup";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -80,7 +82,7 @@ const UserConversation = () => {
   const isMobile = useIsMobile();
   const { address: myAddress } = useAccount();
   const [isLoading, setIsLoading] = useState(true);
-  const [showBidPopup, setShowBidPopup] = useState(false);
+  const [showTradePopup, setShowTradePopup] = useState(false);
   const [replyToId, setReplyToId] = useState<string | undefined>();
   const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
   const [showConversationInfo, setShowConversationInfo] = useState(false);
@@ -426,11 +428,10 @@ const UserConversation = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowBidPopup(true)}
+              onClick={() => setShowTradePopup(true)}
               className="text-primary border-primary hover:bg-primary hover:text-primary-foreground text-xs lg:text-sm h-7 md:h-8"
             >
-              <Send className="h-2 w-2 md:h-3 lg:h-4 md:w-3 lg:w-4 mr-0.5 md:mr-1" />
-              Offer
+              Trade
             </Button>
           )}
           <DropdownMenu>
@@ -577,12 +578,21 @@ const UserConversation = () => {
       />
 
       {/* Bid Message Popup */}
-      {peerAddress && conversation && (
+      {/* {peerAddress && conversation && (
         <ListPromptMessagePopup
           conversation={conversation}
-          isOpen={showBidPopup}
-          onClose={() => setShowBidPopup(false)}
+          isOpen={showTradePopup}
+          onClose={() => setShowTradePopup(false)}
           recipientAddress={peerAddress}
+        />
+      )} */}
+
+      {peerAddress && conversation && (
+        <TradeOptionPopup
+          conversation={conversation}
+          isOpen={showTradePopup}
+          onClose={() => setShowTradePopup(false)}
+          peerAddress={peerAddress}
         />
       )}
 

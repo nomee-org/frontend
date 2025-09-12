@@ -1,13 +1,13 @@
 import { SponsoredAd } from "@/components/common/SponsoredAd";
-import { ISponsoredAd } from "@/types/backend";
+import { IPost, ISponsoredAd } from "@/types/backend";
 import { useState, useEffect } from "react";
 
 interface AdFeedProps {
-  posts: any[];
+  posts: IPost[];
   ads: ISponsoredAd[];
   adFrequency?: number; // Show ad every N posts
   children: (
-    items: (any | { type: "ad"; ad: ISponsoredAd })[],
+    items: (IPost | { type: "ad"; ad: ISponsoredAd })[],
     dismissedAds: Set<string>
   ) => React.ReactNode;
 }
@@ -15,7 +15,7 @@ interface AdFeedProps {
 export const AdFeed = ({
   posts,
   ads,
-  adFrequency = 5,
+  adFrequency = 10,
   children,
 }: AdFeedProps) => {
   const [dismissedAds, setDismissedAds] = useState<Set<string>>(new Set());
@@ -25,8 +25,11 @@ export const AdFeed = ({
   };
 
   // Merge posts and ads based on frequency
-  const mergePostsWithAds = (): (any | { type: "ad"; ad: ISponsoredAd })[] => {
-    const result: (any | { type: "ad"; ad: ISponsoredAd })[] = [];
+  const mergePostsWithAds = (): (
+    | IPost
+    | { type: "ad"; ad: ISponsoredAd }
+  )[] => {
+    const result: (IPost | { type: "ad"; ad: ISponsoredAd })[] = [];
     const availableAds = ads.filter(
       (ad) => ad.isActive && !dismissedAds.has(ad.id)
     );
@@ -59,9 +62,9 @@ export const AdFeedItem = ({
   onAdDismiss,
   renderPost,
 }: {
-  item: any | { type: "ad"; ad: ISponsoredAd };
+  item: IPost | { type: "ad"; ad: ISponsoredAd };
   onAdDismiss?: (adId: string) => void;
-  renderPost: (post: any) => React.ReactNode;
+  renderPost: (post: IPost) => React.ReactNode;
 }) => {
   if ("type" in item && item.type === "ad") {
     return (
@@ -71,5 +74,5 @@ export const AdFeedItem = ({
     );
   }
 
-  return renderPost(item);
+  return renderPost(item as IPost);
 };

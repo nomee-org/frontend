@@ -53,6 +53,7 @@ export function useOwnedNames(address: string, take: number, tlds: string[]) {
       return firstPage.hasPreviousPage ? firstPage.currentPage - 1 : undefined;
     },
     initialPageParam: 1,
+    enabled: !!address,
   });
 }
 

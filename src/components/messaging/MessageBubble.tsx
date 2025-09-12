@@ -39,6 +39,8 @@ import { formatUnits } from "viem";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
+import { isNomeeAction } from "./actions/utils";
+import { NomeeAction } from "./actions/NomeeAction";
 
 const emojis = [
   { emoji: "❤️", icon: Heart, name: "heart" },
@@ -314,11 +316,15 @@ export function MessageBubble({
         })()}
       </>;
     } else if (message.contentType.sameAs(ContentTypeText)) {
+      if (isNomeeAction(String(message.content))) {
+        return <NomeeAction data={String(message.content)} isOwn={isOwn} />;
+      }
+
       return (
         <div
           className="text-sm leading-relaxed break-words whitespace-pre-wrap"
           dangerouslySetInnerHTML={{
-            __html: renderRichContent(message.content as any),
+            __html: renderRichContent(String(message.content)),
           }}
         />
       );

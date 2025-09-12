@@ -35,32 +35,33 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Conversation } from "@xmtp/browser-sdk";
 import { useOwnedNames } from "@/data/use-doma";
 import { ContentTypeText } from "@xmtp/content-type-text";
+import { Name } from "@/types/doma";
 
 interface ListPromptMessagePopupProps {
   conversation: Conversation;
   isOpen: boolean;
-  onClose: () => void;
-  recipientAddress: string;
+  onClose: (deep: boolean) => void;
+  peerAddress: string;
+  names: Name[];
 }
 
 const ListPromptMessagePopup = ({
   conversation,
   isOpen,
   onClose,
-  recipientAddress,
+  names,
 }: ListPromptMessagePopupProps) => {
-  const [bidAmount, setBidAmount] = useState("");
-  const [bidCurrency, setBidCurrency] = useState("USDC");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("USDC");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   const [domainName, setDomainName] = useState("");
-  const { data: namesData } = useOwnedNames(recipientAddress, 50, []);
 
   useEffect(() => {
-    setDomainName(namesData?.pages?.[0]?.items?.[0]?.name ?? "");
-  }, [namesData]);
+    setDomainName(names?.[0]?.name ?? "");
+  }, [names]);
 
   const currencies = [
     { value: "USDC", label: "USDC" },
@@ -68,16 +69,15 @@ const ListPromptMessagePopup = ({
   ];
 
   const formatListPromptMessage = () => {
-    return `
-      💰 Buy Offer
-
-      🌐 Domain: ${domainName}
-      💵 Amount: ${bidAmount} ${bidCurrency}
-    `;
+    return `prompt_listing::${JSON.stringify({
+      domainName,
+      amount,
+      currency,
+    })}`;
   };
 
   const handleSubmitBid = async () => {
-    if (!bidAmount) {
+    if (!amount) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -99,8 +99,8 @@ const ListPromptMessagePopup = ({
       });
 
       // Reset form
-      setBidAmount("");
-      onClose();
+      setAmount("");
+      onClose(true);
 
       conversation.publishMessages();
     } catch (error) {
@@ -119,42 +119,40 @@ const ListPromptMessagePopup = ({
       <div className="space-y-6 flex-1 overflow-y-auto">
         {/* Domain Info */}
         <div className="space-y-2">
-          <Label>Domain</Label>
+          <Label>Select a domain *</Label>
           <Select value={domainName} onValueChange={setDomainName}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {namesData?.pages
-                ?.flatMap((p) => p.items)
-                ?.map((name) => {
-                  return (
-                    <SelectItem value={name.name}>
-                      <div className="flex items-center space-x-2">
-                        <AtSign className="h-4 w-4" />
-                        <span>{name.name}</span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
+              {names?.map((name) => {
+                return (
+                  <SelectItem value={name.name}>
+                    <div className="flex items-center space-x-2">
+                      <AtSign className="h-4 w-4" />
+                      <span>{name.name}</span>
+                    </div>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
 
         {/* Bid Amount */}
         <div className="space-y-2">
-          <Label>Bid Amount *</Label>
+          <Label>Amount *</Label>
           <div className="flex space-x-2">
             <Input
               type="number"
               placeholder="0.00"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               className="flex-1"
               step="0.001"
               min="0"
             />
-            <Select value={bidCurrency} onValueChange={setBidCurrency}>
+            <Select value={currency} onValueChange={setCurrency}>
               <SelectTrigger className="w-24">
                 <SelectValue />
               </SelectTrigger>
@@ -186,7 +184,7 @@ const ListPromptMessagePopup = ({
       <div className="flex space-x-3 sticky bottom-0 bg-background pt-4 border-t">
         <Button
           variant="outline"
-          onClick={onClose}
+          onClick={() => onClose(false)}
           className="flex-1"
           disabled={isSubmitting}
         >
@@ -194,7 +192,7 @@ const ListPromptMessagePopup = ({
         </Button>
         <Button
           onClick={handleSubmitBid}
-          disabled={!bidAmount || isSubmitting}
+          disabled={!amount || isSubmitting}
           className="flex-1"
         >
           {isSubmitting ? (
@@ -202,7 +200,7 @@ const ListPromptMessagePopup = ({
           ) : (
             <>
               <Send className="h-4 w-4 mr-2" />
-              Send Offer
+              Send
             </>
           )}
         </Button>
@@ -235,10 +233,10 @@ const ListPromptMessagePopup = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold font-grotesk">
-            Buy Offer Message
+            User has no listings.
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Send a by offer for {domainName}
+            Prompt user to listing {domainName}
           </p>
         </DialogHeader>
         <div className="flex flex-col overflow-hidden">{content}</div>
