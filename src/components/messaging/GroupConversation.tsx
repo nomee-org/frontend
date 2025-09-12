@@ -205,7 +205,7 @@ const GroupConversation = () => {
   }
 
   return (
-    <div className="flex flex-col h-full animate-[fade-in_0.3s_ease-out,scale-in_0.2s_ease-out]">
+    <div className="flex flex-col h-full animate-[fade-in_0.2s_ease-out]">
       {/* Chat Header */}
       <div className="p-4 border-b border-border bg-background flex items-center justify-between">
         <div className="flex items-center space-x-2 md:space-x-3">

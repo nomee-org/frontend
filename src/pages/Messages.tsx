@@ -102,7 +102,7 @@ const Messages = () => {
       setTimeout(() => {
         setIsConversationSelected(false);
         setIsClosingConversation(false);
-      }, 300);
+      }, 200);
       return;
     }
 
@@ -130,13 +130,13 @@ const Messages = () => {
             isConversationSelected || isClosingConversation
               ? "hidden md:flex md:w-80"
               : "flex-1 md:w-80"
-          } border-r-0 md:border-r border-border flex flex-col bg-background transition-all duration-300 ease-in-out ${
+          } border-r-0 md:border-r border-border flex flex-col bg-background transition-all duration-200 ease-in-out ${
             (isConversationSelected || isClosingConversation) && isMobile
               ? ""
               : ""
           } ${
             isClosingConversation && isMobile
-              ? "animate-[slide-in-left_0.3s_ease-out]"
+              ? "animate-[slide-in-left_0.2s_ease-out]"
               : ""
           }`}
         >
@@ -204,8 +204,8 @@ const Messages = () => {
             className={`flex-1 flex flex-col md:flex-1 md:flex-col ${
               isMobile
                 ? isClosingConversation
-                  ? "animate-[slide-out-left_0.3s_ease-in-out]"
-                  : "animate-[slide-in-left_0.3s_ease-out]"
+                  ? "animate-[slide-out-left_0.2s_ease-in-out]"
+                  : "animate-[slide-in-left_0.2s_ease-out]"
                 : "animate-fade-in"
             }`}
           >
