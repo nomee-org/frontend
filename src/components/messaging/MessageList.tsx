@@ -110,7 +110,7 @@ export const MessageList = ({
 
       onReaction?.(messageId, emoji);
 
-      await conversation.publishMessages();
+      conversation.publishMessages();
     } catch (error) {
       // toast.error("Failed to react to message");
     }

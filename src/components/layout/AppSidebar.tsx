@@ -26,6 +26,7 @@ import {
 import { useUsername } from "@/contexts/UsernameContext";
 import Nomee from "../common/Nomee";
 import { useXmtp } from "@/contexts/XmtpContext";
+import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 
 const navigationItems = [
   { title: "Messages", url: "/", icon: MessageSquare },
@@ -122,9 +123,13 @@ export function AppSidebar() {
                       {isCollapsed && (
                         <TooltipContent side="right" className="font-medium">
                           {item.title}
-                          {item.title === "Messages" && newMessage && (
-                            <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                          )}
+                          {item.title === "Messages" &&
+                            newMessage &&
+                            !newMessage.contentType.sameAs(
+                              ContentTypeReadReceipt
+                            ) && (
+                              <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                            )}
                         </TooltipContent>
                       )}
                     </Tooltip>

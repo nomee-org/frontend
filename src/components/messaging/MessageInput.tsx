@@ -270,7 +270,7 @@ export function MessageInput({
       onSendSuccess?.();
       onCancelReply?.();
 
-      await conversation.publishMessages();
+      conversation.publishMessages();
     } catch (error) {
       // toast.error(error?.message ?? "Failed to send message");
     } finally {
@@ -328,7 +328,7 @@ export function MessageInput({
       onSendSuccess?.();
       onCancelReply?.();
 
-      await conversation.publishMessages();
+      conversation.publishMessages();
     } catch (error) {
       // toast.error("Failed to send voice message");
     }
@@ -374,7 +374,7 @@ export function MessageInput({
       onSendSuccess?.();
       onCancelReply?.();
 
-      await conversation.publishMessages();
+      conversation.publishMessages();
     } catch (error) {
       // toast.error("Failed to send sticker");
     }

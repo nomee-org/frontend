@@ -76,7 +76,7 @@ export function useMessageScroll({
 
     try {
       await conversation?.sendOptimistic({}, ContentTypeReadReceipt);
-      await conversation.publishMessages();
+      conversation.publishMessages();
     } catch (error) {
       console.log(error);
     }

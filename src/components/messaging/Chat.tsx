@@ -17,6 +17,7 @@ import { formatUnits } from "viem";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { useNavigate } from "react-router-dom";
 import { useNameResolver } from "@/contexts/NicknameContext";
+import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 
 export const Chat = ({ conversation }: { conversation: Conversation }) => {
   const { client, newMessage } = useXmtp();
@@ -206,9 +207,11 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
                   "HH:mm"
                 )}
               </span>
-              {newMessage && newMessage.conversationId === conversation.id && (
-                <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center rounded-full"></Badge>
-              )}
+              {newMessage &&
+                !newMessage.contentType.sameAs(ContentTypeReadReceipt) &&
+                newMessage.conversationId === conversation.id && (
+                  <div className="bg-primary text-red-500 text-xs px-2 py-0.5 w-2 h-2 flex items-center justify-center rounded-full"></div>
+                )}
             </div>
           </div>
           <div className="flex items-center space-x-2">

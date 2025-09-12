@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useUsername } from "@/contexts/UsernameContext";
 import { useXmtp } from "@/contexts/XmtpContext";
+import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 
 const navigationItems = [
   { title: "Messages", url: "/", icon: MessageSquare },
@@ -40,9 +41,11 @@ export function MobileBottomNav() {
           >
             <div className="relative">
               <item.icon className="h-4 w-4" />
-              {item.title === "Messages" && newMessage && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
+              {item.title === "Messages" &&
+                newMessage &&
+                !newMessage.contentType.sameAs(ContentTypeReadReceipt) && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
             </div>
             <span className="text-caption mt-1 truncate">{item.title}</span>
           </NavLink>

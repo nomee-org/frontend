@@ -151,15 +151,6 @@ const UserConversation = () => {
     }
   };
 
-  const handleSeenMessage = async () => {
-    try {
-      await conversation?.sendOptimistic({}, ContentTypeReadReceipt);
-      await conversation?.publishMessages();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
     if (newMessage && newMessage.conversationId === conversation?.id) {
       if (newMessage.contentType.sameAs(ContentTypeReadReceipt)) {

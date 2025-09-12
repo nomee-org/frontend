@@ -211,7 +211,7 @@ export function OfferPopup({
 
           onClose();
 
-          await conversation.publishMessages();
+          conversation.publishMessages();
         } else {
           onClose();
         }

@@ -194,7 +194,7 @@ export function MessageBubble({
                     <img
                       src={attachment.url}
                       alt="Shared image"
-                      className="max-w-[min(100%,320px)] rounded-lg cursor-pointer"
+                      className="w-full h-[320px] rounded-lg cursor-pointer"
                       onClick={() => window.open(attachment.url, "_blank")}
                     />
                   )}
@@ -217,7 +217,7 @@ export function MessageBubble({
                     <video
                       src={attachment.url}
                       controls
-                      className="max-w-[min(100%,320px)] rounded-lg"
+                      className="w-full h-[320px] rounded-lg"
                     />
                   )}
                   {message.content && (
@@ -239,7 +239,7 @@ export function MessageBubble({
                     <audio
                       src={attachment.url}
                       controls
-                      className="max-w-[min(100%,320px)] rounded-lg"
+                      className="w-full rounded-lg"
                     />
                   )}
                   {message.content && (

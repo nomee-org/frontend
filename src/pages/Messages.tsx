@@ -42,6 +42,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 
 const Messages = () => {
   // Navigation and routing states
@@ -51,7 +52,7 @@ const Messages = () => {
   // User and account states
   const { address } = useAccount();
   const isMobile = useIsMobile();
-  const { identifier, client } = useXmtp();
+  const { identifier, client, newMessage } = useXmtp();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,22 +66,34 @@ const Messages = () => {
   >(undefined);
 
   useEffect(() => {
+    if (identifier && client) {
+      getConversations();
+    }
+  }, [identifier, client]);
+
+  useEffect(() => {
+    if (newMessage && !newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
+      const index = conversations.findIndex(
+        (c) => c.id === newMessage.conversationId
+      );
+      if (index > 0) {
+        setConversations((prev) => {
+          const updated = [...prev];
+          const [item] = updated.splice(index, 1);
+          return [item, ...updated];
+        });
+      }
+    }
+  }, [newMessage]);
+
+  useEffect(() => {
     let streamController: AsyncIterator<any, any, any> | undefined;
 
     if (client) {
       (async () => {
         streamController = await client.conversations.stream({
           onValue: (value) => {
-            setConversations((prev) => {
-              const index = prev.findIndex((c) => c.id === value.id);
-              if (index >= 0) {
-                const updated = [...prev];
-                const [item] = updated.splice(index, 1);
-                return [item, ...updated];
-              } else {
-                return [value, ...prev];
-              }
-            });
+            setConversations((prev) => [value, ...prev]);
           },
           onError: (error) => {
             // setConversationsError(error);

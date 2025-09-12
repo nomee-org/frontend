@@ -93,20 +93,12 @@ const GroupConversation = () => {
     refetch: refetchMembers,
   } = useGetConversationMembers(conversation, 50);
 
-  const handleSeenMessage = async () => {
-    try {
-      await conversation?.sendOptimistic({}, ContentTypeReadReceipt);
-      await conversation?.publishMessages();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
     if (newMessage && newMessage.conversationId === conversation?.id) {
-      setMessages((prev) => [newMessage, ...prev]);
+      if (!newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
+        setMessages((prev) => [newMessage, ...prev]);
+      }
       clearNewMessage();
-      handleSeenMessage();
     }
   }, [newMessage]);
 
@@ -379,7 +371,7 @@ const GroupConversation = () => {
         {/* Scroll to bottom button */}
         {!isNearBottom && (
           <Button
-            onClick={() => scrollToBottom(conversation)}
+            onClick={() => scrollToBottom()}
             className="fixed bottom-20 right-6 rounded-full w-10 h-10 p-0 animate-scale-in"
             size="sm"
           >
@@ -404,7 +396,7 @@ const GroupConversation = () => {
         }}
         onSendSuccess={() => {
           setReplyToId(undefined);
-          scrollToBottom(conversation);
+          scrollToBottom();
         }}
       />
 

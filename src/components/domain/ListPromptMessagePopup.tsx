@@ -102,7 +102,7 @@ const ListPromptMessagePopup = ({
       setBidAmount("");
       onClose();
 
-      await conversation.publishMessages();
+      conversation.publishMessages();
     } catch (error) {
       // toast({
       //   title: "Error",
