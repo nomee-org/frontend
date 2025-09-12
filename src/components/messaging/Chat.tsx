@@ -174,8 +174,10 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
     <div
       key={conversation.id}
       onClick={() => handleConversationClick(conversation)}
-      className={`p-1 md:p-3 cursor-pointer transition-all duration-200 hover:bg-accent/80 rounded-xl border border-transparent ${
-        isSelected ? "bg-accent border-primary/20 shadow-sm" : "hover:shadow-sm"
+      className={`mx-4 py-3 last:border-0 md:m-0 md:p-3 cursor-pointer transition-all duration-200 md:hover:bg-accent/80 border-t-sidebar-border border-b md:rounded-xl md:border md:border-transparent ${
+        isSelected
+          ? "md:bg-accent md:border-primary/20 md:shadow-sm"
+          : "hover:shadow-sm"
       }`}
     >
       <div className="flex items-start space-x-3">

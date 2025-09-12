@@ -170,13 +170,13 @@ const Messages = () => {
         description="Access your direct messages and group chats. Stay connected with your community through secure XMTP messaging."
         keywords="messages, direct messages, group chat, XMTP, secure messaging, web3 chat"
       />
-      <div className="max-w-7xl mx-auto px-0 md:p-content h-[calc(100vh-50px)] md:h-[calc(100vh-80px)] flex">
+      <div className="max-w-[1400px] mx-auto px-0 !py-0 md:p-content h-[calc(100vh-50px)] md:h-[calc(100vh-80px)] flex">
         {/* Conversations Sidebar */}
         <div
           className={`${
             isConversationSelected || isClosingConversation
-              ? "hidden md:flex md:w-80"
-              : "flex-1 md:w-80"
+              ? "hidden md:flex md:w-96"
+              : "flex-1 md:w-96"
           } border-r-0 md:border-r border-border flex flex-col bg-background transition-all duration-200 ease-in-out ${
             (isConversationSelected || isClosingConversation) && isMobile
               ? ""
@@ -188,7 +188,7 @@ const Messages = () => {
           }`}
         >
           {/* Header */}
-          <div className="p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
+          <div className="px-4 py-3 border-b border-border/50 bg-background/95 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-xl font-bold text-foreground">Chats</h1>
               <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ const Messages = () => {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 h-11 text-sm bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all duration-200 rounded-xl"
+                className="pl-11 h-11 text-sm bg-muted/50 duration-200 rounded-xl"
               />
             </div>
           </div>
@@ -260,7 +260,7 @@ const Messages = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3 p-4">
+              <div className="md:space-y-3 md:p-4">
                 {conversations?.map((conversation) => {
                   return (
                     <Chat key={conversation.id} conversation={conversation} />
