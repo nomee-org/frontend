@@ -71,7 +71,16 @@ const Messages = () => {
       (async () => {
         streamController = await client.conversations.stream({
           onValue: (value) => {
-            setConversations((prev) => [value, ...prev]);
+            setConversations((prev) => {
+              const index = prev.findIndex((c) => c.id === value.id);
+              if (index >= 0) {
+                const updated = [...prev];
+                const [item] = updated.splice(index, 1);
+                return [item, ...updated];
+              } else {
+                return [value, ...prev];
+              }
+            });
           },
           onError: (error) => {
             // setConversationsError(error);
@@ -88,6 +97,8 @@ const Messages = () => {
   }, [identifier, client]);
 
   const getConversations = async () => {
+    setConversationsLoading(true);
+
     try {
       if (client) {
         setConversations(await client.conversations.list());
@@ -103,7 +114,7 @@ const Messages = () => {
 
   const handleSyncAll = async () => {
     await client.conversations.syncAll();
-    await getConversations();
+    setConversations(await client.conversations.list());
     toast.success("Synced");
   };
 
