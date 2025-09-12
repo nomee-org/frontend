@@ -25,7 +25,6 @@ import {
   Send,
   UserRoundX,
   RefreshCcw,
-  VolumeOff,
   VolumeX,
 } from "lucide-react";
 
@@ -56,12 +55,25 @@ import { RecordingIndicator } from "./RecordingIndicator";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { dataService } from "@/services/doma/dataservice";
 import { useHelper } from "@/hooks/use-helper";
-import { Conversation, DecodedMessage, Dm } from "@xmtp/browser-sdk";
-import { formatUnits } from "viem";
+import {
+  ContentType,
+  Conversation,
+  DecodedMessage,
+  Dm,
+} from "@xmtp/browser-sdk";
+import { formatUnits, parseUnits } from "viem";
 import { toast } from "sonner";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { useAccount } from "wagmi";
 import { useName } from "@/data/use-doma";
+import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
+import { ContentTypeReply } from "@xmtp/content-type-reply";
+import { ContentTypeReaction } from "@xmtp/content-type-reaction";
+import {
+  ContentTypeAttachment,
+  ContentTypeRemoteAttachment,
+} from "@xmtp/content-type-remote-attachment";
+import { ContentTypeText } from "@xmtp/content-type-text";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -92,6 +104,9 @@ const UserConversation = () => {
     undefined
   );
   const [messages, setMessages] = useState<DecodedMessage[]>([]);
+  const [receiptMessages, setReceiptMessages] = useState<
+    DecodedMessage<ContentType.ReadReceipt>[]
+  >([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesError, setMessagesError] = useState<Error | undefined>(
     undefined
@@ -136,16 +151,55 @@ const UserConversation = () => {
     }
   };
 
+  const handleSeenMessage = async () => {
+    try {
+      await conversation?.sendOptimistic({}, ContentTypeReadReceipt);
+      await conversation?.publishMessages();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     if (newMessage && newMessage.conversationId === conversation?.id) {
-      setMessages((prev) => [newMessage, ...prev]);
+      if (newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
+        setReceiptMessages((prev) => [newMessage as any, ...prev]);
+      } else {
+        setMessages((prev) => [newMessage, ...prev]);
+      }
       clearNewMessage();
     }
   }, [newMessage]);
 
+  const getReceiptMessages = async () => {
+    try {
+      setReceiptMessages(
+        (await conversation.messages({
+          contentTypes: [ContentType.ReadReceipt],
+          limit: 50n,
+        })) as any
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const getMessages = async () => {
     try {
-      setMessages(await conversation.messages());
+      setMessages(
+        await conversation.messages({
+          contentTypes: [
+            ContentType.Reply,
+            ContentType.Reaction,
+            ContentType.RemoteAttachment,
+            ContentType.Attachment,
+            ContentType.Text,
+            ContentType.GroupUpdated,
+            ContentType.GroupMembershipChange,
+            ContentType.TransactionReference,
+          ],
+        })
+      );
     } catch (error) {
       // setMessagesError(error);
     } finally {
@@ -156,6 +210,7 @@ const UserConversation = () => {
   useEffect(() => {
     if (conversation) {
       getMessages();
+      getReceiptMessages();
     }
   }, [conversation]);
 
@@ -221,7 +276,6 @@ const UserConversation = () => {
     fetchNextPage: () => {},
     isFetchingNextPage: false,
     messages: messages ?? [],
-    newMessageCount: 0,
   });
 
   const pinnedMessages = [];
@@ -239,6 +293,7 @@ const UserConversation = () => {
   const handleSync = async () => {
     await conversation.sync();
     await getMessages();
+    await getReceiptMessages();
     toast.success("Synced");
   };
 
@@ -447,6 +502,13 @@ const UserConversation = () => {
               }}
               onReplyClick={scrollToMessage}
               pinnedMessages={pinnedMessages}
+              peerLastReceipt={
+                receiptMessages.sort(
+                  (a, b) =>
+                    Number(formatUnits(b.sentAtNs, 6)) -
+                    Number(formatUnits(a.sentAtNs, 6))
+                )?.[0] ?? undefined
+              }
             />
           </div>
         )}
@@ -460,7 +522,9 @@ const UserConversation = () => {
         {/* Scroll to bottom button */}
         {!isNearBottom && (
           <Button
-            onClick={scrollToBottom}
+            onClick={() => {
+              scrollToBottom(conversation);
+            }}
             className="fixed bottom-16 md:bottom-20 right-4 md:right-6 rounded-full w-8 h-8 md:w-10 md:h-10 p-0 animate-scale-in"
             size="sm"
           >
@@ -485,7 +549,7 @@ const UserConversation = () => {
         }}
         onSendSuccess={() => {
           setReplyToId(undefined);
-          scrollToBottom();
+          scrollToBottom(conversation);
         }}
       />
 

@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Conversation, DecodedMessage, Dm, Group } from "@xmtp/browser-sdk";
+import {
+  ContentType,
+  Conversation,
+  DecodedMessage,
+  Dm,
+  Group,
+  SortDirection,
+} from "@xmtp/browser-sdk";
 import moment from "moment";
 import { DomainAvatar } from "../domain/DomainAvatar";
 import { Badge, Users } from "lucide-react";
@@ -124,7 +131,20 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
 
   const getLastMessages = async () => {
     try {
-      const messages = await conversation.messages();
+      const messages = await conversation.messages({
+        contentTypes: [
+          ContentType.Reply,
+          ContentType.Reaction,
+          ContentType.RemoteAttachment,
+          ContentType.Attachment,
+          ContentType.Text,
+          ContentType.GroupUpdated,
+          ContentType.GroupMembershipChange,
+          ContentType.TransactionReference,
+        ],
+        limit: 1n,
+        direction: SortDirection.Descending,
+      });
       if (messages?.length) {
         const latestMessage = Array.from(messages).reverse();
         if (latestMessage && latestMessage.length) {

@@ -12,6 +12,10 @@ import {
 } from "@xmtp/content-type-remote-attachment";
 import { Reply, ReplyCodec } from "@xmtp/content-type-reply";
 import { TextCodec } from "@xmtp/content-type-text";
+import {
+  ContentTypeReadReceipt,
+  ReadReceiptCodec,
+} from "@xmtp/content-type-read-receipt";
 
 interface XmtpContextType {
   client: Client<string | any | Reply | RemoteAttachment | Reaction> | null;
@@ -109,6 +113,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
             new AttachmentCodec(),
             new RemoteAttachmentCodec(),
             new TextCodec(),
+            new ReadReceiptCodec(),
           ],
         });
         setClient(xmtpClient);
@@ -132,6 +137,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
               new AttachmentCodec(),
               new RemoteAttachmentCodec(),
               new TextCodec(),
+              new ReadReceiptCodec(),
             ],
           }
         );

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import moment from "moment";
 import { usePinMessage, useUnpinMessage } from "@/data/use-backend";
 import { toast } from "sonner";
-import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { ContentType, Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
 import { formatUnits } from "viem";
@@ -21,6 +21,7 @@ interface MessageListProps {
   onReaction?: (messageId: string, emoji: string) => void;
   onReplyClick?: (messageId: string) => void;
   pinnedMessages?: DecodedMessage[];
+  peerLastReceipt?: DecodedMessage<ContentType.ReadReceipt>;
 }
 
 interface MessageGroup {
@@ -67,6 +68,7 @@ export const MessageList = ({
   onReaction,
   onReplyClick,
   pinnedMessages = [],
+  peerLastReceipt,
 }: MessageListProps) => {
   const { client } = useXmtp();
 
@@ -188,6 +190,9 @@ export const MessageList = ({
           <div className="space-y-1">
             {group.messages.map((message, index) => {
               const isOwn = message.senderInboxId === client?.inboxId;
+              const isSeen =
+                (peerLastReceipt as any)?.sent ?? 0n >= message.sentAtNs;
+
               const showAvatar = shouldShowAvatar(
                 message,
                 index,
@@ -218,6 +223,7 @@ export const MessageList = ({
                   onReplyClick={onReplyClick}
                   isPinned={isPinned}
                   reactions={[]}
+                  isSeen={isSeen}
                 />
               );
             })}

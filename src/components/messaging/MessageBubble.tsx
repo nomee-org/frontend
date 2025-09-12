@@ -58,6 +58,7 @@ interface MessageBubbleProps {
   onReplyClick?: (messageId: string) => void;
   isPinned?: boolean;
   reactions: Reaction[];
+  isSeen: boolean;
 }
 
 export function MessageBubble({
@@ -71,6 +72,7 @@ export function MessageBubble({
   onUnpin,
   isPinned,
   reactions,
+  isSeen = false,
 }: MessageBubbleProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
@@ -352,10 +354,10 @@ export function MessageBubble({
               showAvatar ? "opacity-100" : "opacity-0"
             )}
           >
-            <UserPreviewPopup username={message.senderInboxId || "unknown"}>
+            <UserPreviewPopup username={nickname(message.senderInboxId)}>
               <div className="cursor-pointer">
                 <DomainAvatar
-                  domain={message.senderInboxId || "unknown"}
+                  domain={nickname(message.senderInboxId)}
                   size="xs"
                   className="h-6 w-6 md:h-8 md:w-8 hover:scale-105 transition-transform"
                 />
@@ -426,10 +428,14 @@ export function MessageBubble({
                   Math.ceil(Number(formatUnits(message.sentAtNs, 6)))
                 ).format("HH:mm")}
               </span>
-              {isOwn && (
+              {isSeen || isOwn ? (
                 <div className="flex items-center space-x-0.5">
                   <Check className="h-3 w-3" />
                   <Check className="h-3 w-3 -ml-1" />
+                </div>
+              ) : (
+                <div className="flex items-center space-x-0.5">
+                  <Check className="h-3 w-3" />
                 </div>
               )}
             </div>

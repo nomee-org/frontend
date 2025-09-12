@@ -1,4 +1,5 @@
-import { DecodedMessage } from "@xmtp/browser-sdk";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { useEffect, useRef, useState, useCallback } from "react";
 
 interface UseMessageScrollOptions {
@@ -6,7 +7,6 @@ interface UseMessageScrollOptions {
   fetchNextPage: () => void;
   isFetchingNextPage?: boolean;
   messages: DecodedMessage[];
-  newMessageCount: number;
 }
 
 export function useMessageScroll({
@@ -14,7 +14,6 @@ export function useMessageScroll({
   fetchNextPage,
   isFetchingNextPage,
   messages,
-  newMessageCount,
 }: UseMessageScrollOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -69,10 +68,17 @@ export function useMessageScroll({
     }
   }, [messages.length]);
 
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback(async (conversation?: Conversation) => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
       setShouldAutoScroll(true);
+    }
+
+    try {
+      await conversation?.sendOptimistic({}, ContentTypeReadReceipt);
+      await conversation.publishMessages();
+    } catch (error) {
+      console.log(error);
     }
   }, []);
 
