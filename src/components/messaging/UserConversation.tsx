@@ -53,7 +53,6 @@ import {
 // Type imports
 import { RecordingIndicator } from "./RecordingIndicator";
 import { useXmtp } from "@/contexts/XmtpContext";
-import { dataService } from "@/services/doma/dataservice";
 import { useHelper } from "@/hooks/use-helper";
 import {
   ContentType,
@@ -67,13 +66,7 @@ import { useNameResolver } from "@/contexts/NicknameContext";
 import { useAccount } from "wagmi";
 import { useName } from "@/data/use-doma";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
-import { ContentTypeReply } from "@xmtp/content-type-reply";
 import { ContentTypeReaction } from "@xmtp/content-type-reaction";
-import {
-  ContentTypeAttachment,
-  ContentTypeRemoteAttachment,
-} from "@xmtp/content-type-remote-attachment";
-import { ContentTypeText } from "@xmtp/content-type-text";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -106,6 +99,9 @@ const UserConversation = () => {
   const [messages, setMessages] = useState<DecodedMessage[]>([]);
   const [receiptMessages, setReceiptMessages] = useState<
     DecodedMessage<ContentType.ReadReceipt>[]
+  >([]);
+  const [reactionMessages, setReactionMessages] = useState<
+    DecodedMessage<ContentType.Reaction>[]
   >([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [messagesError, setMessagesError] = useState<Error | undefined>(
@@ -155,6 +151,8 @@ const UserConversation = () => {
     if (newMessage && newMessage.conversationId === conversation?.id) {
       if (newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
         setReceiptMessages((prev) => [newMessage as any, ...prev]);
+      } else if (newMessage.contentType.sameAs(ContentTypeReaction)) {
+        setReactionMessages((prev) => [newMessage as any, ...prev]);
       } else {
         setMessages((prev) => [newMessage, ...prev]);
       }
@@ -167,7 +165,18 @@ const UserConversation = () => {
       setReceiptMessages(
         (await conversation.messages({
           contentTypes: [ContentType.ReadReceipt],
-          limit: 50n,
+        })) as any
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const getReactionMessages = async () => {
+    try {
+      setReactionMessages(
+        (await conversation.messages({
+          contentTypes: [ContentType.Reaction],
         })) as any
       );
     } catch (error) {
@@ -181,7 +190,6 @@ const UserConversation = () => {
         await conversation.messages({
           contentTypes: [
             ContentType.Reply,
-            ContentType.Reaction,
             ContentType.RemoteAttachment,
             ContentType.Attachment,
             ContentType.Text,
@@ -202,6 +210,7 @@ const UserConversation = () => {
     if (conversation) {
       getMessages();
       getReceiptMessages();
+      getReactionMessages();
     }
   }, [conversation]);
 
@@ -285,8 +294,9 @@ const UserConversation = () => {
 
   const handleSync = async () => {
     await conversation.sync();
-    await getMessages();
-    await getReceiptMessages();
+    getMessages();
+    getReceiptMessages();
+    getReactionMessages();
     toast.success("Synced");
   };
 
@@ -493,6 +503,11 @@ const UserConversation = () => {
           <div className="space-y-0 px-2 md:px-0">
             <MessageList
               conversation={conversation}
+              onReply={(message) => {
+                setReplyToId(message.id);
+                setReplyToInboxId(message.senderInboxId);
+              }}
+              onReplyClick={scrollToMessage}
               messages={
                 messages?.sort(
                   (a, b) =>
@@ -504,12 +519,8 @@ const UserConversation = () => {
                     ).getTime()
                 ) ?? []
               }
-              onReply={(message) => {
-                setReplyToId(message.id);
-                setReplyToInboxId(message.senderInboxId);
-              }}
-              onReplyClick={scrollToMessage}
               pinnedMessages={pinnedMessages}
+              reactionMessages={reactionMessages}
               peerLastReceipt={
                 receiptMessages.sort(
                   (a, b) =>

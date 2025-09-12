@@ -21,6 +21,7 @@ interface MessageListProps {
   onReaction?: (messageId: string, emoji: string) => void;
   onReplyClick?: (messageId: string) => void;
   pinnedMessages?: DecodedMessage[];
+  reactionMessages?: DecodedMessage[];
   peerLastReceipt?: DecodedMessage<ContentType.ReadReceipt>;
 }
 
@@ -68,6 +69,7 @@ export const MessageList = ({
   onReaction,
   onReplyClick,
   pinnedMessages = [],
+  reactionMessages = [],
   peerLastReceipt,
 }: MessageListProps) => {
   const { client } = useXmtp();
@@ -211,7 +213,6 @@ export const MessageList = ({
               const isOwn = message.senderInboxId === client?.inboxId;
               const isSeen =
                 (peerLastReceipt as any)?.sent ?? 0n >= message.sentAtNs;
-
               const showAvatar = shouldShowAvatar(
                 message,
                 index,
@@ -222,6 +223,11 @@ export const MessageList = ({
               const isPinned = pinnedMessages
                 .map((p) => p.id)
                 .includes(message.id);
+              const reactions = reactionMessages?.filter(
+                (m) =>
+                  m.contentType.sameAs(ContentTypeReaction) &&
+                  (m.content as Reaction).reference === message.id
+              );
 
               return (
                 <MessageBubble
@@ -245,11 +251,7 @@ export const MessageList = ({
                   }
                   onReplyClick={onReplyClick}
                   isPinned={isPinned}
-                  reactions={messages?.filter(
-                    (m) =>
-                      m.contentType.sameAs(ContentTypeReaction) &&
-                      (m.content as Reaction).reference === message.id
-                  )}
+                  reactions={reactions}
                   isSeen={isSeen}
                 />
               );
