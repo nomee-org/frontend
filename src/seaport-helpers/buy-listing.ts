@@ -21,8 +21,6 @@ export class BuyListingHandler extends SeaportOperationHandler<
       fulFillerAddress: walletAddress,
     });
 
-    console.log(listing);
-
     if (!listing) {
       throw new DomaOrderbookError(
         DomaOrderbookErrorCode.ORDER_NOT_FOUND,
@@ -36,8 +34,6 @@ export class BuyListingHandler extends SeaportOperationHandler<
         extraData: (listing as any)?.extraData ?? "",
         unitsToFill: (listing as any)?.extraData ? 1n : 0,
       });
-
-      console.log({ orderUseCase });
 
       const result = await this.executeBlockchainOperation<TransactionReceipt>(
         orderUseCase.actions
