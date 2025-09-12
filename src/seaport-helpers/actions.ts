@@ -49,8 +49,6 @@ export const executeAllActions = async <R>(
 
     progress.updateStep(i, { progressState: "pending" });
 
-    console.log({ action });
-
     try {
       // signature-based actions
       if (action.type === "create") {
