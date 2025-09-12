@@ -41,10 +41,10 @@ export function ConnectWallet({
             <Loader className="animate-spin" />
           )}
           <span className="hidden sm:inline">
-            {address ? trimAddress(address) : "Connect Wallet"}
+            {address ? trimAddress(address, 5) : "Connect Wallet"}
           </span>
           <span className="sm:hidden">
-            {address ? trimAddress(address) : "Connect"}
+            {address ? trimAddress(address, 4) : "Connect"}
           </span>
         </Button>
       </div>
