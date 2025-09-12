@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 
 // Local component imports
-import ListPromptMessagePopup from "@/components/domain/ListPromptMessagePopup";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { MessageInput } from "@/components/messaging/MessageInput";
 import { MessageList } from "@/components/messaging/MessageList";
@@ -56,6 +55,8 @@ import { RecordingIndicator } from "./RecordingIndicator";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { useHelper } from "@/hooks/use-helper";
 import {
+  ConsentEntityType,
+  ConsentState,
   ContentType,
   Conversation,
   DecodedMessage,
@@ -65,7 +66,7 @@ import { formatUnits } from "viem";
 import { toast } from "sonner";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { useAccount } from "wagmi";
-import { useName, useOwnedNames } from "@/data/use-doma";
+import { useName } from "@/data/use-doma";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { ContentTypeReaction } from "@xmtp/content-type-reaction";
 import { TradeOptionPopup } from "./TradeOptionsPopup";
@@ -83,8 +84,7 @@ const UserConversation = () => {
   const { address: myAddress } = useAccount();
   const [isLoading, setIsLoading] = useState(true);
   const [showTradePopup, setShowTradePopup] = useState(false);
-  const [replyToId, setReplyToId] = useState<string | undefined>();
-  const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
+  const [replyTo, setReplyTo] = useState<DecodedMessage | undefined>();
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
@@ -129,18 +129,28 @@ const UserConversation = () => {
       }
 
       if (!dm) {
-        if (address) {
-          const canMessage = await client.canMessage([
-            {
-              identifier: address.toLowerCase(),
-              identifierKind: "Ethereum",
-            },
-          ]);
+        const consentState = await client.preferences.getConsentState(
+          ConsentEntityType.InboxId,
+          inboxId
+        );
 
-          if (!canMessage.get(address.toLowerCase())) return undefined;
+        if (consentState === ConsentState.Denied) {
+          toast.error(
+            `Recipient has denied messages from you. Please request permission.`
+          );
+          return undefined;
         }
 
+        await client.preferences.setConsentStates([
+          {
+            entityType: ConsentEntityType.InboxId,
+            entity: inboxId,
+            state: ConsentState.Allowed,
+          },
+        ]);
+
         dm = await client.conversations.newDm(inboxId);
+        await dm.sync();
       }
 
       return dm;
@@ -235,7 +245,7 @@ const UserConversation = () => {
         setConversation(
           await getOrCreateConversation(
             await client.findInboxIdByIdentifier({
-              identifier: address.toLowerCase(),
+              identifier: address,
               identifierKind: "Ethereum",
             }),
             peerAddress
@@ -246,7 +256,7 @@ const UserConversation = () => {
         setConversation(
           await getOrCreateConversation(
             await client.findInboxIdByIdentifier({
-              identifier: dmId.toLowerCase(),
+              identifier: dmId,
               identifierKind: "Ethereum",
             }),
             dmId
@@ -504,10 +514,7 @@ const UserConversation = () => {
           <div className="space-y-0 px-2 md:px-0">
             <MessageList
               conversation={conversation}
-              onReply={(message) => {
-                setReplyToId(message.id);
-                setReplyToInboxId(message.senderInboxId);
-              }}
+              onReply={(message) => setReplyTo(message)}
               onReplyClick={scrollToMessage}
               messages={
                 messages?.sort(
@@ -557,12 +564,8 @@ const UserConversation = () => {
       <MessageInput
         placeHolder={initMessage || ""}
         conversation={conversation}
-        replyToId={replyToId}
-        replyToInboxId={replyToInboxId}
-        onCancelReply={() => {
-          setReplyToId(undefined);
-          setReplyToInboxId(undefined);
-        }}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(undefined)}
         onRecording={(recording) => {
           if (recording) {
             webSocketService.startRecording(conversation?.id);
@@ -571,8 +574,7 @@ const UserConversation = () => {
           }
         }}
         onSendSuccess={() => {
-          setReplyToId(undefined);
-          setReplyToInboxId(undefined);
+          setReplyTo(undefined);
           scrollToBottom(conversation);
         }}
       />

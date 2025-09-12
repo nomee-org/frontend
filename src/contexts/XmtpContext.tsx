@@ -1,9 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Client, DecodedMessage, Identifier } from "@xmtp/browser-sdk";
-import React, { createContext, ReactNode, useEffect, useState } from "react";
+import { Client, DecodedMessage, Identifier, Signer } from "@xmtp/browser-sdk";
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { toBytes } from "viem";
-import { useAccount, useWalletClient } from "wagmi";
+import { useAccount, useSignMessage, useWalletClient } from "wagmi";
 import { Reaction, ReactionCodec } from "@xmtp/content-type-reaction";
 import {
   AttachmentCodec,
@@ -22,8 +29,6 @@ interface XmtpContextType {
   identifier: Identifier | null;
   isLoading: boolean;
   error: Error | null;
-  connect: () => Promise<void>;
-  disconnect: () => void;
   newMessage: DecodedMessage | undefined;
   clearNewMessage: () => void;
 }
@@ -36,7 +41,7 @@ interface XmtpProviderProps {
 
 export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   const { address } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const { signMessageAsync } = useSignMessage();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -75,36 +80,53 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     };
   }, [client]);
 
-  useEffect(() => {
-    if (address && walletClient) {
-      connect();
-    } else {
-      disconnect();
-    }
-  }, [address, walletClient]);
+  const signer: Signer = useMemo(() => {
+    return {
+      type: "EOA",
+      getIdentifier: () => ({
+        identifier: address,
+        identifierKind: "Ethereum",
+      }),
+      signMessage: async (message) => {
+        return toBytes(
+          await signMessageAsync({
+            account: address,
+            message,
+          })
+        );
+      },
+    };
+  }, [address, signMessageAsync]);
 
-  const connect = async () => {
+  const connect = useCallback(async () => {
+    if (!address) return;
     try {
-      if (isLoading) {
-        toast.warning("Connecting...");
-        return;
-      }
-
-      if (!address) throw new Error("No connected wallet");
-
       setIsLoading(true);
 
-      const identifier: Identifier = {
-        identifier: address.toLowerCase(),
+      const xmtpIdentifier: Identifier = {
+        identifier: address,
         identifierKind: "Ethereum",
       };
 
-      setIdentifier(identifier);
+      const canMessage = await Client.canMessage([xmtpIdentifier]);
 
-      const canMessage = await Client.canMessage([identifier]);
+      if (canMessage.get(address)) {
+        const xmtpClient = await Client.build(xmtpIdentifier, {
+          env: "dev",
+          appVersion: "nomee-app/1.0",
+          codecs: [
+            new ReplyCodec(),
+            new ReactionCodec(),
+            new AttachmentCodec(),
+            new RemoteAttachmentCodec(),
+            new TextCodec(),
+            new ReadReceiptCodec(),
+          ],
+        });
 
-      if (canMessage.get(address.toLowerCase())) {
-        const xmtpClient = await Client.build(identifier, {
+        setClient(xmtpClient);
+      } else {
+        const xmtpClient = await Client.create(signer, {
           env: "dev",
           appVersion: "nomee-app/1.0",
           codecs: [
@@ -117,55 +139,35 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
           ],
         });
         setClient(xmtpClient);
-      } else {
-        const xmtpClient = await Client.create(
-          {
-            type: "EOA",
-            getIdentifier: () => identifier,
-            signMessage: async (message) => {
-              return toBytes(
-                await walletClient.signMessage({ message, account: address })
-              );
-            },
-          },
-          {
-            env: "dev",
-            appVersion: "nomee-app/1.0",
-            codecs: [
-              new ReplyCodec(),
-              new ReactionCodec(),
-              new AttachmentCodec(),
-              new RemoteAttachmentCodec(),
-              new TextCodec(),
-              new ReadReceiptCodec(),
-            ],
-          }
-        );
-        setClient(xmtpClient);
       }
 
+      setIdentifier(xmtpIdentifier);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error connecting to XMTP:", error);
       setError(error);
     }
-  };
+  }, [address, setClient, signer]);
 
-  const disconnect = () => {
-    // client?.close();
-    setIsLoading(false);
-    setError(null);
-    setClient(null);
-    setIdentifier(null);
-  };
+  useEffect(() => {
+    if (!address) {
+      setIsLoading(false);
+      setError(null);
+      setClient(null);
+      setIdentifier(null);
+    }
+  }, [address, setClient]);
+
+  useEffect(() => {
+    if (address && !client) {
+      connect();
+    }
+  }, [address, client, connect, setClient]);
 
   const value = {
     client,
     identifier,
     isLoading,
     error,
-    connect,
-    disconnect,
     newMessage,
     clearNewMessage,
   };

@@ -56,14 +56,14 @@ import { MembersDialog } from "./MembersDialog";
 import { formatUnits } from "viem";
 import { useAccount } from "wagmi";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
+import { ContentTypeReaction } from "@xmtp/content-type-reaction";
 
 const GroupConversation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { address: myAddress } = useAccount();
-  const [replyToId, setReplyToId] = useState<string | undefined>();
-  const [replyToInboxId, setReplyToInboxId] = useState<string | undefined>();
+  const [replyTo, setReplyTo] = useState<DecodedMessage | undefined>();
   const [showMembers, setShowMembers] = useState(false);
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
@@ -77,6 +77,9 @@ const GroupConversation = () => {
   const [messagesError, setMessagesError] = useState<Error | undefined>(
     undefined
   );
+  const [reactionMessages, setReactionMessages] = useState<
+    DecodedMessage<ContentType.Reaction>[]
+  >([]);
 
   const {
     data: conversation,
@@ -95,12 +98,28 @@ const GroupConversation = () => {
 
   useEffect(() => {
     if (newMessage && newMessage.conversationId === conversation?.id) {
-      if (!newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
+      if (newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
+        // ignore
+      } else if (newMessage.contentType.sameAs(ContentTypeReaction)) {
+        setReactionMessages((prev) => [newMessage as any, ...prev]);
+      } else {
         setMessages((prev) => [newMessage, ...prev]);
       }
       clearNewMessage();
     }
   }, [newMessage]);
+
+  const getReactionMessages = async () => {
+    try {
+      setReactionMessages(
+        (await conversation.messages({
+          contentTypes: [ContentType.Reaction],
+        })) as any
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const getMessages = async () => {
     try {
@@ -108,7 +127,6 @@ const GroupConversation = () => {
         await conversation.messages({
           contentTypes: [
             ContentType.Reply,
-            ContentType.Reaction,
             ContentType.RemoteAttachment,
             ContentType.Attachment,
             ContentType.Text,
@@ -341,6 +359,8 @@ const GroupConversation = () => {
           <div className="space-y-0 px-2 md:px-0">
             <MessageList
               conversation={conversation}
+              onReply={(message) => setReplyTo(message)}
+              onReplyClick={scrollToMessage}
               messages={
                 messages?.sort(
                   (a, b) =>
@@ -352,11 +372,7 @@ const GroupConversation = () => {
                     ).getTime()
                 ) ?? []
               }
-              onReply={(message) => {
-                setReplyToId(message.id);
-                setReplyToInboxId(message.senderInboxId);
-              }}
-              onReplyClick={scrollToMessage}
+              reactionMessages={reactionMessages}
               pinnedMessages={pinnedMessages}
             />
           </div>
@@ -383,9 +399,8 @@ const GroupConversation = () => {
       {/* Message Input */}
       <MessageInput
         conversation={conversation}
-        replyToId={replyToId}
-        replyToInboxId={replyToInboxId}
-        onCancelReply={() => setReplyToId(undefined)}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(undefined)}
         members={membersData ?? []}
         onRecording={(typing) => {
           if (typing) {
@@ -395,7 +410,7 @@ const GroupConversation = () => {
           }
         }}
         onSendSuccess={() => {
-          setReplyToId(undefined);
+          setReplyTo(undefined);
           scrollToBottom();
         }}
       />

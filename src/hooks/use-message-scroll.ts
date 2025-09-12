@@ -1,3 +1,4 @@
+import { useXmtp } from "@/contexts/XmtpContext";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -16,6 +17,7 @@ export function useMessageScroll({
   messages,
 }: UseMessageScrollOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { client } = useXmtp();
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const previousMessageCount = useRef(messages.length);
@@ -75,8 +77,13 @@ export function useMessageScroll({
     }
 
     try {
-      await conversation?.sendOptimistic({}, ContentTypeReadReceipt);
-      conversation.publishMessages();
+      if (messages.length > 0) {
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage && lastMessage.senderInboxId !== client.inboxId) {
+          await conversation?.sendOptimistic({}, ContentTypeReadReceipt);
+          conversation.publishMessages();
+        }
+      }
     } catch (error) {
       console.log(error);
     }

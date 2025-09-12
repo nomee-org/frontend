@@ -179,39 +179,9 @@ export function OfferPopup({
           currencies,
         });
 
-        if (createdOffer && message.trim()) {
-          const otherName = await dataService.getName({ name: domainName });
-          const peerAddress = parseCAIP10(otherName.claimedBy).address;
-
-          const inboxId = await xmtpClient.findInboxIdByIdentifier({
-            identifier: peerAddress,
-            identifierKind: "Ethereum",
-          });
-
-          if (!inboxId) {
-            return toast.error(
-              "Connect send Message. Recipient is not yet on XMTP."
-            );
-          }
-
-          const conversation =
-            (await xmtpClient.conversations.getDmByInboxId(inboxId)) ??
-            (await xmtpClient.conversations.newDm(inboxId));
-
-          await conversation.sendOptimistic(
-            `nomee_created_offer::${JSON.stringify({
-              message,
-              orders: createdOffer?.orders ?? [],
-              domainName,
-              selectedCurrency,
-              expiresSec: Date.now() + durationMs,
-            })}`,
-            ContentTypeText
-          );
-
+        if (message.trim()) {
+          // onClose(message.trim());
           onClose();
-
-          conversation.publishMessages();
         } else {
           onClose();
         }

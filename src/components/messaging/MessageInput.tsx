@@ -17,7 +17,11 @@ import { StickersPickerPopup } from "@/components/media/StickersPickerPopup";
 import { MemberTaggingPopup } from "@/components/messaging/MemberTaggingPopup";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { webSocketService } from "@/services/backend/socketservice";
-import { Conversation, SafeGroupMember } from "@xmtp/browser-sdk";
+import {
+  Conversation,
+  DecodedMessage,
+  SafeGroupMember,
+} from "@xmtp/browser-sdk";
 import { useXmtp } from "@/contexts/XmtpContext";
 import {
   AttachmentCodec,
@@ -32,8 +36,7 @@ import { ContentTypeText } from "@xmtp/content-type-text";
 interface MessageInputProps {
   placeHolder?: string;
   conversation: Conversation;
-  replyToId?: string;
-  replyToInboxId?: string;
+  replyTo?: DecodedMessage;
   onCancelReply?: () => void;
   onSendSuccess?: () => void;
   onRecording?: (isRecording: boolean) => void;
@@ -43,8 +46,7 @@ interface MessageInputProps {
 export function MessageInput({
   placeHolder,
   conversation,
-  replyToId,
-  replyToInboxId,
+  replyTo,
   onCancelReply,
   onSendSuccess,
   onRecording,
@@ -250,11 +252,11 @@ export function MessageInput({
           remoteAttachment,
           ContentTypeRemoteAttachment
         );
-      } else if (replyToId) {
+      } else if (replyTo) {
         const reply: Reply = {
           content: message,
-          reference: replyToId,
-          referenceInboxId: replyToInboxId,
+          reference: replyTo.id,
+          referenceInboxId: replyTo.senderInboxId,
           contentType: ContentTypeReply,
         };
 
@@ -392,7 +394,7 @@ export function MessageInput({
   return (
     <div className="p-3 border-t border-border bg-background">
       {/* Reply/Edit Header */}
-      {replyToId && (
+      {replyTo && (
         <div className="mb-3 p-3 bg-muted/50 rounded-lg border-l-4 border-l-primary">
           <div className="flex items-center justify-between">
             <div>

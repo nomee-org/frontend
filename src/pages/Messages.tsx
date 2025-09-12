@@ -119,7 +119,9 @@ const Messages = () => {
         setConversations([]);
       }
     } catch (error) {
-      //  setConversationsError(error);
+      console.log({ error });
+
+      setConversationsError(error);
     } finally {
       setConversationsLoading(false);
     }
