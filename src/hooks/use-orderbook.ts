@@ -10,9 +10,12 @@ import {
   AcceptOfferResult,
   ApiClient,
   BuyListingParams,
+  BuyListingResult,
   Caip2ChainId,
   CancelListingParams,
+  CancelListingResult,
   CancelOfferParams,
+  CancelOfferResult,
   CreateListingParams,
   CreateListingResult,
   CreateOfferParams,
@@ -90,7 +93,7 @@ export const useOrderbook = () => {
     signer: JsonRpcSigner;
     chainId: Caip2ChainId;
     onProgress: OnProgressCallback;
-  }): Promise<AcceptOfferResult> => {
+  }): Promise<CancelOfferResult> => {
     const handler = new CancelOfferHandler(
       domaConfig,
       apiClient,
@@ -112,7 +115,7 @@ export const useOrderbook = () => {
     signer: JsonRpcSigner;
     chainId: Caip2ChainId;
     onProgress: OnProgressCallback;
-  }): Promise<AcceptOfferResult> => {
+  }): Promise<BuyListingResult> => {
     const handler = new BuyListingHandler(
       domaConfig,
       apiClient,
@@ -134,7 +137,7 @@ export const useOrderbook = () => {
     signer: JsonRpcSigner;
     chainId: Caip2ChainId;
     onProgress: OnProgressCallback;
-  }): Promise<AcceptOfferResult> => {
+  }): Promise<CancelListingResult> => {
     const handler = new CancelListingHandler(
       domaConfig,
       apiClient,

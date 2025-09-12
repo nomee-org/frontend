@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   CancelOfferParams,
   CancelOfferResult,
@@ -64,7 +65,7 @@ export class CancelOfferHandler extends SeaportOperationHandler<
   ): Promise<CancelOfferResult> {
     const cancelOrdersAction = this.seaport.cancelOrders([
       {
-        ...offer.parameters,
+        ...(offer as any).order.parameters,
       },
     ]);
 

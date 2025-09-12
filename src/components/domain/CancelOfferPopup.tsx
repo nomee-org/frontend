@@ -21,7 +21,6 @@ import {
   CancelOfferParams,
   viemToEthersSigner,
 } from "@doma-protocol/orderbook-sdk";
-import { domaConfig } from "@/configs/doma";
 import { useHelper } from "@/hooks/use-helper";
 import { formatUnits } from "viem";
 import { useOrderbook } from "@/hooks/use-orderbook";

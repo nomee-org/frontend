@@ -110,6 +110,7 @@ export function AcceptRejectOfferPopup({
       } else {
         const params: CancelOfferParams = {
           orderId: offer.externalId,
+          cancellationType: "off-chain",
         };
 
         await cancelOffer({
