@@ -165,7 +165,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
     <div
       key={conversation.id}
       onClick={() => handleConversationClick(conversation)}
-      className={`p-3 cursor-pointer transition-all duration-200 hover:bg-accent/80 rounded-xl border border-transparent ${
+      className={`p-1 md:p-3 cursor-pointer transition-all duration-200 hover:bg-accent/80 rounded-xl border border-transparent ${
         isSelected ? "bg-accent border-primary/20 shadow-sm" : "hover:shadow-sm"
       }`}
     >
