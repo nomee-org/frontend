@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   BuyListingParams,
   BuyListingResult,
@@ -20,6 +21,8 @@ export class BuyListingHandler extends SeaportOperationHandler<
       fulFillerAddress: walletAddress,
     });
 
+    console.log(listing);
+
     if (!listing) {
       throw new DomaOrderbookError(
         DomaOrderbookErrorCode.ORDER_NOT_FOUND,
@@ -29,11 +32,12 @@ export class BuyListingHandler extends SeaportOperationHandler<
 
     try {
       const orderUseCase = await this.seaport.fulfillOrder({
-        order: {
-          signature: listing.signature,
-          parameters: listing.parameters,
-        },
+        order: (listing as any).order,
+        extraData: (listing as any)?.extraData ?? "",
+        unitsToFill: (listing as any)?.extraData ? 1n : 0,
       });
+
+      console.log({ orderUseCase });
 
       const result = await this.executeBlockchainOperation<TransactionReceipt>(
         orderUseCase.actions
@@ -46,6 +50,8 @@ export class BuyListingHandler extends SeaportOperationHandler<
         status: result.status === 1 ? "success" : "reverted",
       };
     } catch (error) {
+      console.log({ error });
+
       throw DomaOrderbookError.fromError(
         error,
         DomaOrderbookErrorCode.BUY_LISTING_FAILED,
