@@ -21,7 +21,7 @@ import { useNameResolver } from "@/contexts/NicknameContext";
 export const Chat = ({ conversation }: { conversation: Conversation }) => {
   const { client, newMessage } = useXmtp();
   const { nickname } = useNameResolver();
-  const [lastMessage, setLastMessage] = useState<string>("•••");
+  const [lastMessage, setLastMessage] = useState<string>("No message yet");
   const [lastMessageAt, setLastMessageAt] = useState<Date | undefined>(
     undefined
   );
@@ -181,9 +181,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
                 domain={nickname(peerAddress)}
                 className="h-12 w-12 ring-2 ring-background shadow-sm"
               />
-              {/* {otherUser?.isOnline && (
-                                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full"></div>
-                              )} */}
+              {/* <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-background rounded-full"></div> */}
             </div>
           )}
         </div>
