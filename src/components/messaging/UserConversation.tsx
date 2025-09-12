@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 
 // Local component imports
-import BidMessagePopup from "@/components/domain/BidMessagePopup";
+import ListPromptMessagePopup from "@/components/domain/ListPromptMessagePopup";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { MessageInput } from "@/components/messaging/MessageInput";
 import { MessageList } from "@/components/messaging/MessageList";
@@ -80,7 +80,7 @@ const UserConversation = () => {
   const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
 
   const { client, newMessage, clearNewMessage } = useXmtp();
-  const { nickname } = useNameResolver();
+  const { nickname, setNickname } = useNameResolver();
   const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
@@ -170,6 +170,8 @@ const UserConversation = () => {
         const address = parseCAIP10(nameData.claimedBy).address;
 
         setPeerAddress(address);
+        setNickname(address, nameData.name);
+
         setConversation(
           await getOrCreateConversation(
             await client.findInboxIdByIdentifier({
@@ -482,7 +484,7 @@ const UserConversation = () => {
 
       {/* Bid Message Popup */}
       {peerAddress && conversation && (
-        <BidMessagePopup
+        <ListPromptMessagePopup
           conversation={conversation}
           isOpen={showBidPopup}
           onClose={() => setShowBidPopup(false)}

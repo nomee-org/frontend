@@ -16,15 +16,15 @@ import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Offer, Token } from "@/types/doma";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSwitchChain, useWalletClient } from "wagmi";
+import { useWalletClient } from "wagmi";
 import {
   CancelOfferParams,
-  createDomaOrderbookClient,
   viemToEthersSigner,
 } from "@doma-protocol/orderbook-sdk";
 import { domaConfig } from "@/configs/doma";
 import { useHelper } from "@/hooks/use-helper";
 import { formatUnits } from "viem";
+import { useOrderbook } from "@/hooks/use-orderbook";
 
 interface CancelOfferPopupProps {
   isOpen: boolean;
@@ -43,24 +43,23 @@ export function CancelOfferPopup({
 }: CancelOfferPopupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const isMobile = useIsMobile();
-  const client = createDomaOrderbookClient(domaConfig);
-  const { switchChainAsync } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
   const { formatLargeNumber, parseCAIP10 } = useHelper();
+  const { cancelOffer } = useOrderbook();
 
   const handleCancelOffer = async () => {
     setIsLoading(true);
 
     try {
-      await switchChainAsync({
-        chainId: Number(parseCAIP10(token.chain.networkId).chainId),
+      await walletClient.switchChain({
+        id: Number(parseCAIP10(token.chain.networkId).chainId),
       });
 
       const params: CancelOfferParams = {
         orderId: offer.externalId,
       };
 
-      await client.cancelOffer({
+      await cancelOffer({
         params,
         chainId: `eip155:${Number(parseCAIP10(token.chain.networkId).chainId)}`,
         onProgress: (progress) => {
@@ -77,6 +76,7 @@ export function CancelOfferPopup({
 
       onClose();
     } catch (error) {
+      console.log(error);
       toast.error(error?.message);
     } finally {
       setIsLoading(false);

@@ -22,27 +22,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Zap, Clock } from "lucide-react";
+import { MessageCircle, Zap, Clock, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useHelper } from "@/hooks/use-helper";
 import { formatUnits, parseUnits } from "viem";
 import {
-  createDomaOrderbookClient,
   viemToEthersSigner,
   CreateOfferParams,
   CurrencyToken,
   BuyListingParams,
   OrderbookFee,
 } from "@doma-protocol/orderbook-sdk";
-import { domaConfig } from "@/configs/doma";
 import { Token } from "@/types/doma";
-import { useSwitchChain, useWalletClient } from "wagmi";
+import { useWalletClient } from "wagmi";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Textarea } from "../ui/textarea";
-import { backendService } from "@/services/backend/backendservice";
 import { dataService } from "@/services/doma/dataservice";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { ContentTypeText } from "@xmtp/content-type-text";
+import { useOrderbook } from "@/hooks/use-orderbook";
+
 interface OfferPopupProps {
   isOpen: boolean;
   onClose: () => void;
@@ -65,22 +64,22 @@ export function OfferPopup({
   const [expirationDays, setExpirationDays] = useState("7");
   const [message, setMessage] = useState("");
 
+  const isMobile = useIsMobile();
   const { data: walletClient } = useWalletClient();
-  const { switchChainAsync } = useSwitchChain();
   const { parseCAIP10, formatLargeNumber } = useHelper();
   const [currencies, setCurrencies] = useState<CurrencyToken[]>([]);
 
   const { client: xmtpClient } = useXmtp();
+  const { getSupportedCurrencies, getOrderbookFee, createOffer, buyListing } =
+    useOrderbook();
 
   const [selectedCurrency, setSelectedCurrency] = useState<
     CurrencyToken | undefined
   >(undefined);
-
-  const client = createDomaOrderbookClient(domaConfig);
-  const isMobile = useIsMobile();
+  const [fees, setFees] = useState<OrderbookFee[]>([]);
 
   const getCurrencies = async () => {
-    const supportedCurrencies = await client.getSupportedCurrencies({
+    const supportedCurrencies = await getSupportedCurrencies({
       chainId: token.chain.networkId,
       orderbook: token.listings[0].orderbook,
       contractAddress: token.tokenAddress,
@@ -97,14 +96,28 @@ export function OfferPopup({
     }
   };
 
+  const getFees = async () => {
+    const fees = await getOrderbookFee({
+      chainId: token.chain.networkId,
+      contractAddress: token.tokenAddress,
+      orderbook: token.listings[0].orderbook,
+    });
+
+    setFees(fees.marketplaceFees);
+  };
+
   useEffect(() => {
     getCurrencies();
+  }, [token, isOpen]);
+
+  useEffect(() => {
+    getFees();
   }, [token]);
 
   const handleSubmit = async () => {
     try {
-      await switchChainAsync({
-        chainId: Number(parseCAIP10(token.chain.networkId).chainId),
+      await walletClient.switchChain({
+        id: Number(parseCAIP10(token.chain.networkId).chainId),
       });
 
       if (offerType === "instant") {
@@ -112,7 +125,7 @@ export function OfferPopup({
           orderId: token.listings[0].externalId,
         };
 
-        await client.buyListing({
+        await buyListing({
           params,
           chainId: token.chain.networkId,
           onProgress: (progress) => {
@@ -131,7 +144,7 @@ export function OfferPopup({
           return toast.error("Please enter an offer amount");
         }
 
-        const durationSecs = Number(expirationDays) * 24 * 3600;
+        const durationMs = Number(expirationDays) * 24 * 3600 * 1000;
 
         const params: CreateOfferParams = {
           items: [
@@ -143,14 +156,15 @@ export function OfferPopup({
                 selectedCurrency.decimals
               ).toString(),
               currencyContractAddress: selectedCurrency.contractAddress,
-              duration: durationSecs,
+              duration: durationMs,
             },
           ],
           orderbook: token.listings[0].orderbook,
           source: import.meta.env.VITE_APP_NAME,
+          marketplaceFees: fees,
         };
 
-        await client.createOffer({
+        const createdOffer = await createOffer({
           params,
           chainId: token.chain.networkId,
           onProgress: (progress) => {
@@ -161,9 +175,11 @@ export function OfferPopup({
             });
           },
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
+          hasWethOffer: selectedCurrency?.symbol?.toLowerCase() === "weth",
+          currencies,
         });
 
-        if (message.trim()) {
+        if (createdOffer && message.trim()) {
           const otherName = await dataService.getName({ name: domainName });
           const peerAddress = parseCAIP10(otherName.claimedBy).address;
 
@@ -182,7 +198,16 @@ export function OfferPopup({
             (await xmtpClient.conversations.getDmByInboxId(inboxId)) ??
             (await xmtpClient.conversations.newDm(inboxId));
 
-          await conversation.sendOptimistic(message, ContentTypeText);
+          await conversation.sendOptimistic(
+            `nomee_created_offer::${JSON.stringify({
+              message,
+              orders: createdOffer?.orders ?? [],
+              domainName,
+              selectedCurrency,
+              expiresSec: Date.now() + durationMs,
+            })}`,
+            ContentTypeText
+          );
 
           onClose();
 
@@ -192,7 +217,9 @@ export function OfferPopup({
         }
       }
     } catch (error) {
-      // toast.error(error?.message);
+      console.log(error);
+
+      toast.error(error?.message);
     }
   };
 
@@ -307,6 +334,29 @@ export function OfferPopup({
             <p className="text-xs text-muted-foreground">
               {message.length}/500 characters
             </p>
+          </div>
+        )}
+
+        {/* Fees Information */}
+        {offerType === "make-offer" && fees.length > 0 && (
+          <div className="bg-accent/20 border border-border/30 p-3 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Info className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-medium">Marketplace Fees</p>
+            </div>
+            {fees.map((fee, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center text-sm"
+              >
+                <span className="text-muted-foreground">{fee.feeType}</span>
+                <span>
+                  {fee.basisPoints
+                    ? `${(fee.basisPoints / 100).toFixed(2)}%`
+                    : 0}
+                </span>
+              </div>
+            ))}
           </div>
         )}
       </div>

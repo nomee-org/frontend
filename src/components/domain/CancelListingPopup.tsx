@@ -16,15 +16,14 @@ import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Token } from "@/types/doma";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSwitchChain, useWalletClient } from "wagmi";
+import { useWalletClient } from "wagmi";
 import {
   CancelListingParams,
-  createDomaOrderbookClient,
   viemToEthersSigner,
 } from "@doma-protocol/orderbook-sdk";
-import { domaConfig } from "@/configs/doma";
 import { useHelper } from "@/hooks/use-helper";
 import { formatUnits } from "viem";
+import { useOrderbook } from "@/hooks/use-orderbook";
 
 interface CancelListingPopupProps {
   isOpen: boolean;
@@ -41,27 +40,27 @@ export function CancelListingPopup({
 }: CancelListingPopupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const isMobile = useIsMobile();
-  const client = createDomaOrderbookClient(domaConfig);
-  const { switchChainAsync } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
   const { formatLargeNumber, parseCAIP10 } = useHelper();
+  const { cancelListing } = useOrderbook();
 
   const handleCancelListing = async () => {
     setIsLoading(true);
 
     try {
-      await switchChainAsync({
-        chainId: Number(parseCAIP10(token.chain.networkId).chainId),
+      await walletClient.switchChain({
+        id: Number(parseCAIP10(token.chain.networkId).chainId),
       });
 
-      const orderId = token.listings?.[0]?.externalId ?? "";
+      const orderId = token.listings?.[0]?.externalId;
+      if (!orderId) return;
 
       const params: CancelListingParams = {
         orderId,
         cancellationType: "off-chain",
       };
 
-      await client.cancelListing({
+      await cancelListing({
         params,
         chainId: `eip155:${Number(parseCAIP10(token.chain.networkId).chainId)}`,
         onProgress: (progress) => {

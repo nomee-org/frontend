@@ -25,18 +25,17 @@ import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { Token } from "@/types/doma";
 import {
-  createDomaOrderbookClient,
   CreateListingParams,
   CurrencyToken,
   OrderbookFee,
   OrderbookType,
   viemToEthersSigner,
 } from "@doma-protocol/orderbook-sdk";
-import { domaConfig } from "@/configs/doma";
 import { parseUnits } from "viem";
-import { useSwitchChain, useWalletClient } from "wagmi";
+import { useWalletClient } from "wagmi";
 import { useHelper } from "@/hooks/use-helper";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useOrderbook } from "@/hooks/use-orderbook";
 
 interface ListDomainPopupProps {
   isOpen: boolean;
@@ -61,14 +60,14 @@ export function ListDomainPopup({
     CurrencyToken | undefined
   >(undefined);
   const { data: walletClient } = useWalletClient();
-  const { switchChainAsync } = useSwitchChain();
-  const client = createDomaOrderbookClient(domaConfig);
   const { parseCAIP10 } = useHelper();
   const isMobile = useIsMobile();
+  const { getSupportedCurrencies, getOrderbookFee, createListing } =
+    useOrderbook();
 
   const getCurrencies = async () => {
     try {
-      const supportedCurrencies = await client.getSupportedCurrencies({
+      const supportedCurrencies = await getSupportedCurrencies({
         chainId: token.chain.networkId,
         orderbook,
         contractAddress: token.tokenAddress,
@@ -89,7 +88,7 @@ export function ListDomainPopup({
   };
 
   const getFees = async () => {
-    const fees = await client.getOrderbookFee({
+    const fees = await getOrderbookFee({
       chainId: token.chain.networkId,
       contractAddress: token.tokenAddress,
       orderbook,
@@ -120,10 +119,10 @@ export function ListDomainPopup({
     setIsLoading(true);
 
     try {
-      const durationSecs = Number(expirationDays) * 24 * 3600;
+      const durationMs = Number(expirationDays) * 24 * 3600 * 1000;
 
-      await switchChainAsync({
-        chainId: Number(parseCAIP10(token.chain.networkId).chainId),
+      await walletClient.switchChain({
+        id: Number(parseCAIP10(token.chain.networkId).chainId),
       });
 
       const params: CreateListingParams = {
@@ -136,14 +135,15 @@ export function ListDomainPopup({
               selectedCurrency.decimals
             ).toString(),
             currencyContractAddress: selectedCurrency.contractAddress,
-            duration: durationSecs,
+            duration: durationMs,
           },
         ],
         orderbook,
         source: import.meta.env.VITE_APP_NAME,
+        marketplaceFees: fees,
       };
 
-      const a = await client.createListing({
+      const a = await createListing({
         params,
         chainId: token.chain.networkId,
         onProgress: (progress) => {
@@ -267,16 +267,6 @@ export function ListDomainPopup({
             ))}
           </div>
         )}
-
-        {/* Estimated USD Value */}
-        {/* {listingPrice && selectedCurrency && (
-          <div className="bg-muted p-3 rounded-lg">
-            <p className="text-sm text-muted-foreground">Estimated USD Value</p>
-            <p className="font-semibold">
-              ~${(parseFloat(listingPrice) * selectedCurrency?.).toFixed(2)} USD
-            </p>
-          </div>
-        )} */}
       </div>
 
       {/* Action Buttons */}

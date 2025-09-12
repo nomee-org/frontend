@@ -21,14 +21,14 @@ import { toast } from "sonner";
 import moment from "moment";
 import {
   AcceptOfferParams,
-  createDomaOrderbookClient,
+  CancelOfferParams,
   viemToEthersSigner,
 } from "@doma-protocol/orderbook-sdk";
-import { domaConfig } from "@/configs/doma";
 import { useNavigate } from "react-router-dom";
-import { useSwitchChain, useWalletClient } from "wagmi";
+import { useWalletClient } from "wagmi";
 import { Token } from "@/types/doma";
 import { dataService } from "@/services/doma/dataservice";
+import { useOrderbook } from "@/hooks/use-orderbook";
 
 interface Offer {
   externalId: string;
@@ -63,18 +63,31 @@ export function AcceptRejectOfferPopup({
   const [isProcessing, setIsProcessing] = useState(false);
   const isMobile = useIsMobile();
   const { formatLargeNumber, parseCAIP10, trimAddress } = useHelper();
-  const client = createDomaOrderbookClient(domaConfig);
   const navigate = useNavigate();
-  const { switchChainAsync } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
+  const { acceptOffer, cancelOffer } = useOrderbook();
+
+  const handleSendMessage = async () => {
+    const names = await dataService.getOwnedNames({
+      page: 1,
+      take: 1,
+      address: parseCAIP10(offer.offererAddress).address,
+    });
+
+    if (names.totalCount === 0) {
+      navigate(`/messages/${parseCAIP10(offer.offererAddress).address}`);
+    } else {
+      navigate(`/messages/${names?.items?.[0]?.name}`);
+    }
+  };
 
   const handleConfirm = async () => {
     if (!offer || !action) return;
 
     setIsProcessing(true);
     try {
-      await switchChainAsync({
-        chainId: Number(parseCAIP10(token.chain.networkId).chainId),
+      await walletClient.switchChain({
+        id: Number(parseCAIP10(token.chain.networkId).chainId),
       });
 
       if (action === "accept") {
@@ -82,11 +95,9 @@ export function AcceptRejectOfferPopup({
           orderId: offer.externalId,
         };
 
-        await client.acceptOffer({
+        await acceptOffer({
           params,
-          chainId: `eip155:${Number(
-            parseCAIP10(token.chain.networkId).chainId
-          )}`,
+          chainId: token.chain.networkId,
           onProgress: (progress) => {
             progress.forEach((step) => {
               toast(step.description, {
@@ -96,24 +107,26 @@ export function AcceptRejectOfferPopup({
           },
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
-
-        toast.success("Offer accepted successfully!");
       } else {
-        const names = await dataService.getOwnedNames({
-          page: 1,
-          take: 1,
-          address: parseCAIP10(offer.offererAddress).address,
+        const params: CancelOfferParams = {
+          orderId: offer.externalId,
+          cancellationType: "off-chain",
+        };
+
+        await cancelOffer({
+          params,
+          chainId: `eip155:${Number(
+            parseCAIP10(token.chain.networkId).chainId
+          )}`,
+          onProgress: (progress) => {
+            progress.forEach((step) => {
+              toast(step.description, {
+                id: `cancel_offer_${offer.externalId}_step_${step.kind}`,
+              });
+            });
+          },
+          signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
-
-        if (names.totalCount === 0) {
-          return toast.error(
-            "Cannot send message. The offerer does not own any domains."
-          );
-        }
-
-        navigate(
-          `/messages/${names?.items?.[0]?.name}?message=Your offer for ${domainName} has been rejected.`
-        );
       }
 
       onClose();
@@ -251,24 +264,37 @@ export function AcceptRejectOfferPopup({
 
       {/* Sticky Action Buttons */}
       <div className="border-t bg-background pt-4">
-        <Button
-          onClick={handleConfirm}
-          disabled={isProcessing}
-          className={`w-full ${
-            isAccept
-              ? "bg-green-600 hover:bg-green-700 text-white"
-              : "bg-red-600 hover:bg-red-700 text-white"
-          }`}
-        >
-          {isProcessing ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-              Processing...
-            </>
-          ) : (
-            `${isAccept ? "Accept Offer" : "Send Message"}`
+        <div className="flex gap-2">
+          {!isAccept && (
+            <Button
+              onClick={handleSendMessage}
+              disabled={isProcessing}
+              variant="outline"
+              className={`w-full`}
+            >
+              Send Message
+            </Button>
           )}
-        </Button>
+
+          <Button
+            onClick={handleConfirm}
+            disabled={isProcessing}
+            className={`w-full ${
+              isAccept
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : "bg-red-600 hover:bg-red-700 text-white"
+            }`}
+          >
+            {isProcessing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                Processing...
+              </>
+            ) : (
+              `${isAccept ? "Accept Offer" : "Reject Offer"}`
+            )}
+          </Button>
+        </div>
       </div>
     </>
   );
