@@ -166,7 +166,7 @@ const Messages = () => {
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  className="animate-fade-in shadow-sm"
+                  className="shadow-sm"
                   onClick={() => setShowCreateGroup(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
