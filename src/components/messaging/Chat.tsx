@@ -34,8 +34,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
   const isSelected =
     conversation.metadata.conversationType === "group"
       ? location.pathname.includes(`/messages/groups/${conversation?.id}`)
-      : peerAddress &&
-        location.pathname.includes(
+      : location.pathname.includes(
           `/messages/${peerAddress ? nickname(peerAddress) : conversation.id}`
         );
 
@@ -218,8 +217,9 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
               </span>
               {newMessage &&
                 !newMessage.contentType.sameAs(ContentTypeReadReceipt) &&
+                newMessage.senderInboxId !== client.inboxId &&
                 newMessage.conversationId === conversation.id && (
-                  <div className="bg-primary text-red-500 text-xs px-2 py-0.5 w-2 h-2 flex items-center justify-center rounded-full"></div>
+                  <div className="bg-red-500 w-2 h-2 flex items-center justify-center rounded-full"></div>
                 )}
             </div>
           </div>

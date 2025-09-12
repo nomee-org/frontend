@@ -21,7 +21,7 @@ const navigationItems = [
 export function MobileBottomNav() {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { newMessage } = useXmtp();
+  const { client, newMessage } = useXmtp();
 
   const isActive = (path: string) => currentPath === path;
 
@@ -43,7 +43,8 @@ export function MobileBottomNav() {
               <item.icon className="h-4 w-4" />
               {item.title === "Messages" &&
                 newMessage &&
-                !newMessage.contentType.sameAs(ContentTypeReadReceipt) && (
+                !newMessage.contentType.sameAs(ContentTypeReadReceipt) &&
+                newMessage.senderInboxId !== client.inboxId && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 )}
             </div>

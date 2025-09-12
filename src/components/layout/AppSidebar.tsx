@@ -39,7 +39,7 @@ const settingsItems = [{ title: "Settings", url: "/settings", icon: Settings }];
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { newMessage } = useXmtp();
+  const { client, newMessage } = useXmtp();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -127,7 +127,8 @@ export function AppSidebar() {
                             newMessage &&
                             !newMessage.contentType.sameAs(
                               ContentTypeReadReceipt
-                            ) && (
+                            ) &&
+                            newMessage.senderInboxId !== client.inboxId && (
                               <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
                             )}
                         </TooltipContent>
