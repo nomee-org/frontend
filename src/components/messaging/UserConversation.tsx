@@ -358,9 +358,24 @@ const UserConversation = () => {
           <p className="text-muted-foreground">
             User is not registered on XTMP.
           </p>
-          <Button size="sm" variant="outline">
-            Invite them
-          </Button>
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (isMobile && navigator.vibrate) {
+                  navigator.vibrate(50);
+                }
+                navigate("/");
+              }}
+              className="h-8 w-8 p-0 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant="secondary">
+              Invite them
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -370,7 +385,7 @@ const UserConversation = () => {
     <div className="flex flex-col h-full animate-[fade-in_0.2s_ease-out]">
       {/* Chat Header */}
       <div className="p-4 border-b border-border bg-background flex items-center justify-between">
-        <div className="flex items-center space-x-2 md:space-x-3">
+        <div className="flex items-center space-x-0 md:space-x-2">
           <Button
             variant="ghost"
             size="sm"
@@ -380,7 +395,7 @@ const UserConversation = () => {
               }
               navigate("/");
             }}
-            className="h-8 w-8 p-0 mr-2 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
+            className="h-8 w-8 p-0 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
