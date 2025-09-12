@@ -7,6 +7,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import { useUsername } from "@/contexts/UsernameContext";
+import { useXmtp } from "@/contexts/XmtpContext";
 
 const navigationItems = [
   { title: "Messages", url: "/", icon: MessageSquare },
@@ -19,12 +20,12 @@ const navigationItems = [
 export function MobileBottomNav() {
   const location = useLocation();
   const currentPath = location.pathname;
-  const { lastOpenedCount } = useUsername();
+  const { newMessage } = useXmtp();
 
   const isActive = (path: string) => currentPath === path;
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border z-10">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border">
       <div className="flex items-center justify-around py-2 px-2">
         {navigationItems.map((item) => (
           <NavLink
@@ -39,7 +40,7 @@ export function MobileBottomNav() {
           >
             <div className="relative">
               <item.icon className="h-4 w-4" />
-              {item.title === "Messages" && lastOpenedCount > 0 && (
+              {item.title === "Messages" && newMessage && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               )}
             </div>
