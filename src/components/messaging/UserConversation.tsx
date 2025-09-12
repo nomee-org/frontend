@@ -24,6 +24,9 @@ import {
   ArrowLeft,
   Send,
   UserRoundX,
+  RefreshCcw,
+  VolumeOff,
+  VolumeX,
 } from "lucide-react";
 
 // Local component imports
@@ -233,6 +236,12 @@ const UserConversation = () => {
     }
   }, [conversation]);
 
+  const handleSync = async () => {
+    await conversation.sync();
+    await getMessages();
+    toast.success("Synced");
+  };
+
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "user-conversations",
@@ -369,17 +378,15 @@ const UserConversation = () => {
                 onClick={() => setShowMuteDialog(true)}
                 className="hover:bg-accent"
               >
-                {/* {currentParticipant?.isMuted ? (
-                  <>
-                    <Volume2 className="h-4 w-4 mr-2" />
-                    Unmute
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="h-4 w-4 mr-2" />
-                    Mute
-                  </>
-                )} */}
+                <VolumeX className="h-4 w-4 mr-2" />
+                Mute
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleSync}
+                className="hover:bg-accent"
+              >
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Sync
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -505,13 +512,15 @@ const UserConversation = () => {
       )}
 
       {/* Mute Conversation Popup */}
-      {/* <MuteConversationPopup
-        isOpen={showMuteDialog}
-        onClose={() => setShowMuteDialog(false)}
-        isMuted={currentParticipant?.isMuted || false}
-        conversationId={conversation?.id || ""}
-        conversationName={username || "user"}
-      /> */}
+      {conversation && (
+        <MuteConversationPopup
+          conversation={conversation}
+          isOpen={showMuteDialog}
+          onClose={() => setShowMuteDialog(false)}
+          isMuted={false}
+          conversationName={nickname(peerAddress, 8)}
+        />
+      )}
     </div>
   );
 };

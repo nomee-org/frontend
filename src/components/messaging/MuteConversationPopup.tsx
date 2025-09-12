@@ -14,41 +14,40 @@ import { Button } from "@/components/ui/button";
 import { VolumeX, Volume2, Loader } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
-import { useMuteConversation, useUnmuteConversation } from "@/data/use-backend";
+import { useState } from "react";
+import { Conversation } from "@xmtp/browser-sdk";
 
 interface MuteConversationPopupProps {
+  conversation: Conversation;
   isOpen: boolean;
   onClose: () => void;
   isMuted: boolean;
-  conversationId: string;
   onMute?: () => void;
   onUnmute?: () => void;
   conversationName?: string;
 }
 
 export function MuteConversationPopup({
+  conversation,
   isOpen,
   onClose,
   isMuted,
-  conversationId,
   onMute,
   onUnmute,
   conversationName = "conversation",
 }: MuteConversationPopupProps) {
   const isMobile = useIsMobile();
-  const muteConversation = useMuteConversation();
-  const unmuteConversation = useUnmuteConversation();
 
-  const isLoading = muteConversation.isPending || unmuteConversation.isPending;
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAction = async () => {
     try {
       if (isMuted) {
-        await unmuteConversation.mutateAsync(conversationId);
+        // to do
         onUnmute?.();
         toast.success("Conversation unmuted");
       } else {
-        await muteConversation.mutateAsync(conversationId);
+        // to do
         onMute?.();
         toast.success("Conversation muted");
       }
@@ -69,16 +68,15 @@ export function MuteConversationPopup({
             <VolumeX className="h-6 w-6 text-muted-foreground" />
           )}
         </div>
-        
+
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">
             {isMuted ? "Unmute" : "Mute"} {conversationName}?
           </h3>
           <p className="text-sm text-muted-foreground">
-            {isMuted 
+            {isMuted
               ? "You will start receiving notifications from this conversation again."
-              : "You won't receive notifications from this conversation, but you can still see new messages."
-            }
+              : "You won't receive notifications from this conversation, but you can still see new messages."}
           </p>
         </div>
       </div>
@@ -114,9 +112,7 @@ export function MuteConversationPopup({
               {isMuted ? "Unmute" : "Mute"} Conversation
             </DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 pb-6">
-            {content}
-          </div>
+          <div className="px-4 pb-6">{content}</div>
         </DrawerContent>
       </Drawer>
     );
@@ -126,9 +122,7 @@ export function MuteConversationPopup({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {isMuted ? "Unmute" : "Mute"} Conversation
-          </DialogTitle>
+          <DialogTitle>{isMuted ? "Unmute" : "Mute"} Conversation</DialogTitle>
         </DialogHeader>
         {content}
       </DialogContent>

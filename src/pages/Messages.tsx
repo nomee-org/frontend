@@ -15,7 +15,13 @@ import { QueryListLoader } from "@/components/ui/query-loader";
 import { QueryError } from "@/components/ui/query-error";
 
 // Icon imports
-import { Search, MessageSquare, Plus } from "lucide-react";
+import {
+  Search,
+  MessageSquare,
+  Plus,
+  MoreVertical,
+  RefreshCcw,
+} from "lucide-react";
 
 // Local component imports
 import { CreateGroupDialog } from "@/components/messaging/CreateGroupDialog";
@@ -29,6 +35,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { Conversation } from "@xmtp/browser-sdk";
 import { Chat } from "@/components/messaging/Chat";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 const Messages = () => {
   // Navigation and routing states
@@ -88,6 +101,12 @@ const Messages = () => {
     }
   };
 
+  const handleSyncAll = async () => {
+    await client.conversations.syncAll();
+    await getConversations();
+    toast.success("Synced");
+  };
+
   useEffect(() => {
     getConversations();
   }, [client?.inboxId]);
@@ -144,14 +163,40 @@ const Messages = () => {
           <div className="p-4 border-b border-border/50 bg-background/95 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-xl font-bold text-foreground">Chats</h1>
-              <Button
-                size="sm"
-                className="animate-fade-in shadow-sm"
-                onClick={() => setShowCreateGroup(true)}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden xs:inline">New </span>Group
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  className="animate-fade-in shadow-sm"
+                  onClick={() => setShowCreateGroup(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden xs:inline">New </span>Group
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 md:h-8 md:w-8"
+                    >
+                      <MoreVertical className="h-3 w-3 md:h-4 md:w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="bg-background border border-border shadow-lg z-50"
+                  >
+                    <DropdownMenuItem
+                      onClick={() => handleSyncAll}
+                      className="hover:bg-accent"
+                    >
+                      <RefreshCcw className="h-4 w-4 mr-2" />
+                      Sync All
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
             {/* Search */}
