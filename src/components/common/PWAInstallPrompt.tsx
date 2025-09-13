@@ -55,7 +55,7 @@ export const PWAInstallPrompt: React.FC = () => {
       setInstalling(true);
     } else {
       setInstalling(false);
-      console.log("User dismissed the install prompt");
+      toast.error("Installation cancelled.");
     }
 
     setPrompt(null);
