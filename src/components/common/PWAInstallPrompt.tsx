@@ -94,7 +94,7 @@ export const PWAInstallPrompt: React.FC = () => {
 
   if (installed) return null;
   if (!visible) return null;
-  if (!identifier) return null;
+  if (!identifier?.identifier) return null;
 
   if (isMobile) {
     return (
