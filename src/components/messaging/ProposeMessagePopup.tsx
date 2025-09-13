@@ -29,7 +29,7 @@ import { Conversation } from "@xmtp/browser-sdk";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { Name } from "@/types/doma";
 
-interface ListPromptMessagePopupProps {
+interface ProposeMessagePopupProps {
   conversation: Conversation;
   isOpen: boolean;
   onClose: (deep: boolean) => void;
@@ -37,12 +37,12 @@ interface ListPromptMessagePopupProps {
   names: Name[];
 }
 
-const ListPromptMessagePopup = ({
+const ProposeMessagePopup = ({
   conversation,
   isOpen,
   onClose,
   names,
-}: ListPromptMessagePopupProps) => {
+}: ProposeMessagePopupProps) => {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USDC");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -175,7 +175,7 @@ const ListPromptMessagePopup = ({
         </div>
       ) : (
         <div className="px-4 py-10">
-          <p className="text-secondary text-sm text-center">
+          <p className="text-muted text-sm text-center">
             User has no domain name.
           </p>
         </div>
@@ -215,10 +215,10 @@ const ListPromptMessagePopup = ({
         <DrawerContent className="max-h-[80vh] flex flex-col">
           <DrawerHeader className="sticky top-0 bg-background border-b">
             <DrawerTitle className="text-xl font-bold font-grotesk">
-              User has no listings.
+              Propose an offer.
             </DrawerTitle>
             <p className="text-sm text-muted-foreground">
-              Prompt user to listing {domainName}
+              Send a desired offer for {domainName}
             </p>
           </DrawerHeader>
           <div className="p-4 flex flex-col flex-1 overflow-hidden">
@@ -234,10 +234,10 @@ const ListPromptMessagePopup = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold font-grotesk">
-            User has no listings.
+            Propose an offer.
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Prompt user to listing {domainName}
+            Send a desired offer for {domainName}
           </p>
         </DialogHeader>
         <div className="flex flex-col overflow-hidden">{content}</div>
@@ -246,4 +246,4 @@ const ListPromptMessagePopup = ({
   );
 };
 
-export default ListPromptMessagePopup;
+export default ProposeMessagePopup;

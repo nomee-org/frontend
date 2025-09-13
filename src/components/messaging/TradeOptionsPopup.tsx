@@ -1,4 +1,10 @@
-import { ChevronRight, InboxIcon, Coins, Loader } from "lucide-react";
+import {
+  ChevronRight,
+  InboxIcon,
+  Coins,
+  Loader,
+  LetterText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -19,7 +25,8 @@ import { useOwnedNames } from "@/data/use-doma";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
 import { useState } from "react";
-import ListPromptMessagePopup from "../domain/ListPromptMessagePopup";
+import ListPromptMessagePopup from "./ProposeMessagePopup";
+import { NameOptionsPopup } from "./NamesOptionsPopup copy";
 
 interface TradeOptionPopupProps {
   conversation: Conversation;
@@ -41,6 +48,12 @@ const tradeOptions = [
     description: "Create a listing for your domains.",
     icon: <Coins />,
   },
+  {
+    id: "proposal",
+    name: "Proposal ",
+    description: "Propose them your desired offer.",
+    icon: <LetterText />,
+  },
 ];
 
 export function TradeOptionPopup({
@@ -58,13 +71,15 @@ export function TradeOptionPopup({
   const [showPromptListing, setShowPromptListing] = useState(false);
   const [showCreateListing, setShowCreateListing] = useState(false);
 
+  const [showOffer, setShowOffer] = useState(false);
+
   const handleClick = (tradeOption: {
     id: string;
     name: string;
     description: string;
   }) => {
     if (
-      tradeOption.id === "buy" &&
+      (tradeOption.id === "buy" || tradeOption.id === "proposal") &&
       (peerNames.isLoading || peerNames.isFetching)
     ) {
       return toast("Please wait.");
@@ -75,27 +90,9 @@ export function TradeOptionPopup({
       return toast("Please wait.");
     }
 
-    if (tradeOption.id === "buy") {
-      const peerListedNames = peerNames?.data?.pages
-        ?.flatMap((p) => p.items)
-        ?.filter((n) => n.tokens?.[0]?.listings?.length);
-
-      if (peerListedNames.length === 0) {
-        return setShowPromptListing(true);
-      } else {
-        setShowPromptListing(false);
-      }
-    } else {
-      const listedNames = names?.data?.pages
-        ?.flatMap((p) => p.items)
-        ?.filter((n) => n.tokens?.[0]?.listings?.length);
-
-      if (listedNames.length === 0) {
-        return setShowCreateListing(true);
-      } else {
-        setShowCreateListing(false);
-      }
-    }
+    setShowPromptListing(tradeOption.id === "proposal");
+    setShowOffer(tradeOption.id === "buy");
+    setShowCreateListing(tradeOption.id === "sell");
   };
 
   const content = (
@@ -138,7 +135,11 @@ export function TradeOptionPopup({
           ))}
         </div>
       </div>
+    </>
+  );
 
+  if (showPromptListing) {
+    return (
       <ListPromptMessagePopup
         conversation={conversation}
         isOpen={showPromptListing}
@@ -151,15 +152,49 @@ export function TradeOptionPopup({
         peerAddress={peerAddress}
         names={peerNames?.data?.pages?.flatMap((p) => p.items)}
       />
-    </>
-  );
+    );
+  }
+
+  if (showOffer) {
+    return (
+      <NameOptionsPopup
+        conversation={conversation}
+        isOpen={showOffer}
+        handleClick={(name) => {}}
+        onClose={(deep) => {
+          setShowOffer(false);
+          if (deep) {
+            onClose();
+          }
+        }}
+        names={peerNames?.data?.pages?.flatMap((p) => p.items)}
+      />
+    );
+  }
+
+  if (showCreateListing) {
+    return (
+      <NameOptionsPopup
+        conversation={conversation}
+        isOpen={showCreateListing}
+        handleClick={(name) => {}}
+        onClose={(deep) => {
+          setShowCreateListing(false);
+          if (deep) {
+            onClose();
+          }
+        }}
+        names={names?.data?.pages?.flatMap((p) => p.items)}
+      />
+    );
+  }
 
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onClose}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Buy Domain</DrawerTitle>
+            <DrawerTitle>Trade Options</DrawerTitle>
           </DrawerHeader>
           <div className="p-4 pb-safe">{content}</div>
         </DrawerContent>
