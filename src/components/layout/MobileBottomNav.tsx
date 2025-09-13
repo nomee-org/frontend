@@ -32,7 +32,7 @@ export function MobileBottomNav() {
             key={item.title}
             to={item.url}
             end={item.url === "/"}
-            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors min-w-[3rem] ${
+            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors min-w-[4rem] ${
               isActive(item.url)
                 ? "text-primary bg-primary/10"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent"
