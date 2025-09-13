@@ -6,7 +6,6 @@ import {
   Users,
   UserCircle,
 } from "lucide-react";
-import { useUsername } from "@/contexts/UsernameContext";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 

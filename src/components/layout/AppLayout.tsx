@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/common/ThemeToggle";
 import { NotificationPopover } from "@/components/common/NotificationPopover";
@@ -49,8 +48,6 @@ function AppLayoutContent() {
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      // Open sidebar by default on desktop (1024px+)
-      // Collapse by default on tablet and mobile (< 1024px)
       setSidebarDefaultOpen(width >= 1024);
     };
 
@@ -124,12 +121,6 @@ function AppLayoutContent() {
             </div>
           </main>
         </div>
-        {/* Mobile Bottom Navigation - hidden on md+ screens where sidebar is available */}
-        {location.pathname.startsWith("/messages/") ? null : (
-          <div className="md:hidden">
-            <MobileBottomNav />
-          </div>
-        )}
       </div>
     </SidebarProvider>
   );

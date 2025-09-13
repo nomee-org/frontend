@@ -13,32 +13,34 @@ import NotFound from "./pages/NotFound";
 import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
 import Hashtag from "./pages/Hashtag";
-import { useUserConversations } from "./data/use-backend";
-import { useUsername } from "./contexts/UsernameContext";
+import { MobileBottomNav } from "./components/layout/MobileBottomNav";
 
 export const AppRoutes = () => {
-  const { activeUsername } = useUsername();
-
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<AppLayout />}>
-          <Route path="/" element={<Messages />}>
-            <Route path="messages/:dmId" element={<UserConversation />} />
-            <Route path="groups/:id" element={<GroupConversation />} />
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<AppLayout />}>
+            <Route path="/" element={<Messages />}>
+              <Route path="messages/:dmId" element={<UserConversation />} />
+              <Route path="groups/:id" element={<GroupConversation />} />
+            </Route>
+            <Route path="feeds" element={<Community />} />
+            <Route path="discover" element={<DomainSearch />} />
+            <Route path="search" element={<Search />} />
+            <Route path="feeds/:postId" element={<PostDetails />} />
+            <Route path="names/:domainName" element={<DomainDetails />} />
+            <Route path="hashtag/:hashtag" element={<Hashtag />} />
+            <Route path="me" element={<Portfolio />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
-          <Route path="feeds" element={<Community />} />
-          <Route path="discover" element={<DomainSearch />} />
-          <Route path="search" element={<Search />} />
-          <Route path="feeds/:postId" element={<PostDetails />} />
-          <Route path="names/:domainName" element={<DomainDetails />} />
-          <Route path="hashtag/:hashtag" element={<Hashtag />} />
-          <Route path="me" element={<Portfolio />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="notifications" element={<Notifications />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <div className="md:hidden">
+          <MobileBottomNav />
+        </div>
+      </BrowserRouter>
+    </>
   );
 };

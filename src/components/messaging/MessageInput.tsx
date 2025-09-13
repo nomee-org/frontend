@@ -541,7 +541,7 @@ export function MessageInput({
                   e.preventDefault();
                   setShowMemberTagging(false);
                 }
-              } else if (e.key === "Enter" && !e.shiftKey) {
+              } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                 e.preventDefault();
                 handleSendMessage();
               }

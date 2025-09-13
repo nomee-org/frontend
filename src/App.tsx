@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import { ThemeProvider } from "@/components/common/ThemeProvider";
-
 import { wagmiAdapter } from "./configs/reown";
 import { AppRoutes } from "./Routes";
 import { UsernameProvider } from "./contexts/UsernameContext";
@@ -25,6 +24,7 @@ const App = () => {
               <XmtpProvider>
                 <NameResolverProvider>
                   <AppRoutes />
+
                   <PWAInstallPrompt />
                 </NameResolverProvider>
               </XmtpProvider>
