@@ -53,8 +53,8 @@ export const PWAInstallPrompt: React.FC = () => {
     const choice = await prompt.userChoice;
     if (choice.outcome === "accepted") {
       setInstalling(true);
-      toast.success("Installing..");
     } else {
+      setInstalling(false);
       console.log("User dismissed the install prompt");
     }
 
