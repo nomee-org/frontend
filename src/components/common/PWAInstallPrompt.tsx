@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useXmtp } from "@/contexts/XmtpContext";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -27,6 +28,7 @@ export const PWAInstallPrompt: React.FC = () => {
   const [installed, setInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
   const isMobile = useIsMobile();
+  const { identifier } = useXmtp();
 
   useEffect(() => {
     function handleBeforeInstallPrompt(e: Event) {
@@ -99,6 +101,7 @@ export const PWAInstallPrompt: React.FC = () => {
 
   if (installed) return null;
   if (!visible) return null;
+  if (!identifier) return null;
 
   if (isMobile) {
     return (

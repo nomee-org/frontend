@@ -22,17 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DollarSign,
-  TrendingUp,
-  AlertCircle,
-  Send,
-  AtSign,
-} from "lucide-react";
+import { AlertCircle, Send, AtSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Conversation } from "@xmtp/browser-sdk";
-import { useOwnedNames } from "@/data/use-doma";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { Name } from "@/types/doma";
 
