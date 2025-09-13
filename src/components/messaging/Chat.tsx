@@ -9,7 +9,7 @@ import {
 } from "@xmtp/browser-sdk";
 import moment from "moment";
 import { DomainAvatar } from "../domain/DomainAvatar";
-import { Badge, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { ContentTypeRemoteAttachment } from "@xmtp/content-type-remote-attachment";
 import { useXmtp } from "@/contexts/XmtpContext";
@@ -19,9 +19,10 @@ import { useNavigate } from "react-router-dom";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
+import { Badge } from "../ui/badge";
 
 export const Chat = ({ conversation }: { conversation: Conversation }) => {
-  const { client, newMessage } = useXmtp();
+  const { client, newMessages } = useXmtp();
   const { nickname } = useNameResolver();
   const [lastMessage, setLastMessage] = useState<string>("No message yet");
   const [lastMessageAt, setLastMessageAt] = useState<Date | undefined>(
@@ -119,10 +120,12 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
   );
 
   useEffect(() => {
-    if (newMessage && newMessage.conversationId === conversation.id) {
-      handleLastMessage(newMessage);
+    for (const newMessage of newMessages) {
+      if (newMessage.conversationId === conversation.id) {
+        handleLastMessage(newMessage);
+      }
     }
-  }, [newMessage]);
+  }, [newMessages]);
 
   const getPeerAddress = async () => {
     try {
@@ -222,12 +225,26 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
                   "HH:mm"
                 )}
               </span>
-              {newMessage &&
-                !newMessage.contentType.sameAs(ContentTypeReadReceipt) &&
-                newMessage.senderInboxId !== client.inboxId &&
-                newMessage.conversationId === conversation.id && (
-                  <div className="bg-red-500 w-2 h-2 flex items-center justify-center rounded-full"></div>
-                )}
+              <>
+                {(() => {
+                  const count = newMessages.filter(
+                    (m) =>
+                      !m.contentType.sameAs(ContentTypeReadReceipt) &&
+                      m.senderInboxId !== client.inboxId &&
+                      m.conversationId === conversation.id
+                  ).length;
+
+                  return (
+                    <>
+                      {count > 0 && (
+                        <Badge className="bg-red-500 p-2 text-xs h-4 flex items-center justify-center rounded-full">
+                          {count}
+                        </Badge>
+                      )}
+                    </>
+                  );
+                })()}
+              </>
             </div>
           </div>
           <div className="flex items-center space-x-2">

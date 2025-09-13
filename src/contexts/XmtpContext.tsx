@@ -8,7 +8,6 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { toast } from "sonner";
 import { toBytes } from "viem";
 import { useAccount, useSignMessage, useWalletClient } from "wagmi";
 import { Reaction, ReactionCodec } from "@xmtp/content-type-reaction";
@@ -29,8 +28,9 @@ interface XmtpContextType {
   identifier: Identifier | null;
   isLoading: boolean;
   error: Error | null;
-  newMessage: DecodedMessage | undefined;
-  clearNewMessage: () => void;
+  newMessages: DecodedMessage[];
+  clearNewMessages: (conversationId: string) => void;
+  clearAllNewMessages: () => void;
 }
 
 const XmtpContext = createContext<XmtpContextType | undefined>(undefined);
@@ -49,12 +49,16 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     null
   );
   const [identifier, setIdentifier] = useState<Identifier | null>(null);
-  const [newMessage, setNewMessage] = useState<DecodedMessage | undefined>(
-    undefined
-  );
+  const [newMessages, setNewMessages] = useState<DecodedMessage[]>([]);
 
-  const clearNewMessage = () => {
-    setNewMessage(undefined);
+  const clearNewMessages = (conversationId: string) => {
+    setNewMessages((prev) =>
+      prev.filter((p) => p.conversationId !== conversationId)
+    );
+  };
+
+  const clearAllNewMessages = () => {
+    setNewMessages([]);
   };
 
   useEffect(() => {
@@ -64,7 +68,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
       (async () => {
         streamController = await client.conversations.streamAllMessages({
           onValue: (value) => {
-            setNewMessage(value);
+            setNewMessages((prev) => [value, ...prev]);
           },
           onError: (error) => {
             // setConversationsError(error);
@@ -170,8 +174,9 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     identifier,
     isLoading,
     error,
-    newMessage,
-    clearNewMessage,
+    newMessages,
+    clearNewMessages,
+    clearAllNewMessages,
   };
 
   return <XmtpContext.Provider value={value}>{children}</XmtpContext.Provider>;

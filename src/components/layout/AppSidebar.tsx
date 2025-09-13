@@ -39,7 +39,7 @@ const settingsItems = [{ title: "Settings", url: "/settings", icon: Settings }];
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { client, newMessage } = useXmtp();
+  const { client, newMessages } = useXmtp();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -108,9 +108,15 @@ export function AppSidebar() {
                               }`}
                             >
                               <item.icon className="h-5 w-5" />
-                              {item.title === "Messages" && newMessage && (
-                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                              )}
+                              {item.title === "Messages" &&
+                                newMessages.filter(
+                                  (m) =>
+                                    !m.contentType.sameAs(
+                                      ContentTypeReadReceipt
+                                    ) && m.senderInboxId !== client.inboxId
+                                ).length > 0 && (
+                                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                )}
                             </div>
                             {!isCollapsed && (
                               <span className="font-grotesk text-lg">
@@ -124,11 +130,11 @@ export function AppSidebar() {
                         <TooltipContent side="right" className="font-medium">
                           {item.title}
                           {item.title === "Messages" &&
-                            newMessage &&
-                            !newMessage.contentType.sameAs(
-                              ContentTypeReadReceipt
-                            ) &&
-                            newMessage.senderInboxId !== client.inboxId && (
+                            newMessages.filter(
+                              (m) =>
+                                !m.contentType.sameAs(ContentTypeReadReceipt) &&
+                                m.senderInboxId !== client.inboxId
+                            ).length > 0 && (
                               <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
                             )}
                         </TooltipContent>

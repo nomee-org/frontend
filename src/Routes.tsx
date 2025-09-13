@@ -24,7 +24,7 @@ export const AppRoutes = () => {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route path="/" element={<Messages />}>
-            <Route path="messages/:username" element={<UserConversation />} />
+            <Route path="messages/:dmId" element={<UserConversation />} />
             <Route path="groups/:id" element={<GroupConversation />} />
           </Route>
           <Route path="feeds" element={<Community />} />

@@ -74,8 +74,8 @@ import { TradeOptionPopup } from "./TradeOptionsPopup";
 const UserConversation = () => {
   const [params] = useSearchParams();
   const initMessage = params.get("message");
-  const { username: dmId } = useParams<{
-    username: string;
+  const { dmId } = useParams<{
+    dmId: string;
   }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -87,7 +87,7 @@ const UserConversation = () => {
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
   const [peerInboxId, setPeerInboxId] = useState<string | undefined>(undefined);
-  const { identifier, client, newMessage, clearNewMessage } = useXmtp();
+  const { identifier, client, newMessages, clearNewMessages } = useXmtp();
   const { nickname, setNickname } = useNameResolver();
   const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -140,10 +140,11 @@ const UserConversation = () => {
           ]);
 
           dm = await client.conversations.newDm(inboxId);
-          await dm.sync();
         }
 
         setConversation(dm);
+
+        dm.sync();
       } catch (error) {
         return undefined;
       }
@@ -152,17 +153,25 @@ const UserConversation = () => {
   );
 
   useEffect(() => {
-    if (newMessage && newMessage.conversationId === conversation?.id) {
-      if (newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
-        setReceiptMessages((prev) => [newMessage as any, ...prev]);
-      } else if (newMessage.contentType.sameAs(ContentTypeReaction)) {
-        setReactionMessages((prev) => [newMessage as any, ...prev]);
-      } else {
-        setMessages((prev) => [newMessage, ...prev]);
+    const cleanNewMessages = newMessages.filter(
+      (m) => m.conversationId === conversation?.id
+    );
+    if (cleanNewMessages.length === 0) return;
+
+    for (const newMessage of cleanNewMessages) {
+      if (newMessage.conversationId === conversation?.id) {
+        if (newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
+          setReceiptMessages((prev) => [newMessage as any, ...prev]);
+        } else if (newMessage.contentType.sameAs(ContentTypeReaction)) {
+          setReactionMessages((prev) => [newMessage as any, ...prev]);
+        } else {
+          setMessages((prev) => [newMessage, ...prev]);
+        }
       }
-      clearNewMessage();
     }
-  }, [newMessage]);
+
+    clearNewMessages(conversation?.id);
+  }, [dmId, newMessages, conversation]);
 
   const getReceiptMessages = async () => {
     try {

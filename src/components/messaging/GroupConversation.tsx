@@ -72,7 +72,7 @@ const GroupConversation = () => {
   const [showMembers, setShowMembers] = useState(false);
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
-  const { client, newMessage, clearNewMessage } = useXmtp();
+  const { client, newMessages, clearNewMessages } = useXmtp();
 
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
@@ -98,17 +98,25 @@ const GroupConversation = () => {
   } = useGetConversationMembers(conversation, 50);
 
   useEffect(() => {
-    if (newMessage && newMessage.conversationId === conversation?.id) {
-      if (newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
-        // ignore
-      } else if (newMessage.contentType.sameAs(ContentTypeReaction)) {
-        setReactionMessages((prev) => [newMessage as any, ...prev]);
-      } else {
-        setMessages((prev) => [newMessage, ...prev]);
+    const cleanNewMessages = newMessages.filter(
+      (m) => m.conversationId === conversation?.id
+    );
+    if (cleanNewMessages.length === 0) return;
+
+    for (const newMessage of cleanNewMessages) {
+      if (newMessage.conversationId === conversation?.id) {
+        if (newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
+          // ignore
+        } else if (newMessage.contentType.sameAs(ContentTypeReaction)) {
+          setReactionMessages((prev) => [newMessage as any, ...prev]);
+        } else {
+          setMessages((prev) => [newMessage, ...prev]);
+        }
       }
-      clearNewMessage();
     }
-  }, [newMessage]);
+
+    clearNewMessages(conversation?.id);
+  }, [id, newMessages, conversation]);
 
   const getReactionMessages = async () => {
     try {
