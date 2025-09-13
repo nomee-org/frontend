@@ -6,8 +6,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -19,6 +26,7 @@ export const PWAInstallPrompt: React.FC = () => {
   const [visible, setVisible] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     function handleBeforeInstallPrompt(e: Event) {
@@ -62,8 +70,55 @@ export const PWAInstallPrompt: React.FC = () => {
     setVisible(false);
   };
 
+  const content = (
+    <div className="flex space-x-3 sticky bottom-0 bg-background pt-4 border-t">
+      <Button
+        variant="outline"
+        onClick={() => setVisible(false)}
+        className="flex-1"
+        disabled={installing}
+      >
+        Cancel
+      </Button>
+      <Button
+        onClick={handleInstallClick}
+        disabled={installing}
+        className="flex-1"
+      >
+        {installing ? (
+          "Installing..."
+        ) : (
+          <>
+            <Download className="h-4 w-4 mr-2" />
+            Install
+          </>
+        )}
+      </Button>
+    </div>
+  );
+
   if (installed) return null;
   if (!visible) return null;
+
+  if (isMobile) {
+    return (
+      <Drawer open={visible} onOpenChange={() => setVisible(false)}>
+        <DrawerContent className="max-h-[80vh] flex flex-col">
+          <DrawerHeader className="sticky top-0 bg-background border-b">
+            <DrawerTitle className="text-xl font-bold font-grotesk">
+              Install this app?
+            </DrawerTitle>
+            <p className="text-sm text-muted-foreground">
+              Enjoy using Nomee as a Stanlone App.
+            </p>
+          </DrawerHeader>
+          <div className="p-4 flex flex-col flex-1 overflow-hidden">
+            {content}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
     <Dialog open={visible} onOpenChange={() => setVisible(false)}>
@@ -76,32 +131,7 @@ export const PWAInstallPrompt: React.FC = () => {
             Enjoy using Nomee as a Stanlone App.
           </p>
         </DialogHeader>
-        <div className="flex flex-col overflow-hidden">
-          <div className="flex space-x-3 sticky bottom-0 bg-background pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => setVisible(false)}
-              className="flex-1"
-              disabled={installing}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleInstallClick}
-              disabled={installing}
-              className="flex-1"
-            >
-              {installing ? (
-                "Installing..."
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Install
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
+        <div className="flex flex-col overflow-hidden">{content}</div>
       </DialogContent>
     </Dialog>
   );

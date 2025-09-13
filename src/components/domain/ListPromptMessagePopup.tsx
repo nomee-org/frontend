@@ -222,10 +222,10 @@ const ListPromptMessagePopup = ({
         <DrawerContent className="max-h-[80vh] flex flex-col">
           <DrawerHeader className="sticky top-0 bg-background border-b">
             <DrawerTitle className="text-xl font-bold font-grotesk">
-              Buy Offer Message
+              User has no listings.
             </DrawerTitle>
             <p className="text-sm text-muted-foreground">
-              Send a by offer for {domainName}
+              Prompt user to listing {domainName}
             </p>
           </DrawerHeader>
           <div className="p-4 flex flex-col flex-1 overflow-hidden">
