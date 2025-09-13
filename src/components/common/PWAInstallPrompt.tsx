@@ -80,21 +80,14 @@ export const PWAInstallPrompt: React.FC = () => {
         className="flex-1"
         disabled={installing}
       >
-        Cancel
+        Later
       </Button>
       <Button
         onClick={handleInstallClick}
         disabled={installing}
         className="flex-1"
       >
-        {installing ? (
-          "Installing..."
-        ) : (
-          <>
-            <Download className="h-4 w-4 mr-2" />
-            Install
-          </>
-        )}
+        {installing ? "Installing..." : "Continue"}
       </Button>
     </div>
   );
