@@ -41,6 +41,7 @@ import { useNameResolver } from "@/contexts/NicknameContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { isNomeeAction } from "./actions/utils";
 import { NomeeAction } from "./actions/NomeeAction";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const emojis = [
   { emoji: "❤️", icon: Heart, name: "heart" },
@@ -96,6 +97,7 @@ export function MessageBubble({
   const currentX = useRef(0);
   const longPressTimer = useRef<NodeJS.Timeout>();
   const { nickname } = useNameResolver();
+  const isMobile = useIsMobile();
 
   const handleLongPress = () => {
     setIsLongPressed(true);
@@ -346,7 +348,11 @@ export function MessageBubble({
 
   return (
     <div
-      className={cn("mb-1", isOwn ? "ml-12" : "mr-12", "!select-none")}
+      className={cn(
+        "mb-1",
+        isOwn ? "ml-12" : "mr-12",
+        isMobile ? "!select-none" : ""
+      )}
       data-message-id={message.id}
     >
       <div
