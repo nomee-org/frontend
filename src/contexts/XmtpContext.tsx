@@ -125,6 +125,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
         });
 
         setClient(xmtpClient);
+        xmtpClient.conversations.syncAll();
       } else {
         const xmtpClient = await Client.create(signer, {
           env: "dev",
@@ -139,6 +140,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
           ],
         });
         setClient(xmtpClient);
+        xmtpClient.conversations.syncAll();
       }
 
       setIdentifier(xmtpIdentifier);

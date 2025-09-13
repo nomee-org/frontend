@@ -109,7 +109,7 @@ const Messages = () => {
     };
   }, [identifier, client]);
 
-  const getConversations = async () => {
+  const getConversations = useCallback(async () => {
     setConversationsLoading(true);
 
     try {
@@ -125,13 +125,13 @@ const Messages = () => {
     } finally {
       setConversationsLoading(false);
     }
-  };
+  }, [client]);
 
-  const handleSyncAll = async () => {
+  const handleSyncAll = useCallback(async () => {
     await client.conversations.syncAll();
     setConversations(await client.conversations.list());
     toast.success("Synced");
-  };
+  }, [client]);
 
   useEffect(() => {
     if (identifier && client) {
@@ -170,7 +170,7 @@ const Messages = () => {
         description="Access your direct messages and group chats. Stay connected with your community through secure XMTP messaging."
         keywords="messages, direct messages, group chat, XMTP, secure messaging, web3 chat"
       />
-      <div className="max-w-[1400px] mx-auto px-0 !py-0 md:p-content h-[calc(100vh-50px)] md:h-[calc(100vh-80px)] flex">
+      <div className="max-w-[1400px] mx-auto px-0 !py-0 md:p-content h-[calc(100vh-50px)] md:h-[calc(100vh-80px)] overflow-hidden flex">
         {/* Conversations Sidebar */}
         <div
           className={`${
@@ -179,7 +179,7 @@ const Messages = () => {
               : "flex-1 md:w-96"
           } border-r-0 md:border-r border-border flex flex-col bg-background transition-all duration-200 ease-in-out ${
             (isConversationSelected || isClosingConversation) && isMobile
-              ? ""
+              ? "animate-[slide-in-left_0.2s_ease-out]"
               : ""
           } ${
             isClosingConversation && isMobile
@@ -216,7 +216,7 @@ const Messages = () => {
                     className="bg-background border border-border shadow-lg z-50"
                   >
                     <DropdownMenuItem
-                      onClick={() => handleSyncAll}
+                      onClick={() => handleSyncAll()}
                       className="hover:bg-accent"
                     >
                       <RefreshCcw className="h-4 w-4 mr-2" />
@@ -277,7 +277,7 @@ const Messages = () => {
             className={`flex-1 flex flex-col md:flex-1 md:flex-col ${
               isMobile
                 ? isClosingConversation
-                  ? "animate-[slide-out-left_0.2s_ease-in-out]"
+                  ? "animate-[slide-out-right_0.2s_ease-in-out]"
                   : "animate-[slide-in-left_0.2s_ease-out]"
                 : "animate-fade-in"
             }`}

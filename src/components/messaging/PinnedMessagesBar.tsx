@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import "swiper/css";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { formatUnits } from "viem";
+import { ContentTypeText } from "@xmtp/content-type-text";
 
 interface PinnedMessagesBarProps {
   conversation: Conversation;
@@ -151,8 +152,8 @@ export function PinnedMessagesBar({
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                      {message.content
-                        ? truncateContent(message.content as any)
+                      {message.contentType.sameAs(ContentTypeText)
+                        ? truncateContent(String(message.content))
                         : "Media message"}
                     </p>
                   </div>

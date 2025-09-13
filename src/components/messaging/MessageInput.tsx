@@ -35,7 +35,7 @@ import { ContentTypeText } from "@xmtp/content-type-text";
 
 interface MessageInputProps {
   placeHolder?: string;
-  conversation: Conversation;
+  conversation?: Conversation;
   replyTo?: DecodedMessage;
   onCancelReply?: () => void;
   onSendSuccess?: () => void;
@@ -248,7 +248,7 @@ export function MessageInput({
           contentLength: attachment.data.byteLength,
         };
 
-        await conversation.sendOptimistic(
+        await conversation?.sendOptimistic(
           remoteAttachment,
           ContentTypeRemoteAttachment
         );
@@ -260,9 +260,9 @@ export function MessageInput({
           contentType: ContentTypeReply,
         };
 
-        await conversation.sendOptimistic(reply, ContentTypeReply);
+        await conversation?.sendOptimistic(reply, ContentTypeReply);
       } else {
-        await conversation.sendOptimistic(message, ContentTypeText);
+        await conversation?.sendOptimistic(message, ContentTypeText);
       }
 
       setMessage("");
@@ -271,7 +271,7 @@ export function MessageInput({
       onSendSuccess?.();
       onCancelReply?.();
 
-      conversation.publishMessages();
+      conversation?.publishMessages();
     } catch (error) {
       console.log(error);
     } finally {
@@ -321,7 +321,7 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      await conversation.sendOptimistic(
+      await conversation?.sendOptimistic(
         remoteAttachment,
         ContentTypeRemoteAttachment
       );
@@ -329,7 +329,7 @@ export function MessageInput({
       onSendSuccess?.();
       onCancelReply?.();
 
-      conversation.publishMessages();
+      conversation?.publishMessages();
     } catch (error) {
       // toast.error("Failed to send voice message");
     }
@@ -367,7 +367,7 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      await conversation.sendOptimistic(
+      await conversation?.sendOptimistic(
         remoteAttachment,
         ContentTypeRemoteAttachment
       );
@@ -375,7 +375,7 @@ export function MessageInput({
       onSendSuccess?.();
       onCancelReply?.();
 
-      conversation.publishMessages();
+      conversation?.publishMessages();
     } catch (error) {
       // toast.error("Failed to send sticker");
     }
@@ -392,7 +392,7 @@ export function MessageInput({
   };
 
   return (
-    <div className="p-3 border-t border-border bg-background">
+    <div className="p-3 border-t border-border bg-background sticky bottom-0 z-10">
       {/* Reply/Edit Header */}
       {replyTo && (
         <div className="mb-3 p-3 bg-muted/50 rounded-lg border-l-4 border-l-primary">
