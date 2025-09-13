@@ -120,11 +120,12 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
   );
 
   useEffect(() => {
-    for (const newMessage of newMessages) {
-      if (newMessage.conversationId === conversation.id) {
-        handleLastMessage(newMessage);
-      }
-    }
+    const newMessage = newMessages.find(
+      (m) => m.conversationId === conversation.id
+    );
+    if (!newMessage) return;
+
+    handleLastMessage(newMessage);
   }, [newMessages]);
 
   const getPeerAddress = async () => {
@@ -157,11 +158,8 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
         limit: 1n,
         direction: SortDirection.Descending,
       });
-      if (messages?.length) {
-        const latestMessage = Array.from(messages).reverse();
-        if (latestMessage && latestMessage.length) {
-          handleLastMessage(latestMessage[0]);
-        }
+      if ((messages?.length ?? 0) > 0) {
+        handleLastMessage(messages[0]);
       }
     } catch (error) {
       console.log(error);
