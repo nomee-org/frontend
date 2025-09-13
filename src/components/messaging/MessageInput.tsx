@@ -233,7 +233,7 @@ export function MessageInput({
           new AttachmentCodec()
         );
 
-        const url = await backendService.uploadFile(
+        const url = await backendService().uploadFile(
           selectedMedia[0].originalFile
         );
 
@@ -308,7 +308,7 @@ export function MessageInput({
         new AttachmentCodec()
       );
 
-      const url = await backendService.uploadFile(audioFile);
+      const url = await backendService().uploadFile(audioFile);
 
       const remoteAttachment = {
         url,
