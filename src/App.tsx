@@ -10,6 +10,7 @@ import { AppRoutes } from "./Routes";
 import { UsernameProvider } from "./contexts/UsernameContext";
 import { XmtpProvider } from "./contexts/XmtpContext";
 import { NameResolverProvider } from "./contexts/NicknameContext";
+import { PWAInstallPrompt } from "./components/common/PWAInstallPrompt";
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -24,6 +25,7 @@ const App = () => {
               <XmtpProvider>
                 <NameResolverProvider>
                   <AppRoutes />
+                  <PWAInstallPrompt />
                 </NameResolverProvider>
               </XmtpProvider>
             </UsernameProvider>

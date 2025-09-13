@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -68,15 +67,16 @@ const ListPromptMessagePopup = ({
     { value: "WETH", label: "WETH" },
   ];
 
-  const formatListPromptMessage = () => {
-    return `prompt_listing::${JSON.stringify({
-      domainName,
-      amount,
-      currency,
-    })}`;
-  };
-
   const handleSubmitBid = async () => {
+    if (!domainName) {
+      toast({
+        title: "Error",
+        description: "Please select a domain",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!amount) {
       toast({
         title: "Error",
@@ -89,26 +89,26 @@ const ListPromptMessagePopup = ({
     setIsSubmitting(true);
 
     try {
-      const richMessage = formatListPromptMessage();
-
-      await conversation.sendOptimistic(richMessage, ContentTypeText);
+      await conversation.sendOptimistic(
+        `prompt_listing::${JSON.stringify({
+          domainName,
+          amount,
+          currency,
+        })}`,
+        ContentTypeText
+      );
 
       toast({
         title: "Success",
         description: "Bid message sent successfully!",
       });
 
-      // Reset form
       setAmount("");
       onClose(true);
 
       conversation.publishMessages();
     } catch (error) {
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to send bid message. Please try again.",
-      //   variant: "destructive",
-      // });
+      console.log(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,69 +116,77 @@ const ListPromptMessagePopup = ({
 
   const content = (
     <>
-      <div className="space-y-6 flex-1 overflow-y-auto">
-        {/* Domain Info */}
-        <div className="space-y-2">
-          <Label>Select a domain *</Label>
-          <Select value={domainName} onValueChange={setDomainName}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {names?.map((name) => {
-                return (
-                  <SelectItem value={name.name}>
-                    <div className="flex items-center space-x-2">
-                      <AtSign className="h-4 w-4" />
-                      <span>{name.name}</span>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Bid Amount */}
-        <div className="space-y-2">
-          <Label>Amount *</Label>
-          <div className="flex space-x-2">
-            <Input
-              type="number"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="flex-1"
-              step="0.001"
-              min="0"
-            />
-            <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger className="w-24">
+      {names.length > 0 ? (
+        <div className="space-y-6 flex-1 overflow-y-auto">
+          {/* Domain Info */}
+          <div className="space-y-2">
+            <Label>Select a domain *</Label>
+            <Select value={domainName} onValueChange={setDomainName}>
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {currencies.map((currency) => (
-                  <SelectItem key={currency.value} value={currency.value}>
-                    {currency.label}
-                  </SelectItem>
-                ))}
+                {names?.map((name) => {
+                  return (
+                    <SelectItem value={name.name}>
+                      <div className="flex items-center space-x-2">
+                        <AtSign className="h-4 w-4" />
+                        <span>{name.name}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        {/* Warning */}
-        <div className="flex items-start space-x-2 p-3 bg-muted/50 border rounded-lg">
-          <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-muted-foreground">
-            <p className="font-medium">Important</p>
-            <p>
-              This buy message will be sent to the domain owner. Make sure your
-              offer is genuine and you have the funds available.
-            </p>
+          {/* Bid Amount */}
+          <div className="space-y-2">
+            <Label>Amount *</Label>
+            <div className="flex space-x-2">
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="flex-1"
+                step="0.001"
+                min="0"
+              />
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((currency) => (
+                    <SelectItem key={currency.value} value={currency.value}>
+                      {currency.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Warning */}
+          <div className="flex items-start space-x-2 p-3 bg-muted/50 border rounded-lg">
+            <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-muted-foreground">
+              <p className="font-medium">Important</p>
+              <p>
+                This buy message will be sent to the domain owner. Make sure
+                your offer is genuine and you have the funds available.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="px-4 py-10">
+          <p className="text-secondary text-sm text-center">
+            User has no domain name.
+          </p>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex space-x-3 sticky bottom-0 bg-background pt-4 border-t">
