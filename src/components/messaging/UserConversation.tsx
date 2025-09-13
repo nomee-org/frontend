@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // React imports
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 // Third-party imports
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
@@ -73,9 +73,7 @@ import { TradeOptionPopup } from "./TradeOptionsPopup";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
-
   const initMessage = params.get("message");
-
   const { username: dmId } = useParams<{
     username: string;
   }>();
@@ -88,13 +86,12 @@ const UserConversation = () => {
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
-
+  const [peerInboxId, setPeerInboxId] = useState<string | undefined>(undefined);
   const { identifier, client, newMessage, clearNewMessage } = useXmtp();
   const { nickname, setNickname } = useNameResolver();
   const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
-
   const [conversation, setConversation] = useState<Conversation | undefined>(
     undefined
   );
@@ -117,47 +114,42 @@ const UserConversation = () => {
     isEnabled,
   } = useName(dmId);
 
-  const getOrCreateConversation = async (
-    inboxId: string,
-    address?: string
-  ): Promise<Dm | undefined> => {
-    try {
-      let dm: Dm | undefined = undefined;
-
-      if (inboxId) {
+  const getOrCreateConversation = useCallback(
+    async (inboxId: string) => {
+      try {
+        let dm: Dm | undefined = undefined;
         dm = await client.conversations.getDmByInboxId(inboxId);
-      }
-
-      if (!dm) {
-        const consentState = await client.preferences.getConsentState(
-          ConsentEntityType.InboxId,
-          inboxId
-        );
-
-        if (consentState === ConsentState.Denied) {
-          toast.error(
-            `Recipient has denied messages from you. Please request permission.`
+        if (!dm) {
+          const consentState = await client.preferences.getConsentState(
+            ConsentEntityType.InboxId,
+            inboxId
           );
-          return undefined;
+
+          if (consentState === ConsentState.Denied) {
+            return toast.error(
+              `Recipient has denied messages from you. Please request permission.`
+            );
+          }
+
+          await client.preferences.setConsentStates([
+            {
+              entityType: ConsentEntityType.InboxId,
+              entity: inboxId,
+              state: ConsentState.Allowed,
+            },
+          ]);
+
+          dm = await client.conversations.newDm(inboxId);
+          await dm.sync();
         }
 
-        await client.preferences.setConsentStates([
-          {
-            entityType: ConsentEntityType.InboxId,
-            entity: inboxId,
-            state: ConsentState.Allowed,
-          },
-        ]);
-
-        dm = await client.conversations.newDm(inboxId);
-        await dm.sync();
+        setConversation(dm);
+      } catch (error) {
+        return undefined;
       }
-
-      return dm;
-    } catch (error) {
-      return undefined;
-    }
-  };
+    },
+    [client]
+  );
 
   useEffect(() => {
     if (newMessage && newMessage.conversationId === conversation?.id) {
@@ -226,6 +218,10 @@ const UserConversation = () => {
     }
   }, [conversation]);
 
+  useEffect(() => {
+    getOrCreateConversation(peerInboxId);
+  }, [peerInboxId, getOrCreateConversation]);
+
   const init = async () => {
     try {
       setMessages([]);
@@ -236,34 +232,26 @@ const UserConversation = () => {
 
       if (dmId?.toLowerCase() === "you") {
         setPeerAddress(myAddress);
-        setConversation(
-          await getOrCreateConversation(client?.inboxId, myAddress)
-        );
+        setPeerInboxId(client?.inboxId);
       } else if (nameData?.claimedBy && dmId.includes(".")) {
         const address = parseCAIP10(nameData.claimedBy).address;
 
         setPeerAddress(address);
         setNickname(address, nameData.name);
 
-        setConversation(
-          await getOrCreateConversation(
-            await client.findInboxIdByIdentifier({
-              identifier: address,
-              identifierKind: "Ethereum",
-            }),
-            peerAddress
-          )
+        setPeerInboxId(
+          await client.findInboxIdByIdentifier({
+            identifier: address,
+            identifierKind: "Ethereum",
+          })
         );
       } else if (dmId.startsWith("0x")) {
         setPeerAddress(dmId);
-        setConversation(
-          await getOrCreateConversation(
-            await client.findInboxIdByIdentifier({
-              identifier: dmId,
-              identifierKind: "Ethereum",
-            }),
-            dmId
-          )
+        setPeerInboxId(
+          await client.findInboxIdByIdentifier({
+            identifier: dmId,
+            identifierKind: "Ethereum",
+          })
         );
       } else {
         setPeerAddress(undefined);
@@ -428,7 +416,7 @@ const UserConversation = () => {
                   Mute
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => handleSync}
+                  onClick={() => handleSync()}
                   className="hover:bg-accent"
                 >
                   <RefreshCcw className="h-4 w-4 mr-2" />
@@ -496,12 +484,16 @@ const UserConversation = () => {
               className="flex-1 p-2 md:p-3 lg:p-4 overflow-y-auto overflow-x-hidden h-full"
             >
               {messagesLoading ? (
-                <div className="flex justify-center py-6 md:py-8">
-                  <Loader className="h-4 w-4 md:h-6 md:w-6 animate-spin" />
+                <div className="text-center text-muted-foreground h-full flex items-center justify-center">
+                  <div className="flex justify-center py-6 md:py-8">
+                    <Loader className="h-4 w-4 md:h-6 md:w-6 animate-spin" />
+                  </div>
                 </div>
               ) : messagesError ? (
-                <div className="text-center text-red-500 text-xs md:text-sm">
-                  Failed to load messages
+                <div className="text-center text-muted-foreground h-full flex items-center justify-center">
+                  <div className="text-center text-red-500 text-xs md:text-sm">
+                    Failed to load messages
+                  </div>
                 </div>
               ) : messages?.length === 0 ? (
                 <div className="text-center text-muted-foreground h-full flex items-center justify-center">

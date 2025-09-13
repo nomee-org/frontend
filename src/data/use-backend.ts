@@ -1420,19 +1420,6 @@ export function useUserConversations(
   });
 }
 
-export function useGetConversation(
-  client: Client,
-  conversationId: string,
-  options?: UseQueryOptions<Conversation, Error>,
-  activeUsername?: string
-) {
-  return useQuery<Conversation, Error>({
-    queryKey: queryKeys.conversations.byId(conversationId, activeUsername),
-    queryFn: () => client.conversations.getConversationById(conversationId),
-    ...options,
-  });
-}
-
 export function useCreateGroupConversation(client: Client) {
   const queryClient = useQueryClient();
 
