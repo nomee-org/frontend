@@ -36,8 +36,13 @@ import { useWalletClient } from "wagmi";
 import { useHelper } from "@/hooks/use-helper";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrderbook } from "@/hooks/use-orderbook";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { ContentTypeText } from "@xmtp/content-type-text";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 
 interface ListDomainPopupProps {
+  conversation?: Conversation;
+  replyTo?: DecodedMessage;
   isOpen: boolean;
   onClose: () => void;
   token: Token;
@@ -45,6 +50,8 @@ interface ListDomainPopupProps {
 }
 
 export function ListDomainPopup({
+  conversation,
+  replyTo,
   isOpen,
   onClose,
   token,
@@ -143,7 +150,7 @@ export function ListDomainPopup({
         marketplaceFees: fees,
       };
 
-      const a = await createListing({
+      const createdListing = await createListing({
         params,
         chainId: token.chain.networkId,
         onProgress: (progress) => {
@@ -156,7 +163,32 @@ export function ListDomainPopup({
         signer: viemToEthersSigner(walletClient, token.chain.networkId),
       });
 
-      console.log(a);
+      if (conversation) {
+        const richMessage = `created_listing::${JSON.stringify({
+          domainName,
+          orderId: createdListing.orders?.[0]?.orderId,
+          contract: token.tokenAddress,
+          tokenId: token.tokenId,
+          price: listingPrice,
+          currency: selectedCurrency.symbol,
+          expiresMs: Date.now() + durationMs,
+        })}`;
+
+        if (replyTo) {
+          await conversation.sendOptimistic(
+            {
+              content: richMessage,
+              reference: replyTo.id,
+              contentType: ContentTypeText,
+            } as Reply,
+            ContentTypeReply
+          );
+        } else {
+          await conversation.sendOptimistic(richMessage, ContentTypeText);
+        }
+
+        conversation.publishMessages();
+      }
 
       onClose();
     } catch (error) {

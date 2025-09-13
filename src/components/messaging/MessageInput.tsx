@@ -244,25 +244,40 @@ export function MessageInput({
           nonce: encryptedEncoded.nonce,
           secret: encryptedEncoded.secret,
           scheme: "https://",
-          filename: `${attachment.filename} - ${attachment.mimeType}`,
+          filename: `${message} - ${attachment.mimeType}`,
           contentLength: attachment.data.byteLength,
         };
 
-        await conversation?.sendOptimistic(
-          remoteAttachment,
-          ContentTypeRemoteAttachment
-        );
-      } else if (replyTo) {
-        const reply: Reply = {
-          content: message,
-          reference: replyTo.id,
-          referenceInboxId: replyTo.senderInboxId,
-          contentType: ContentTypeReply,
-        };
-
-        await conversation?.sendOptimistic(reply, ContentTypeReply);
+        if (replyTo) {
+          await conversation?.sendOptimistic(
+            {
+              content: remoteAttachment,
+              reference: replyTo.id,
+              referenceInboxId: replyTo.senderInboxId,
+              contentType: ContentTypeRemoteAttachment,
+            } as Reply,
+            ContentTypeReply
+          );
+        } else {
+          await conversation?.sendOptimistic(
+            remoteAttachment,
+            ContentTypeRemoteAttachment
+          );
+        }
       } else {
-        await conversation?.sendOptimistic(message, ContentTypeText);
+        if (replyTo) {
+          await conversation?.sendOptimistic(
+            {
+              content: message,
+              reference: replyTo.id,
+              referenceInboxId: replyTo.senderInboxId,
+              contentType: ContentTypeText,
+            } as Reply,
+            ContentTypeReply
+          );
+        } else {
+          await conversation?.sendOptimistic(message, ContentTypeText);
+        }
       }
 
       setMessage("");
@@ -321,10 +336,22 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      await conversation?.sendOptimistic(
-        remoteAttachment,
-        ContentTypeRemoteAttachment
-      );
+      if (replyTo) {
+        await conversation?.sendOptimistic(
+          {
+            content: remoteAttachment,
+            reference: replyTo.id,
+            referenceInboxId: replyTo.senderInboxId,
+            contentType: ContentTypeRemoteAttachment,
+          } as Reply,
+          ContentTypeReply
+        );
+      } else {
+        await conversation?.sendOptimistic(
+          remoteAttachment,
+          ContentTypeRemoteAttachment
+        );
+      }
 
       onSendSuccess?.();
       onCancelReply?.();
@@ -367,10 +394,22 @@ export function MessageInput({
         contentLength: attachment.data.byteLength,
       };
 
-      await conversation?.sendOptimistic(
-        remoteAttachment,
-        ContentTypeRemoteAttachment
-      );
+      if (replyTo) {
+        await conversation?.sendOptimistic(
+          {
+            content: remoteAttachment,
+            reference: replyTo.id,
+            referenceInboxId: replyTo.senderInboxId,
+            contentType: ContentTypeRemoteAttachment,
+          } as Reply,
+          ContentTypeReply
+        );
+      } else {
+        await conversation?.sendOptimistic(
+          remoteAttachment,
+          ContentTypeRemoteAttachment
+        );
+      }
 
       onSendSuccess?.();
       onCancelReply?.();

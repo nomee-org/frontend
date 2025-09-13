@@ -20,16 +20,23 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Conversation } from "@xmtp/browser-sdk";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { useOwnedNames } from "@/data/use-doma";
 import { useAccount } from "wagmi";
 import { toast } from "sonner";
 import { useState } from "react";
-import ListPromptMessagePopup from "./ProposeMessagePopup";
-import { NameOptionsPopup } from "./NamesOptionsPopup copy";
+import ListProposeMessagePopup from "./ProposeMessagePopup";
+import { NameOptionsPopup } from "./NamesOptionsPopup";
+import { OfferPopup } from "../domain/OfferPopup";
+import { Name } from "@/types/doma";
+import { ContentTypeText } from "@xmtp/content-type-text";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
+import { ListDomainPopup } from "../domain/ListDomainPopup";
+import { formatUnits, parseUnits } from "viem";
 
 interface TradeOptionPopupProps {
   conversation: Conversation;
+  replyTo?: DecodedMessage;
   isOpen: boolean;
   onClose: () => void;
   peerAddress: string;
@@ -58,6 +65,7 @@ const tradeOptions = [
 
 export function TradeOptionPopup({
   conversation,
+  replyTo,
   isOpen,
   onClose,
   peerAddress,
@@ -68,10 +76,17 @@ export function TradeOptionPopup({
   const peerNames = useOwnedNames(peerAddress, 20, []);
   const names = useOwnedNames(address, 20, []);
 
-  const [showPromptListing, setShowPromptListing] = useState(false);
-  const [showCreateListing, setShowCreateListing] = useState(false);
+  // layer 1
+  const [showPropose, setShowPropose] = useState(false);
+  const [showSell, setShowSell] = useState(false);
+  const [showBuy, setBuyOffer] = useState(false);
 
-  const [showOffer, setShowOffer] = useState(false);
+  // layer 2
+  const [showOfferListing, setShowOfferListing] = useState(false);
+  const [showListing, setShowListing] = useState(false);
+
+  // layer 0
+  const [selectedName, setSelectedName] = useState<Name | undefined>(undefined);
 
   const handleClick = (tradeOption: {
     id: string;
@@ -90,9 +105,9 @@ export function TradeOptionPopup({
       return toast("Please wait.");
     }
 
-    setShowPromptListing(tradeOption.id === "proposal");
-    setShowOffer(tradeOption.id === "buy");
-    setShowCreateListing(tradeOption.id === "sell");
+    setShowPropose(tradeOption.id === "proposal");
+    setBuyOffer(tradeOption.id === "buy");
+    setShowSell(tradeOption.id === "sell");
   };
 
   const content = (
@@ -120,7 +135,8 @@ export function TradeOptionPopup({
                   </div>
                 </div>
                 <>
-                  {tradeOption.id === "buy" &&
+                  {(tradeOption.id === "buy" ||
+                    tradeOption.id === "purchase") &&
                   (peerNames.isLoading || peerNames.isFetching) ? (
                     <Loader className="animate-spin" />
                   ) : tradeOption.id === "sell" &&
@@ -138,13 +154,46 @@ export function TradeOptionPopup({
     </>
   );
 
-  if (showPromptListing) {
+  // layer 2
+  if (showOfferListing && selectedName && selectedName?.tokens?.length > 0) {
     return (
-      <ListPromptMessagePopup
+      <OfferPopup
         conversation={conversation}
-        isOpen={showPromptListing}
+        replyTo={replyTo}
+        isOpen={showOfferListing}
+        onClose={() => {
+          setShowOfferListing(false);
+        }}
+        token={selectedName?.tokens[0]}
+        domainName={selectedName.name}
+      />
+    );
+  }
+
+  if (showListing && selectedName && selectedName?.tokens?.length > 0) {
+    return (
+      <ListDomainPopup
+        conversation={conversation}
+        replyTo={replyTo}
+        isOpen={showListing}
+        onClose={() => {
+          setShowListing(false);
+        }}
+        token={selectedName?.tokens[0]}
+        domainName={selectedName.name}
+      />
+    );
+  }
+
+  // layer 1
+
+  if (showPropose) {
+    return (
+      <ListProposeMessagePopup
+        conversation={conversation}
+        isOpen={showPropose}
         onClose={(deep) => {
-          setShowPromptListing(false);
+          setShowPropose(false);
           if (deep) {
             onClose();
           }
@@ -155,14 +204,21 @@ export function TradeOptionPopup({
     );
   }
 
-  if (showOffer) {
+  if (showBuy) {
     return (
       <NameOptionsPopup
         conversation={conversation}
-        isOpen={showOffer}
-        handleClick={(name) => {}}
+        isOpen={showBuy}
+        handleClick={(name) => {
+          if (name?.tokens?.[0]?.listings?.length > 0) {
+            setSelectedName(name);
+            setShowOfferListing(true);
+          } else {
+            toast.error(`${name.name} has no listing.`);
+          }
+        }}
         onClose={(deep) => {
-          setShowOffer(false);
+          setBuyOffer(false);
           if (deep) {
             onClose();
           }
@@ -172,14 +228,55 @@ export function TradeOptionPopup({
     );
   }
 
-  if (showCreateListing) {
+  if (showSell) {
     return (
       <NameOptionsPopup
         conversation={conversation}
-        isOpen={showCreateListing}
-        handleClick={(name) => {}}
+        isOpen={showSell}
+        handleClick={async (name) => {
+          const token = name?.tokens?.[0];
+          const listing = token?.listings?.[0];
+
+          if (listing) {
+            if (conversation) {
+              const richMessage = `created_listing::${JSON.stringify({
+                domainName: name.name,
+                orderId: listing?.externalId,
+                contract: token.tokenAddress,
+                tokenId: token.tokenId,
+                price: formatUnits(
+                  BigInt(listing.price),
+                  listing.currency.decimals
+                ).toString(),
+                currency: listing.currency?.symbol,
+                expiresMs: listing.expiresAt,
+              })}`;
+
+              if (replyTo) {
+                await conversation.sendOptimistic(
+                  {
+                    content: richMessage,
+                    reference: replyTo.id,
+                    contentType: ContentTypeText,
+                  } as Reply,
+                  ContentTypeReply
+                );
+              } else {
+                await conversation.sendOptimistic(richMessage, ContentTypeText);
+              }
+
+              conversation.publishMessages();
+            }
+
+            setShowSell(false);
+            onClose();
+          } else {
+            setSelectedName(name);
+            setShowListing(true);
+          }
+        }}
         onClose={(deep) => {
-          setShowCreateListing(false);
+          setShowSell(false);
           if (deep) {
             onClose();
           }

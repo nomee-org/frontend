@@ -29,6 +29,9 @@ import { useWalletClient } from "wagmi";
 import { Token } from "@/types/doma";
 import { dataService } from "@/services/doma/dataservice";
 import { useOrderbook } from "@/hooks/use-orderbook";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { ContentTypeText } from "@xmtp/content-type-text";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 
 interface Offer {
   externalId: string;
@@ -44,6 +47,8 @@ interface Offer {
 }
 
 interface AcceptRejectOfferPopupProps {
+  conversation?: Conversation;
+  replyTo?: DecodedMessage;
   isOpen: boolean;
   onClose: () => void;
   offer: Offer | null;
@@ -53,6 +58,8 @@ interface AcceptRejectOfferPopupProps {
 }
 
 export function AcceptRejectOfferPopup({
+  conversation,
+  replyTo,
   isOpen,
   onClose,
   offer,
@@ -95,7 +102,7 @@ export function AcceptRejectOfferPopup({
           orderId: offer.externalId,
         };
 
-        await acceptOffer({
+        const acceptedOffer = await acceptOffer({
           params,
           chainId: token.chain.networkId,
           onProgress: (progress) => {
@@ -107,13 +114,35 @@ export function AcceptRejectOfferPopup({
           },
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
+
+        if (conversation) {
+          const richMessage = `accepted_offer::${JSON.stringify({
+            domainName,
+            transactionHash: acceptedOffer.transactionHash,
+          })}`;
+
+          if (replyTo) {
+            await conversation.sendOptimistic(
+              {
+                content: richMessage,
+                reference: replyTo.id,
+                contentType: ContentTypeText,
+              } as Reply,
+              ContentTypeReply
+            );
+          } else {
+            await conversation.sendOptimistic(richMessage, ContentTypeText);
+          }
+
+          conversation.publishMessages();
+        }
       } else {
         const params: CancelOfferParams = {
           orderId: offer.externalId,
           cancellationType: "off-chain",
         };
 
-        await cancelOffer({
+        const cancelledOffer = await cancelOffer({
           params,
           chainId: `eip155:${Number(
             parseCAIP10(token.chain.networkId).chainId
@@ -127,11 +156,33 @@ export function AcceptRejectOfferPopup({
           },
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
+
+        if (conversation) {
+          const richMessage = `cancelled_offer::${JSON.stringify({
+            domainName,
+            transactionHash: cancelledOffer.transactionHash,
+          })}`;
+
+          if (replyTo) {
+            await conversation.sendOptimistic(
+              {
+                content: richMessage,
+                reference: replyTo.id,
+                contentType: ContentTypeText,
+              } as Reply,
+              ContentTypeReply
+            );
+          } else {
+            await conversation.sendOptimistic(richMessage, ContentTypeText);
+          }
+
+          conversation.publishMessages();
+        }
       }
 
       onClose();
     } catch (error) {
-      toast.error(error?.message);
+      console.log(error);
     } finally {
       setIsProcessing(false);
     }

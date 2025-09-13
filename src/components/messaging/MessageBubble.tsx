@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   MoreVertical,
-  Reply,
+  Reply as ReplyIcon,
   Pin,
   PinOff,
   Copy,
@@ -39,9 +39,17 @@ import { formatUnits } from "viem";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
-import { isNomeeAction } from "./actions/utils";
+import {
+  getSummary,
+  isNomeeAction,
+  plainTextFromFilename,
+  summarizeAttachment,
+} from "./actions/utils";
 import { NomeeAction } from "./actions/NomeeAction";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
+import { useXmtp } from "@/contexts/XmtpContext";
+import { MessageRender } from "./renders/MessageRender";
 
 const emojis = [
   { emoji: "❤️", icon: Heart, name: "heart" },
@@ -98,6 +106,7 @@ export function MessageBubble({
   const longPressTimer = useRef<NodeJS.Timeout>();
   const { nickname } = useNameResolver();
   const isMobile = useIsMobile();
+  const { client } = useXmtp();
 
   const handleLongPress = () => {
     setIsLongPressed(true);
@@ -163,178 +172,6 @@ export function MessageBubble({
     }
   };
 
-  const renderRichContent = (content?: string) => {
-    if (!content) return "";
-
-    // Convert newlines to <br> tags
-    let richContent = content.replace(/\n/g, "<br>");
-
-    // Make URLs clickable
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    richContent = richContent.replace(
-      urlRegex,
-      '<a href="$1" target="_blank" rel="noopener noreferrer" class="underline text-blue-400 hover:text-blue-300">$1</a>'
-    );
-
-    // Make emails clickable
-    const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-    richContent = richContent.replace(
-      emailRegex,
-      '<a href="mailto:$1" class="underline text-blue-400 hover:text-blue-300">$1</a>'
-    );
-
-    // Make mentions clickable
-    const mentionRegex = /(?!<[^>]*>)@([a-zA-Z0-9._-]+)(?![^<]*<\/a>)/g;
-    richContent = richContent.replace(
-      mentionRegex,
-      '<a href="/names/$1" target="_blank" class="text-accent hover:text-accent/80 hover:underline font-medium" onclick="event.stopPropagation()">@$1</a>'
-    );
-
-    return richContent;
-  };
-
-  const renderMessageContent = () => {
-    if (message.contentType.sameAs(ContentTypeRemoteAttachment)) {
-      return (
-        <>
-          {(() => {
-            const attachment: RemoteAttachment = message.content as any;
-
-            if (attachment.filename.includes("image/")) {
-              return (
-                <div className="space-y-2">
-                  {attachment.url && (
-                    <img
-                      src={attachment.url}
-                      alt="Shared image"
-                      className="max-w-full object-contain h-[220px] md:h-[320px] rounded-lg cursor-pointer"
-                      onClick={() => window.open(attachment.url, "_blank")}
-                    />
-                  )}
-                  {message.content && (
-                    <div
-                      className="text-sm leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: renderRichContent(attachment.filename),
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            }
-
-            if (attachment.filename.includes("video/")) {
-              return (
-                <div className="space-y-2">
-                  {attachment.url && (
-                    <video
-                      src={attachment.url}
-                      controls
-                      className="max-w-full object-contain h-[220px] md:h-[320px]  rounded-lg"
-                    />
-                  )}
-                  {message.content && (
-                    <div
-                      className="text-sm leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: renderRichContent(attachment.filename),
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            }
-
-            if (attachment.filename.includes("audio/")) {
-              return (
-                <div className="space-y-2">
-                  {attachment.url && (
-                    <audio
-                      src={attachment.url}
-                      controls
-                      className="w-full rounded-lg"
-                    />
-                  )}
-                  {message.content && (
-                    <div
-                      className="text-sm leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: renderRichContent(attachment.filename),
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            }
-            if (attachment.filename.includes("sticker/")) {
-              return (
-                <div className="w-32 h-32">
-                  {attachment.url && (
-                    <img
-                      src={attachment.url}
-                      alt="Sticker"
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  )}
-                </div>
-              );
-            }
-
-            return (
-              <div className="flex items-center space-x-3 bg-black/10 p-3 rounded-lg">
-                <div className="p-2 bg-white/10 rounded">
-                  <User className="h-4 w-4" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{attachment.filename}</p>
-                  <p className="text-xs opacity-70">Document</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => window.open(attachment.url, "_blank")}
-                >
-                  Download
-                </Button>
-              </div>
-            );
-          })()}
-        </>
-      );
-    } else if (message.contentType.sameAs(ContentTypeReaction)) {
-      <>
-        {(() => {
-          const reaction: Reaction = message.content as any;
-
-          return (
-            <div
-              className="text-sm leading-relaxed break-words whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{
-                __html: renderRichContent(reaction.content),
-              }}
-            />
-          );
-        })()}
-      </>;
-    } else if (message.contentType.sameAs(ContentTypeText)) {
-      if (isNomeeAction(String(message.content))) {
-        return <NomeeAction data={String(message.content)} isOwn={isOwn} />;
-      }
-
-      return (
-        <div
-          className="text-sm leading-relaxed break-words whitespace-pre-wrap"
-          dangerouslySetInnerHTML={{
-            __html: renderRichContent(String(message.content)),
-          }}
-        />
-      );
-    } else {
-      return null;
-    }
-  };
-
   useEffect(() => {
     return () => {
       if (longPressTimer.current) {
@@ -362,10 +199,10 @@ export function MessageBubble({
         )}
       >
         {/* Reply Icon */}
-        {showReplyIcon && !isOwn && (
+        {showReplyIcon && (
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 animate-scale-in">
             <div className="bg-primary text-primary-foreground rounded-full p-2">
-              <Reply className="h-4 w-4" />
+              <ReplyIcon className="h-4 w-4" />
             </div>
           </div>
         )}
@@ -396,11 +233,10 @@ export function MessageBubble({
           className={cn(
             "relative max-w-[75%] transition-all duration-200",
             !isOwn && "ml-2",
-            isDragging && !isOwn && "cursor-grabbing"
+            isDragging && "cursor-grabbing"
           )}
           style={{
-            transform:
-              isDragging && !isOwn ? `translateX(${dragOffset}px)` : "none",
+            transform: isDragging ? `translateX(${dragOffset}px)` : "none",
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -423,25 +259,19 @@ export function MessageBubble({
           {replyTo && (
             <div
               className={cn(
-                "mb-2 p-2 rounded-lg border-l-4 bg-muted/30 text-sm max-w-xs",
+                "mb-1 p-2 rounded-lg border-l-4 bg-muted/30 text-sm max-w-xs",
                 isOwn ? "border-l-primary ml-auto" : "border-l-secondary"
               )}
             >
               <p className="text-muted-foreground text-xs font-medium">
-                {replyTo.senderInboxId || "User"}
+                {replyTo.senderInboxId === client.inboxId ? "Yours" : "Theirs"}
               </p>
               <p className="text-foreground truncate text-xs">
-                {(() => {
-                  if (replyTo.contentType.sameAs(ContentTypeText)) {
-                    return String(replyTo.content);
-                  } else if (
-                    replyTo.contentType.sameAs(ContentTypeRemoteAttachment)
-                  ) {
-                    return "An attachment";
-                  } else {
-                    return "A message";
-                  }
-                })()}
+                {getSummary(
+                  replyTo,
+                  replyTo.senderInboxId === client?.inboxId,
+                  true
+                )}
               </p>
             </div>
           )}
@@ -465,7 +295,7 @@ export function MessageBubble({
             )}
 
             {/* Message content */}
-            {renderMessageContent()}
+            <MessageRender message={message} isOwn={isOwn} />
 
             {/* Timestamp and status */}
             <div
@@ -505,7 +335,7 @@ export function MessageBubble({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuItem onClick={() => onReply?.(message)}>
-                    <Reply className="h-4 w-4 mr-2" />
+                    <ReplyIcon className="h-4 w-4 mr-2" />
                     Reply
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowReactions(true)}>

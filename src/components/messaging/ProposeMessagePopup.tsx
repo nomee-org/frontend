@@ -25,12 +25,14 @@ import {
 import { AlertCircle, Send, AtSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Conversation } from "@xmtp/browser-sdk";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { Name } from "@/types/doma";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 
 interface ProposeMessagePopupProps {
   conversation: Conversation;
+  replyTo?: DecodedMessage;
   isOpen: boolean;
   onClose: (deep: boolean) => void;
   peerAddress: string;
@@ -39,6 +41,7 @@ interface ProposeMessagePopupProps {
 
 const ProposeMessagePopup = ({
   conversation,
+  replyTo,
   isOpen,
   onClose,
   names,
@@ -82,19 +85,24 @@ const ProposeMessagePopup = ({
     setIsSubmitting(true);
 
     try {
-      await conversation.sendOptimistic(
-        `prompt_listing::${JSON.stringify({
-          domainName,
-          amount,
-          currency,
-        })}`,
-        ContentTypeText
-      );
+      const richMessage = `prompt_listing::${JSON.stringify({
+        domainName,
+        amount,
+        currency,
+      })}`;
 
-      toast({
-        title: "Success",
-        description: "Bid message sent successfully!",
-      });
+      if (replyTo) {
+        await conversation.sendOptimistic(
+          {
+            content: richMessage,
+            reference: replyTo.id,
+            contentType: ContentTypeText,
+          } as Reply,
+          ContentTypeReply
+        );
+      } else {
+        await conversation.sendOptimistic(richMessage, ContentTypeText);
+      }
 
       setAmount("");
       onClose(true);

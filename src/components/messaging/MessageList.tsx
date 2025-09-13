@@ -160,7 +160,7 @@ export const MessageList = ({
   const getReplyToMessage = (
     message: DecodedMessage
   ): DecodedMessage | undefined => {
-    if (message.contentType.sameAs(ContentTypeReply)) return undefined;
+    if (!message.contentType.sameAs(ContentTypeReply)) return undefined;
     const reply: Reply = message.content as any;
     return messages.find((m) => m.id === reply.reference);
   };

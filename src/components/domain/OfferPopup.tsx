@@ -36,13 +36,14 @@ import {
 import { Token } from "@/types/doma";
 import { useWalletClient } from "wagmi";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Textarea } from "../ui/textarea";
-import { dataService } from "@/services/doma/dataservice";
-import { useXmtp } from "@/contexts/XmtpContext";
-import { ContentTypeText } from "@xmtp/content-type-text";
 import { useOrderbook } from "@/hooks/use-orderbook";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { ContentTypeText } from "@xmtp/content-type-text";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 
 interface OfferPopupProps {
+  conversation?: Conversation;
+  replyTo?: DecodedMessage;
   isOpen: boolean;
   onClose: () => void;
   token: Token;
@@ -51,6 +52,8 @@ interface OfferPopupProps {
 }
 
 export function OfferPopup({
+  conversation,
+  replyTo,
   isOpen,
   onClose,
   token,
@@ -62,14 +65,11 @@ export function OfferPopup({
     "instant"
   );
   const [expirationDays, setExpirationDays] = useState("7");
-  const [message, setMessage] = useState("");
-
   const isMobile = useIsMobile();
   const { data: walletClient } = useWalletClient();
   const { parseCAIP10, formatLargeNumber } = useHelper();
   const [currencies, setCurrencies] = useState<CurrencyToken[]>([]);
 
-  const { client: xmtpClient } = useXmtp();
   const { getSupportedCurrencies, getOrderbookFee, createOffer, buyListing } =
     useOrderbook();
 
@@ -179,12 +179,29 @@ export function OfferPopup({
           currencies,
         });
 
-        if (message.trim()) {
-          // onClose(message.trim());
-          onClose();
-        } else {
-          onClose();
+        if (conversation) {
+          const richMessage = `created_offer::${JSON.stringify({
+            domainName,
+            orderId: createdOffer.orders?.[0]?.orderId,
+          })}`;
+
+          if (replyTo) {
+            await conversation.sendOptimistic(
+              {
+                content: richMessage,
+                reference: replyTo.id,
+                contentType: ContentTypeText,
+              } as Reply,
+              ContentTypeReply
+            );
+          } else {
+            await conversation.sendOptimistic(richMessage, ContentTypeText);
+          }
+
+          conversation.publishMessages();
         }
+
+        onClose();
       }
     } catch (error) {
       console.log(error);
@@ -287,23 +304,6 @@ export function OfferPopup({
               value={offerAmount}
               onChange={(e) => setOfferAmount(e.target.value)}
             />
-          </div>
-        )}
-
-        {/* Message */}
-        {offerType === "make-offer" && (
-          <div className="space-y-2">
-            <Label>Message (Optional)</Label>
-            <Textarea
-              placeholder="Describe your offer and why you're interested in this domain..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="resize-none"
-              rows={4}
-            />
-            <p className="text-xs text-muted-foreground">
-              {message.length}/500 characters
-            </p>
           </div>
         )}
 

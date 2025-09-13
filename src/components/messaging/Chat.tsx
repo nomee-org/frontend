@@ -20,14 +20,12 @@ import { useNameResolver } from "@/contexts/NicknameContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
 import { Badge } from "../ui/badge";
+import { getSummary } from "./actions/utils";
 
 export const Chat = ({ conversation }: { conversation: Conversation }) => {
   const { client, newMessages } = useXmtp();
   const { nickname } = useNameResolver();
-  const [lastMessage, setLastMessage] = useState<string>("No message yet");
-  const [lastMessageAt, setLastMessageAt] = useState<Date | undefined>(
-    undefined
-  );
+  const [lastMessage, setLastMessage] = useState<DecodedMessage>(undefined);
   const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
 
   const navigate = useNavigate();
@@ -50,72 +48,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
   };
 
   const handleLastMessage = useCallback(
-    (message: DecodedMessage) => {
-      if (client && message) {
-        try {
-          const isOwn = message.senderInboxId === client?.inboxId;
-
-          if (isOwn) {
-            if (message.contentType.sameAs(ContentTypeRemoteAttachment)) {
-              setLastMessage("You sent an attachment");
-            } else if (message.contentType.typeId === "group_updated") {
-              if ((message.content as any)?.addedInboxes?.length) {
-                setLastMessage(
-                  `${
-                    (message.content as any)?.addedInboxes?.length
-                  } members added.`
-                );
-              } else if ((message.content as any)?.removedInboxes) {
-                setLastMessage(
-                  `${
-                    (message.content as any)?.addedInboxes?.length
-                  } members removed.`
-                );
-              } else {
-                setLastMessage("Group updated");
-              }
-            } else if (message.contentType.sameAs(ContentTypeText)) {
-              setLastMessage(message.content as any);
-            } else if (message.contentType.sameAs(ContentTypeReaction)) {
-              setLastMessage(
-                `You reacted ${(message.content as Reaction).content}`
-              );
-            }
-          } else {
-            if (message.contentType.sameAs(ContentTypeRemoteAttachment)) {
-              setLastMessage("Received an attachment");
-            } else if (message.contentType.typeId === "group_updated") {
-              if ((message.content as any)?.addedInboxes?.length) {
-                setLastMessage(
-                  `${
-                    (message.content as any)?.addedInboxes?.length
-                  } members added.`
-                );
-              } else if ((message.content as any)?.removedInboxes) {
-                setLastMessage(
-                  `${
-                    (message.content as any)?.addedInboxes?.length
-                  } members removed.`
-                );
-              } else {
-                setLastMessage("Group updated");
-              }
-            } else if (message.contentType.sameAs(ContentTypeText)) {
-              setLastMessage(message.content as any);
-            } else if (message.contentType.sameAs(ContentTypeReaction)) {
-              setLastMessage(
-                `Received a react ${(message.content as Reaction).content}`
-              );
-            }
-          }
-          setLastMessageAt(
-            new Date(Math.ceil(Number(formatUnits(message.sentAtNs, 6))))
-          );
-        } catch (error) {
-          console.log(error);
-        }
-      }
-    },
+    (message: DecodedMessage) => setLastMessage(message),
     [client]
   );
 
@@ -219,9 +152,11 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
             </div>
             <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
               <span className="text-xs text-muted-foreground font-medium">
-                {moment(lastMessageAt ?? conversation.createdAt).format(
-                  "HH:mm"
-                )}
+                {moment(
+                  lastMessage
+                    ? Math.ceil(Number(formatUnits(lastMessage.sentAtNs, 6)))
+                    : conversation.createdAt
+                ).format("HH:mm")}
               </span>
               <>
                 {(() => {
@@ -247,7 +182,13 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
           </div>
           <div className="flex items-center space-x-2">
             <p className="text-sm text-muted-foreground truncate flex-1 max-w-44">
-              {lastMessage || "No messages yet"}
+              {lastMessage
+                ? getSummary(
+                    lastMessage,
+                    lastMessage.senderInboxId === client?.inboxId,
+                    false
+                  )
+                : "No messages yet"}
             </p>
           </div>
         </div>
