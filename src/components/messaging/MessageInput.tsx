@@ -431,7 +431,7 @@ export function MessageInput({
   };
 
   return (
-    <div className="p-3 border-t border-border bg-background fixed bottom-0 z-10 pb-[env(safe-area-inset-bottom)]">
+    <div className="p-3 w-full border-t border-border bg-background fixed md:sticky bottom-0 z-10 pb-[calc(min(env(safe-area-inset-bottom), 0.75rem)] md:pb-0">
       {/* Reply/Edit Header */}
       {replyTo && (
         <div className="mb-3 p-3 bg-muted/50 rounded-lg border-l-4 border-l-primary">
