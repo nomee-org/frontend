@@ -175,8 +175,8 @@ const ProposeMessagePopup = ({
             <div className="text-sm text-muted-foreground">
               <p className="font-medium">Important</p>
               <p>
-                This buy message will be sent to the domain owner. Make sure
-                your offer is genuine and you have the funds available.
+                This offer message will be sent to the domain owner. Make sure
+                your proposal is genuine and you have the funds available.
               </p>
             </div>
           </div>
