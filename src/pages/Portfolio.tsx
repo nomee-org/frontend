@@ -219,14 +219,35 @@ const Portfolio = () => {
           <Card className="p-content">
             <div className="flex items-center justify-between mb-2">
               <span className="text-caption text-muted-foreground">
-                Total Value
+                Listing Value
               </span>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </div>
             <div className="space-y-1">
-              <span className="text-display font-grotesk">{0} ETH</span>
-              <p className="text-caption text-muted-foreground">
-                ${(0).toLocaleString()}
+              <span className="text-display font-grotesk">
+                {formatLargeNumber(
+                  namesData?.pages
+                    ?.flatMap((p) => p.items)
+                    ?.reduce((a, b) => {
+                      return Number(
+                        a +
+                          Number(
+                            formatUnits(
+                              BigInt(b?.tokens?.[0]?.listings?.[0]?.price ?? 0),
+                              b.tokens?.[0]?.listings?.[0]?.currency
+                                ?.decimals ?? 18
+                            )
+                          ) *
+                            (b?.tokens?.[0]?.listings?.[0]?.currency
+                              ?.usdExchangeRate ?? 0)
+                      );
+                    }, 0)
+                )}{" "}
+                USD
+              </span>
+              <p className="text-caption text-muted-foreground flex gap-1 cursor-pointer items-center p-1">
+                Hide
+                <EyeOff className="w-4 h-4" />
               </p>
             </div>
           </Card>
@@ -291,7 +312,7 @@ const Portfolio = () => {
                 .flatMap((p) => p.items)
                 ?.map((name) => (
                   <Link to={`/names/${name.name}`} key={name.name}>
-                    <Card className="relative p-section transition-normal hover:shadow-custom-lg cursor-pointer overflow-hidden border-border hover:border-primary/50 hover:bg-accent/30 min-h-[360px] md:min-h-[420px] bg-gradient-to-br from-background via-card to-accent/10">
+                    <Card className="relative p-section transition-normal hover:shadow-custom-lg cursor-pointer overflow-hidden border-border hover:border-primary/50 hover:bg-accent/30 bg-gradient-to-br from-background via-card to-accent/10">
                       <div className="space-y-6">
                         <div className="flex flex-col items-center space-y-4">
                           <div className="aspect-square flex items-center justify-center">
@@ -396,19 +417,13 @@ const Portfolio = () => {
                                 <span className="text-sm text-muted-foreground">
                                   Registrar
                                 </span>
-                                <span className="font-semibold text-xs bg-secondary/10 text-secondary px-2 py-1 rounded">
+                                <span className="font-semibold text-xs bg-secondary/50 text-secondary-foreground px-2 py-1 rounded">
                                   {name.registrar.name}
                                 </span>
                               </div>
                             </div>
                           );
                         })()}
-
-                        {/* Purchase Date */}
-                        <div className="flex items-center justify-center text-xs text-muted-foreground bg-muted/30 rounded-lg p-2">
-                          <Calendar className="h-3 w-3 mr-2" />
-                          Purchased {new Date().toLocaleDateString()}
-                        </div>
                       </div>
                     </Card>
                   </Link>
@@ -487,7 +502,7 @@ const Portfolio = () => {
                         <div className="space-y-3 bg-accent/20 rounded-xl p-4 border border-border/30">
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">
-                              Floor Price
+                              List Price
                             </span>
                             <span className="font-bold text-lg text-primary">
                               {name.tokens?.[0]?.listings?.[0]
