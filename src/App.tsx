@@ -24,7 +24,6 @@ const App = () => {
               <XmtpProvider>
                 <NameResolverProvider>
                   <AppRoutes />
-
                   <PWAInstallPrompt />
                 </NameResolverProvider>
               </XmtpProvider>

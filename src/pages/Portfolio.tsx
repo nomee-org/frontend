@@ -248,7 +248,7 @@ const Portfolio = () => {
 
         {/* Domains & Activity Tabs */}
         <Tabs defaultValue="domains" className="space-y-4">
-          <TabsList>
+          <TabsList className="overflow-x-auto max-w-[calc(100vw-40px)] no-scrollbar">
             <TabsTrigger value="domains">My Domains</TabsTrigger>
             <TabsTrigger value="watchlist">Watch Domains</TabsTrigger>
             <TabsTrigger value="activity">Recent Activity</TabsTrigger>
