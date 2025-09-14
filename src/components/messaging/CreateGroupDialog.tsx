@@ -125,8 +125,8 @@ export function CreateGroupDialog({
     }
   };
 
-  const removeUser = (username: string) => {
-    setSelectedUsers(selectedUsers.filter((u) => u.name !== username));
+  const removeUser = (inboxId: string) => {
+    setSelectedUsers(selectedUsers.filter((u) => u.inboxId !== inboxId));
   };
 
   const content = (
@@ -169,7 +169,7 @@ export function CreateGroupDialog({
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                  onClick={() => removeUser(user.name)}
+                  onClick={() => removeUser(user.inboxId)}
                 >
                   <X className="h-3 w-3" />
                 </Button>
