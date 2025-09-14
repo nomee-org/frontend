@@ -29,25 +29,13 @@ import {
 import { cn } from "@/lib/utils";
 import moment from "moment";
 import { toast } from "sonner";
-import { DecodedMessage } from "@xmtp/browser-sdk";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
-import {
-  ContentTypeRemoteAttachment,
-  RemoteAttachment,
-} from "@xmtp/content-type-remote-attachment";
 import { formatUnits } from "viem";
-import { ContentTypeText } from "@xmtp/content-type-text";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
-import {
-  getSummary,
-  isNomeeAction,
-  plainTextFromFilename,
-  summarizeAttachment,
-} from "./actions/utils";
-import { NomeeAction } from "./actions/NomeeAction";
+import { getSummary } from "./actions/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { MessageRender } from "./renders/MessageRender";
 
@@ -61,6 +49,7 @@ const emojis = [
 ];
 
 interface MessageBubbleProps {
+  conversation: Conversation;
   message: DecodedMessage;
   isOwn: boolean;
   showAvatar: boolean;
@@ -78,6 +67,7 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({
+  conversation,
   message,
   isOwn,
   showAvatar,
@@ -295,7 +285,11 @@ export function MessageBubble({
             )}
 
             {/* Message content */}
-            <MessageRender message={message} isOwn={isOwn} />
+            <MessageRender
+              conversation={conversation}
+              message={message}
+              isOwn={isOwn}
+            />
 
             {/* Timestamp and status */}
             <div

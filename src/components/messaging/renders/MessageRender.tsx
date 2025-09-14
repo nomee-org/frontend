@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { DecodedMessage } from "@xmtp/browser-sdk";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +8,7 @@ import {
   plainTextFromFilename,
   summarizeAttachment,
 } from "../actions/utils";
-import { NomeeAction } from "../actions/NomeeAction";
+import { NomeeAction } from "../actions";
 import {
   ContentTypeRemoteAttachment,
   RemoteAttachment,
@@ -18,11 +18,16 @@ import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 
 // Component props
 type MessageRenderProps = {
+  conversation: Conversation;
   message: DecodedMessage;
   isOwn: boolean;
 };
 
-export const MessageRender = ({ message, isOwn }: MessageRenderProps) => {
+export const MessageRender = ({
+  conversation,
+  message,
+  isOwn,
+}: MessageRenderProps) => {
   const renderRichContent = (content?: string) => {
     if (!content) return "";
 
@@ -169,7 +174,14 @@ export const MessageRender = ({ message, isOwn }: MessageRenderProps) => {
     // === Text ===
     if (contentType.sameAs(ContentTypeText)) {
       if (isNomeeAction(String(content))) {
-        return <NomeeAction data={String(content)} isOwn={isOwn} />;
+        return (
+          <NomeeAction
+            conversation={conversation}
+            message={message}
+            data={String(content)}
+            isOwn={isOwn}
+          />
+        );
       }
 
       return (

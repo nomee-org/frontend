@@ -232,6 +232,7 @@ export const MessageList = ({
               return (
                 <MessageBubble
                   key={message.id}
+                  conversation={conversation}
                   message={message}
                   isOwn={isOwn}
                   showAvatar={showAvatar}
