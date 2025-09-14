@@ -105,18 +105,8 @@ function AppLayoutContent() {
           </header>
 
           {/* Main Content */}
-          <main
-            className={`flex-1 ${
-              location.pathname.startsWith("/messages/") ? "pb-0" : "pb-16"
-            } md:pb-0`}
-          >
-            <div
-              className={
-                location.pathname.startsWith("/messages")
-                  ? "h-full"
-                  : "max-w-[max(80rem,calc(100%-32px))] mx-auto"
-              }
-            >
+          <main className={`flex-1 pb-16 md:pb-0`}>
+            <div className={"max-w-[max(80rem,calc(100%-32px))] mx-auto"}>
               <Outlet />
             </div>
           </main>
