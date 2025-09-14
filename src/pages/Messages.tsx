@@ -237,7 +237,7 @@ const Messages = () => {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 h-11 text-sm bg-muted/50 duration-200 rounded-xl"
+                className="pl-11 h-11 text-[16px] bg-muted/50 duration-200 rounded-xl"
               />
             </div>
           </div>
