@@ -399,7 +399,6 @@ const UserConversation = () => {
             {peerAddress && (
               <Button
                 variant="outline"
-                disabled={!conversation?.isActive}
                 size="sm"
                 onClick={() => setShowTradePopup(true)}
                 className="text-primary border-primary hover:bg-primary hover:text-primary-foreground text-xs lg:text-sm h-7 md:h-8"

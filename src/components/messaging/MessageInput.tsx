@@ -488,7 +488,6 @@ export function MessageInput({
         <Button
           variant="ghost"
           size="sm"
-          disabled={!conversation?.isActive}
           className="text-muted-foreground hover:text-foreground flex-shrink-0"
           onClick={() => setShowMediaPicker(true)}
         >
@@ -512,7 +511,6 @@ export function MessageInput({
             ref={textareaRef}
             placeholder="Type a message..."
             value={message}
-            disabled={!conversation?.isActive}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={(e) => {
               if (showMemberTagging && members && members.length > 1) {
@@ -568,7 +566,6 @@ export function MessageInput({
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={!conversation?.isActive}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground h-8 w-8 p-0"
                   onClick={() => setShowStickersPicker(true)}
                 >
@@ -583,7 +580,6 @@ export function MessageInput({
                     <Button
                       variant="ghost"
                       size="sm"
-                      disabled={!conversation?.isActive}
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground h-8 w-8 p-0"
                     >
                       <Smile className="h-4 w-4" />
@@ -608,7 +604,7 @@ export function MessageInput({
           <Button
             onClick={handleSendMessage}
             size="sm"
-            disabled={isSending || !conversation?.isActive}
+            disabled={isSending}
             className="rounded-full h-10 w-10 p-0 flex-shrink-0"
           >
             {isSending ? (
@@ -622,7 +618,6 @@ export function MessageInput({
             {isMobile ? (
               <Button
                 variant="default"
-                disabled={!conversation?.isActive}
                 size="sm"
                 className="rounded-full h-10 w-10 p-0 flex-shrink-0"
                 onClick={() => setShowVoiceRecorder(true)}
@@ -636,7 +631,6 @@ export function MessageInput({
               >
                 <PopoverTrigger asChild>
                   <Button
-                    disabled={!conversation?.isActive}
                     variant="default"
                     size="sm"
                     className="rounded-full h-10 w-10 p-0 flex-shrink-0"
