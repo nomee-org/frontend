@@ -387,7 +387,10 @@ const UserConversation = () => {
                 <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
                   {nickname(peerAddress, 8)}
                 </h3>
-                <OnlineStatus isOnline={true} className="mt-0.5" />
+                <OnlineStatus
+                  isActive={conversation?.isActive}
+                  className="mt-0.5"
+                />
               </div>
             </div>
           </div>
