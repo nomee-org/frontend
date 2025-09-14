@@ -72,7 +72,7 @@ export function MembersDialog({
 
   // Get current user's level in the conversation
   const currentUserLevel = members?.find(
-    (m) => m.inboxId === client.inboxId
+    (m) => m.inboxId === client?.inboxId
   )?.permissionLevel;
 
   // Check if current user can manage members
@@ -121,9 +121,9 @@ export function MembersDialog({
   const canManageMember = (member: SafeGroupMember) => {
     if (!canManageMembers) return false;
     if (member.inboxId === client.inboxId) return false; // Can't manage self
-    if (member.permissionLevel === PermissionLevel.SuperAdmin) return false; // Can't manage owner
+    if (member.permissionLevel === PermissionLevel.SuperAdmin) return false; // Can't manage SuperAdmin
 
-    // Only owners can manage admins
+    // Only SuperAdmins can manage admins
     if (member.permissionLevel === PermissionLevel.Admin) {
       return currentUserLevel === PermissionLevel.SuperAdmin;
     }
@@ -145,7 +145,7 @@ export function MembersDialog({
   const getLevelBadge = (level: PermissionLevel) => {
     const levelConfig = {
       [PermissionLevel.SuperAdmin]: {
-        label: "Owner",
+        label: "SuperAdmin",
         variant: "default" as const,
       },
       [PermissionLevel.Admin]: {
@@ -254,7 +254,7 @@ export function MembersDialog({
             <div className="flex justify-center p-3 md:p-4">
               <Loader className="h-4 w-4 animate-spin" />
             </div>
-          ) : (members?.length || 0) > 0 ? (
+          ) : (members?.length ?? 0) > 0 ? (
             members?.map((member) => (
               <div
                 key={member.inboxId}
@@ -268,7 +268,9 @@ export function MembersDialog({
                   </Avatar>
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium">{member.inboxId}</span>
+                      <span className="font-medium truncate max-w-44">
+                        {member.inboxId}
+                      </span>
                       {getLevelBadge(member.permissionLevel)}
                     </div>
                     <p className="text-sm text-muted-foreground">

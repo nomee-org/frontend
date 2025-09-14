@@ -141,14 +141,9 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm truncate text-foreground max-w-40">
                 {conversation.metadata.conversationType === "group"
-                  ? (conversation as Group).name
+                  ? (conversation as Group)?.name || "Group Chat"
                   : nickname(peerAddress, 6)}
               </h3>
-              {/* {otherUser?.isOnline && (
-                                <span className="text-xs text-green-600 font-medium">
-                                  Online
-                                </span>
-                              )} */}
             </div>
             <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
               <span className="text-xs text-muted-foreground font-medium">

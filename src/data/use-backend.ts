@@ -1455,6 +1455,7 @@ export function useGetConversationMembers(
   return useQuery({
     queryKey: queryKeys.conversations.members(conversation?.id, 1, limit),
     queryFn: () => conversation.members(),
+    initialData: [],
     enabled: !!conversation,
   });
 }
