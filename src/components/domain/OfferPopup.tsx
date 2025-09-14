@@ -10,6 +10,7 @@ import {
   Drawer,
   DrawerContent,
   DrawerHeader,
+  DrawerInput,
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
@@ -297,7 +298,7 @@ export function OfferPopup({
         {offerType === "make-offer" && (
           <div className="space-y-2">
             <Label htmlFor="amount">Offer Amount</Label>
-            <Input
+            <DrawerInput
               id="amount"
               type="number"
               placeholder={`Enter amount in ${selectedCurrency?.symbol}`}
