@@ -14,7 +14,7 @@ const queryClient = new QueryClient();
 
 const App = () => {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="nomee-theme">
+    <ThemeProvider storageKey="nomee-theme">
       <WagmiProvider config={wagmiAdapter.wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
