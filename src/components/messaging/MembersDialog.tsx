@@ -160,8 +160,8 @@ export function MembersDialog({
 
     const config = levelConfig[level];
     return (
-      <Badge variant={config.variant} className="text-xs">
-        {config.label}
+      <Badge variant={config?.variant ?? "default"} className="text-xs">
+        {config?.label ?? "Member"}
       </Badge>
     );
   };
