@@ -85,7 +85,7 @@ const ProposeMessagePopup = ({
     setIsSubmitting(true);
 
     try {
-      const richMessage = `prompt_listing::${JSON.stringify({
+      const richMessage = `proposal::${JSON.stringify({
         domainName,
         amount,
         currency,
@@ -183,7 +183,7 @@ const ProposeMessagePopup = ({
         </div>
       ) : (
         <div className="px-4 py-10">
-          <p className="text-muted text-sm text-center">
+          <p className="text-secondary-foreground text-sm text-center">
             User has no domain name.
           </p>
         </div>

@@ -82,7 +82,7 @@ export function NameOptionsPopup({
         </div>
       ) : (
         <div className="px-4 py-10">
-          <p className="text-muted text-sm text-center">
+          <p className="text-secondary-foreground text-sm text-center">
             User has no domain name.
           </p>
         </div>

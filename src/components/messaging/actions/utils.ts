@@ -9,7 +9,7 @@ import { ContentTypeText } from "@xmtp/content-type-text";
 import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
 
 export const isNomeeAction = (data: string): boolean => {
-  if (data.startsWith("prompt_listing::")) return true;
+  if (data.startsWith("proposal::")) return true;
   if (data.startsWith("created_listing::")) return true;
   return false;
 };
@@ -128,7 +128,7 @@ export const getSummary = (
     const str = String(message.content);
 
     if (isNomeeAction(str)) {
-      if (str.startsWith("prompt_listing::")) {
+      if (str.startsWith("proposal::")) {
         return simple ? "Proposal request" : `${senderPrefix} a Nomee proposal`;
       }
       if (str.startsWith("created_listing::")) {

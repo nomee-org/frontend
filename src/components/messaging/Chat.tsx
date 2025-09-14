@@ -119,7 +119,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
           {conversation.metadata.conversationType === "group" ? (
             <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center border-2 border-primary/10">
               <Users className="h-5 w-5 text-primary" />
-              {!conversation.isActive && (
+              {!conversation?.isActive && (
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 border-2 border-background rounded-full"></div>
               )}
             </div>
@@ -129,7 +129,7 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
                 domain={nickname(peerAddress)}
                 className="h-12 w-12 ring-2 ring-background shadow-sm"
               />
-              {!conversation.isActive && (
+              {!conversation?.isActive && (
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 border-2 border-background rounded-full"></div>
               )}
             </div>

@@ -15,7 +15,7 @@ export const NomeeAction = ({
     return <p className="text-muted-foreground">Cannot parse message.</p>;
   }
 
-  if (data.startsWith("prompt_listing::")) {
+  if (data.startsWith("proposal::")) {
     try {
       const props = JSON.parse(text);
 
