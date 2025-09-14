@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, matchPath, useLocation } from "react-router-dom";
 import {
   Search,
   MessageSquare,
@@ -24,8 +24,18 @@ export function MobileBottomNav() {
 
   const isActive = (path: string) => currentPath === path;
 
+  if (
+    matchPath("/messages/:id", location.pathname) ||
+    matchPath("/group/:id", location.pathname)
+  ) {
+    return null;
+  }
+
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border">
+    <div
+      className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <div className="flex items-center justify-around py-2 px-2">
         {navigationItems.map((item) => (
           <NavLink
