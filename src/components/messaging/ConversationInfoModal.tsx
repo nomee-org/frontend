@@ -117,7 +117,7 @@ export const ConversationInfoModal = ({
             </p>
           ) : (
             <div className="flex items-center justify-center mt-2">
-              <OnlineStatus isOnline={false} />
+              <OnlineStatus isActive={conversation?.isActive} />
             </div>
           )}
         </div>
@@ -153,7 +153,7 @@ export const ConversationInfoModal = ({
       {activeTab === "info" && (
         <div className="space-y-4">
           {/* Domain Info */}
-          {namesData?.pages?.length && (
+          {(namesData?.pages?.length ?? 0) > 0 && (
             <div className="space-y-2">
               <Label>Set a nickname</Label>
               <div className="flex items-center gap-2">
