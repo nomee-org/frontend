@@ -153,7 +153,7 @@ export const ConversationInfoModal = ({
       {activeTab === "info" && (
         <div className="space-y-4">
           {/* Domain Info */}
-          {(namesData?.pages?.length ?? 0) > 0 && (
+          {(namesData?.pages?.[0]?.totalCount ?? 0) > 0 && (
             <div className="space-y-2">
               <Label>Set a nickname</Label>
               <div className="flex items-center gap-2">
