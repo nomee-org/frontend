@@ -55,7 +55,7 @@ const DrawerContent = React.forwardRef<
 
   return (
     <DrawerPortal>
-      <DrawerOverlay />
+      <DrawerOverlay className="fixed" />
       <DrawerPrimitive.Content
         ref={ref}
         className={cn(
@@ -126,42 +126,6 @@ const DrawerDescription = React.forwardRef<
 ));
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
-// Mobile-friendly input component to use inside drawers
-const DrawerInput = React.forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement>
->(({ className, ...props }, ref) => (
-  <input
-    ref={ref}
-    className={cn(
-      "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-      // Prevent zoom on focus in iOS < 13
-      "text-[16px]",
-      className
-    )}
-    {...props}
-  />
-));
-DrawerInput.displayName = "DrawerInput";
-
-// Mobile-friendly textarea component to use inside drawers
-const DrawerTextarea = React.forwardRef<
-  HTMLTextAreaElement,
-  React.TextareaHTMLAttributes<HTMLTextAreaElement>
->(({ className, ...props }, ref) => (
-  <textarea
-    ref={ref}
-    className={cn(
-      "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-      // Prevent zoom on focus in iOS < 13
-      "text-[16px]",
-      className
-    )}
-    {...props}
-  />
-));
-DrawerTextarea.displayName = "DrawerTextarea";
-
 export {
   Drawer,
   DrawerPortal,
@@ -173,6 +137,4 @@ export {
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
-  DrawerInput,
-  DrawerTextarea,
 };
