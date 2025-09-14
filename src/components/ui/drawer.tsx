@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
-
 import { cn } from "@/lib/utils";
 
 const Drawer = ({
@@ -35,22 +34,47 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay />
-    <DrawerPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
-        className
-      )}
-      {...props}
-    >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
-      {children}
-    </DrawerPrimitive.Content>
-  </DrawerPortal>
-));
+>(({ className, children, ...props }, ref) => {
+  // Handle iOS viewport resize when keyboard appears
+  React.useEffect(() => {
+    if (!("visualViewport" in window)) return;
+
+    const visualViewport = window.visualViewport;
+
+    const handleResize = () => {
+      // Adjust drawer position when keyboard appears
+      document.documentElement.style.setProperty(
+        "--vh",
+        `${visualViewport.height * 0.01}px`
+      );
+    };
+
+    visualViewport.addEventListener("resize", handleResize);
+    return () => visualViewport.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <DrawerPortal>
+      <DrawerOverlay />
+      <DrawerPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[80vh] flex-col rounded-t-[10px] border bg-background",
+          "supports-[height:100dvh]:max-h-[80dvh]",
+          className
+        )}
+        style={{
+          // Use dynamic vh for better mobile support
+          maxHeight: "calc(var(--vh, 1vh) * 80)",
+        }}
+        {...props}
+      >
+        <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
+        <div className="overflow-y-auto">{children}</div>
+      </DrawerPrimitive.Content>
+    </DrawerPortal>
+  );
+});
 DrawerContent.displayName = "DrawerContent";
 
 const DrawerHeader = ({
@@ -102,6 +126,42 @@ const DrawerDescription = React.forwardRef<
 ));
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
+// Mobile-friendly input component to use inside drawers
+const DrawerInput = React.forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>(({ className, ...props }, ref) => (
+  <input
+    ref={ref}
+    className={cn(
+      "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+      // Prevent zoom on focus in iOS < 13
+      "text-[16px]",
+      className
+    )}
+    {...props}
+  />
+));
+DrawerInput.displayName = "DrawerInput";
+
+// Mobile-friendly textarea component to use inside drawers
+const DrawerTextarea = React.forwardRef<
+  HTMLTextAreaElement,
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ className, ...props }, ref) => (
+  <textarea
+    ref={ref}
+    className={cn(
+      "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+      // Prevent zoom on focus in iOS < 13
+      "text-[16px]",
+      className
+    )}
+    {...props}
+  />
+));
+DrawerTextarea.displayName = "DrawerTextarea";
+
 export {
   Drawer,
   DrawerPortal,
@@ -113,4 +173,6 @@ export {
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
+  DrawerInput,
+  DrawerTextarea,
 };
