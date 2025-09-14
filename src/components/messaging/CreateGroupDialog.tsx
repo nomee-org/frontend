@@ -45,7 +45,12 @@ export function CreateGroupDialog({
   const [groupName, setGroupName] = useState("");
   const [description, setDescription] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedInboxIds, setSelectedInboxIds] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<
+    {
+      inboxId: string;
+      name: string;
+    }[]
+  >([]);
 
   const { client } = useXmtp();
 
@@ -63,18 +68,16 @@ export function CreateGroupDialog({
       return;
     }
 
-    if (selectedInboxIds.length < 1) {
+    if (selectedUsers.length < 1) {
       toast.error("Add at least one member to the group");
       return;
     }
 
     try {
-      setSelectedInboxIds([...selectedInboxIds, client?.inboxId]);
-
       const result = await createConversationMutation.mutateAsync({
         name: groupName.trim(),
         description: description?.trim(),
-        inboxIds: selectedInboxIds,
+        inboxIds: selectedUsers.map((u) => u.inboxId),
       });
 
       toast.success("Group created successfully");
@@ -84,7 +87,7 @@ export function CreateGroupDialog({
       // Reset form
       setGroupName("");
       setDescription("");
-      setSelectedInboxIds([]);
+      setSelectedUsers([]);
       setSearchQuery("");
     } catch (error) {
       // toast.error("Failed to create group");
@@ -110,14 +113,20 @@ export function CreateGroupDialog({
       return toast.error("You cannot add your self.");
     }
 
-    if (!selectedInboxIds.includes(inboxId)) {
-      setSelectedInboxIds([...selectedInboxIds, inboxId]);
+    if (!selectedUsers.map((u) => u.inboxId).includes(inboxId)) {
+      setSelectedUsers([
+        ...selectedUsers,
+        {
+          inboxId,
+          name: username,
+        },
+      ]);
       setSearchQuery("");
     }
   };
 
   const removeUser = (username: string) => {
-    setSelectedInboxIds(selectedInboxIds.filter((user) => user !== username));
+    setSelectedUsers(selectedUsers.filter((u) => u.name !== username));
   };
 
   const content = (
@@ -146,21 +155,21 @@ export function CreateGroupDialog({
       </div>
 
       {/* Selected Users */}
-      {selectedInboxIds.length > 0 && (
+      {selectedUsers.length > 0 && (
         <div className="space-y-2">
-          <Label>Selected Members ({selectedInboxIds.length})</Label>
+          <Label>Selected Members ({selectedUsers.length})</Label>
           <div className="flex flex-wrap gap-2">
-            {selectedInboxIds.map((username) => (
+            {selectedUsers.map((user) => (
               <div
-                key={username}
+                key={user.inboxId}
                 className="flex items-center space-x-2 bg-muted px-3 py-1 rounded-full"
               >
-                <span className="text-sm truncate max-w-40">{username}</span>
+                <span className="text-sm truncate max-w-40">{user.name}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                  onClick={() => removeUser(username)}
+                  onClick={() => removeUser(user.name)}
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -199,7 +208,9 @@ export function CreateGroupDialog({
           className="space-y-2"
           children={searchResults?.pages
             ?.flatMap((p) => p.items)
-            ?.filter((user) => !selectedInboxIds.includes(user.name))
+            ?.filter(
+              (user) => !selectedUsers.map((u) => u.name).includes(user.name)
+            )
             ?.map((user) => (
               <div
                 key={user.name}
@@ -244,7 +255,7 @@ export function CreateGroupDialog({
         disabled={
           createConversationMutation.isPending ||
           !groupName.trim() ||
-          selectedInboxIds.length < 1
+          selectedUsers.length < 1
         }
         className="flex-1"
       >
