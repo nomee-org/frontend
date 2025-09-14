@@ -109,11 +109,7 @@ function AppLayoutContent() {
 
           {/* Main Content */}
           <main className={`flex-1`}>
-            <div
-              className={
-                "max-w-[max(80rem,calc(100%-32px))] mx-auto md:min-h-[calc(100vh)]"
-              }
-            >
+            <div className={"max-w-[max(80rem,calc(100%-32px))] mx-auto"}>
               <Outlet />
             </div>
           </main>
