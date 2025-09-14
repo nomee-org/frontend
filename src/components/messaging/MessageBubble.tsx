@@ -175,11 +175,7 @@ export function MessageBubble({
 
   return (
     <div
-      className={cn(
-        "mb-1",
-        isOwn ? "ml-12" : "mr-12",
-        isMobile ? "!select-none" : ""
-      )}
+      className={cn("mb-1", isMobile ? "!select-none" : "")}
       data-message-id={message.id}
     >
       <div
