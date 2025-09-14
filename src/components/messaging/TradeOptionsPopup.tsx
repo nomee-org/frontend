@@ -186,7 +186,6 @@ export function TradeOptionPopup({
   }
 
   // layer 1
-
   if (showPropose) {
     return (
       <ListProposeMessagePopup
@@ -233,6 +232,7 @@ export function TradeOptionPopup({
       <NameOptionsPopup
         conversation={conversation}
         isOpen={showSell}
+        emptyMessage="You don't have a domain."
         handleClick={async (name) => {
           const token = name?.tokens?.[0];
           const listing = token?.listings?.[0];

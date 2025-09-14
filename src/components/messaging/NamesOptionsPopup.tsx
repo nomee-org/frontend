@@ -25,6 +25,7 @@ interface NameOptionsPopupProps {
   onClose: (deep: boolean) => void;
   names: Name[];
   handleClick: (name: Name) => void;
+  emptyMessage?: string;
 }
 
 export function NameOptionsPopup({
@@ -33,6 +34,7 @@ export function NameOptionsPopup({
   onClose,
   names,
   handleClick,
+  emptyMessage = "User has no domain name.",
 }: NameOptionsPopupProps) {
   const isMobile = useIsMobile();
   const { formatLargeNumber } = useHelper();
@@ -83,7 +85,7 @@ export function NameOptionsPopup({
       ) : (
         <div className="px-4 py-10">
           <p className="text-secondary-foreground text-sm text-center">
-            User has no domain name.
+            {emptyMessage}
           </p>
         </div>
       )}
