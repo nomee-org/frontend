@@ -32,6 +32,7 @@ import { backendService } from "@/services/backend/backendservice";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { Sticker } from "@/types/backend";
 import { ContentTypeText } from "@xmtp/content-type-text";
+import { getSummary } from "./actions/utils";
 
 interface MessageInputProps {
   placeHolder?: string;
@@ -437,8 +438,13 @@ export function MessageInput({
         <div className="mb-3 p-3 bg-muted/50 rounded-lg border-l-4 border-l-primary">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-foreground">
-                Replying to message
+              <p className="text-sm font-medium text-foreground truncate">
+                Replying:{" "}
+                {getSummary(
+                  replyTo,
+                  replyTo.senderInboxId === client?.inboxId,
+                  true
+                )}
               </p>
             </div>
             <Button
