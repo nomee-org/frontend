@@ -36,20 +36,11 @@ const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
+  // prevent background scroll while drawer is open
   React.useEffect(() => {
-    const handleFocus = (e: Event) => {
-      const target = e.target as HTMLElement;
-      setTimeout(() => {
-        target.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 300);
-    };
-    document.querySelectorAll("input, textarea").forEach((el) => {
-      el.addEventListener("focus", handleFocus);
-    });
+    document.body.style.overflow = "hidden";
     return () => {
-      document.querySelectorAll("input, textarea").forEach((el) => {
-        el.removeEventListener("focus", handleFocus);
-      });
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -60,6 +51,7 @@ const DrawerContent = React.forwardRef<
         ref={ref}
         className={cn(
           "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[80dvh] flex-col rounded-t-[16px] border bg-background overflow-y-auto",
+          "pb-[env(safe-area-inset-bottom)]",
           className
         )}
         {...props}
