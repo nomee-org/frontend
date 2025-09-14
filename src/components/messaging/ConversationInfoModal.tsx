@@ -157,7 +157,11 @@ export const ConversationInfoModal = ({
             <div className="space-y-2">
               <Label>Set a nickname</Label>
               <div className="flex items-center gap-2">
-                <Select value={domainName} onValueChange={setDomainName}>
+                <Select
+                  value={domainName}
+                  defaultValue={nickname(peerAddress)}
+                  onValueChange={setDomainName}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
