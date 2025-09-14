@@ -120,7 +120,7 @@ export function CreateGroupDialog({
   };
 
   const content = (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-auto max-h-[55vh]">
       {/* Group Name */}
       <div className="space-y-2">
         <Label htmlFor="groupName">Group Name</Label>
@@ -148,13 +148,13 @@ export function CreateGroupDialog({
       {selectedInboxIds.length > 0 && (
         <div className="space-y-2">
           <Label>Selected Members ({selectedInboxIds.length})</Label>
-          <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto">
+          <div className="flex flex-wrap gap-2">
             {selectedInboxIds.map((username) => (
               <div
                 key={username}
                 className="flex items-center space-x-2 bg-muted px-3 py-1 rounded-full"
               >
-                <span className="text-sm">{username}</span>
+                <span className="text-sm truncate max-w-40">{username}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -195,7 +195,7 @@ export function CreateGroupDialog({
           next={searchFetchNextPage}
           hasMore={searchHasNextPage}
           loader={null}
-          className="max-h-40 overflow-y-auto space-y-2 border rounded-lg p-2"
+          className="space-y-2"
           children={searchResults?.pages
             ?.flatMap((p) => p.items)
             ?.filter((user) => !selectedInboxIds.includes(user.name))
@@ -210,7 +210,9 @@ export function CreateGroupDialog({
                       <User className="h-4 w-4" />
                     </div>
                   </Avatar>
-                  <span className="font-medium text-sm">{user.name}</span>
+                  <span className="font-medium text-sm truncate max-w-40">
+                    {user.name}
+                  </span>
                 </div>
                 <Button
                   size="sm"
