@@ -26,7 +26,7 @@ export function MobileBottomNav() {
 
   if (
     matchPath("/messages/:id", location.pathname) ||
-    matchPath("/group/:id", location.pathname)
+    matchPath("/groups/:id", location.pathname)
   ) {
     return null;
   }
