@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { matchPath, Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,10 @@ function AppLayoutContent() {
     };
   }, []);
 
+  const isConversation =
+    matchPath("/messages/:id", location.pathname) ||
+    matchPath("/groups/:id", location.pathname);
+
   return (
     <SidebarProvider defaultOpen={sidebarDefaultOpen}>
       <div className="min-h-screen flex w-full">
@@ -79,8 +83,7 @@ function AppLayoutContent() {
                 )}
 
                 {location.pathname !== "/" &&
-                  !location.pathname.startsWith("/messages") &&
-                  !location.pathname.startsWith("/group") &&
+                  !isConversation &&
                   activeUsername && <UsernameSelector />}
               </div>
               <div className="flex items-center gap-3 md:gap-2">
@@ -105,7 +108,7 @@ function AppLayoutContent() {
           </header>
 
           {/* Main Content */}
-          <main className={`flex-1 pb-16 md:pb-0`}>
+          <main className={`flex-1`}>
             <div className={"max-w-[max(80rem,calc(100%-32px))] mx-auto"}>
               <Outlet />
             </div>
