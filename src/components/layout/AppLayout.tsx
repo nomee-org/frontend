@@ -111,7 +111,7 @@ function AppLayoutContent() {
           <main className={`flex-1`}>
             <div
               className={
-                "max-w-[max(80rem,calc(100%-32px))] mx-auto min-h-[100vh]"
+                "max-w-[max(80rem,calc(100%-32px))] mx-auto min-h-[calc(100vh-70px)] md:min-h-[calc(100vh)]"
               }
             >
               <Outlet />
