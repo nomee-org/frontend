@@ -27,6 +27,7 @@ import { useCreateGroupConversation } from "@/data/use-backend";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { dataService } from "@/services/doma/dataservice";
 import { useHelper } from "@/hooks/use-helper";
+import { DomainAvatar } from "../domain/DomainAvatar";
 
 interface CreateGroupDialogProps {
   isOpen: boolean;
@@ -205,11 +206,7 @@ export function CreateGroupDialog({
                 className="flex items-center justify-between p-2 hover:bg-accent rounded-lg"
               >
                 <div className="flex items-center space-x-3">
-                  <Avatar className="h-8 w-8">
-                    <div className="w-full h-full bg-muted flex items-center justify-center">
-                      <User className="h-4 w-4" />
-                    </div>
-                  </Avatar>
+                  <DomainAvatar domain={user.name} size="sm" />
                   <span className="font-medium text-sm truncate max-w-40">
                     {user.name}
                   </span>
