@@ -5,16 +5,8 @@
   text-align: center;
 }
 
-html,
 body {
-  height: 100%;
   overflow-x: hidden;
-}
-
-@supports (-webkit-touch-callout: none) {
-  .drawer-content {
-    height: 100dvh; /* ✅ dynamic viewport fixes push */
-  }
 }
 
 .logo {
