@@ -38,7 +38,6 @@ export function useMessageScroll({
     const nearBottom = distanceFromBottom < 100;
 
     setIsNearBottom(nearBottom);
-    setShouldAutoScroll(nearBottom);
 
     // Load more messages when scrolled to top
     if (scrollTop < 100 && hasNextPage && !isFetchingNextPage) {

@@ -358,7 +358,7 @@ const UserConversation = () => {
     <>
       <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-140px)]">
         {/* Chat Header */}
-        <div className="p-4 border-b border-border bg-background flex items-center justify-between">
+        <div className="p-4 sticky top-0 border-b border-border bg-background flex items-center justify-between">
           <div className="flex items-center space-x-0 md:space-x-2">
             <Button
               variant="ghost"

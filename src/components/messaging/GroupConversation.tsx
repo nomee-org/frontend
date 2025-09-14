@@ -257,7 +257,7 @@ const GroupConversation = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Chat Header */}
-      <div className="p-4 border-b border-border bg-background flex items-center justify-between">
+      <div className="p-4 sticky top-0 border-b border-border bg-background flex items-center justify-between">
         <div className="flex items-center space-x-2 md:space-x-3">
           <Button
             variant="ghost"
