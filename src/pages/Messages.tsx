@@ -52,7 +52,7 @@ const Messages = () => {
   // User and account states
   const { address } = useAccount();
   const isMobile = useIsMobile();
-  const { identifier, client, newMessage } = useXmtp();
+  const { identifier, client, lastestMessage } = useXmtp();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,9 +72,12 @@ const Messages = () => {
   }, [identifier, client]);
 
   useEffect(() => {
-    if (newMessage && !newMessage.contentType.sameAs(ContentTypeReadReceipt)) {
+    if (
+      lastestMessage &&
+      !lastestMessage.contentType.sameAs(ContentTypeReadReceipt)
+    ) {
       const index = conversations.findIndex(
-        (c) => c.id === newMessage.conversationId
+        (c) => c.id === lastestMessage.conversationId
       );
       if (index > 0) {
         setConversations((prev) => {
@@ -84,7 +87,7 @@ const Messages = () => {
         });
       }
     }
-  }, [newMessage]);
+  }, [lastestMessage]);
 
   useEffect(() => {
     let streamController: AsyncIterator<any, any, any> | undefined;

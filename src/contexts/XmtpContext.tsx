@@ -29,6 +29,7 @@ interface XmtpContextType {
   isLoading: boolean;
   error: Error | null;
   newMessages: DecodedMessage[];
+  lastestMessage?: DecodedMessage;
   clearNewMessages: (conversationId: string) => void;
   clearAllNewMessages: () => void;
 }
@@ -50,6 +51,9 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   );
   const [identifier, setIdentifier] = useState<Identifier | null>(null);
   const [newMessages, setNewMessages] = useState<DecodedMessage[]>([]);
+  const [latestMessage, setLatestMessage] = useState<
+    DecodedMessage | undefined
+  >(undefined);
 
   const clearNewMessages = (conversationId: string) => {
     setNewMessages((prev) =>
@@ -69,6 +73,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
         streamController = await client.conversations.streamAllMessages({
           onValue: (value) => {
             setNewMessages((prev) => [value, ...prev]);
+            setLatestMessage(value);
           },
           onError: (error) => {
             // setConversationsError(error);
@@ -177,6 +182,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     newMessages,
     clearNewMessages,
     clearAllNewMessages,
+    latestMessage,
   };
 
   return <XmtpContext.Provider value={value}>{children}</XmtpContext.Provider>;
