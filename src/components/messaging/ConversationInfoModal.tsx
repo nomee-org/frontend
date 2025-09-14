@@ -239,7 +239,7 @@ export const ConversationInfoModal = ({
             {isGroupConversation && (
               <Button variant="outline" className="w-full justify-start">
                 <UserPlus className="h-4 w-4 mr-2" />
-                Add Members
+                Manage Members
               </Button>
             )}
           </div>

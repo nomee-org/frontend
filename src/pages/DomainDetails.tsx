@@ -191,7 +191,7 @@ const DomainDetails = () => {
 
   if (!nameData) {
     return (
-      <div className="max-w-7xl mx-auto p-content space-content min-h-screen bg-background flex items-center justify-center">
+      <div className="max-w-7xl mx-auto p-content space-content bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-muted-foreground">
             Domain not found

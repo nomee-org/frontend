@@ -256,88 +256,88 @@ const GroupConversation = () => {
 
   return (
     <>
-      <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-140px)]">
-        {/* Chat Header */}
-        <div className="p-4 sticky top-0 border-b border-border bg-background flex items-center justify-between">
-          <div className="flex items-center space-x-0 md:space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                // Add haptic feedback and smooth transition
-                if (isMobile && navigator.vibrate) {
-                  navigator.vibrate(50);
-                }
-                navigate("/");
-              }}
-              className="h-8 w-8 p-0 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div
-              className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
-              onClick={() => setShowConversationInfo(true)}
-            >
-              <div className="relative">
-                <Avatar className="h-6 w-6 md:h-8 lg:h-10 md:w-8 lg:w-10">
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <Users className="h-3 w-3 md:h-4 lg:h-5 md:w-4 lg:w-5 text-muted-foreground" />
-                  </div>
-                </Avatar>
-              </div>
-              <div>
-                <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
-                  {(conversation as Group)?.name || "Group Chat"}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {membersData?.length} members
-                </p>
-              </div>
+      {/* Chat Header */}
+      <div className="p-4 sticky top-0 border-b border-border bg-background flex items-center justify-between">
+        <div className="flex items-center space-x-0 md:space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              // Add haptic feedback and smooth transition
+              if (isMobile && navigator.vibrate) {
+                navigator.vibrate(50);
+              }
+              navigate("/");
+            }}
+            className="h-8 w-8 p-0 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div
+            className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
+            onClick={() => setShowConversationInfo(true)}
+          >
+            <div className="relative">
+              <Avatar className="h-6 w-6 md:h-8 lg:h-10 md:w-8 lg:w-10">
+                <div className="w-full h-full bg-muted flex items-center justify-center">
+                  <Users className="h-3 w-3 md:h-4 lg:h-5 md:w-4 lg:w-5 text-muted-foreground" />
+                </div>
+              </Avatar>
             </div>
-          </div>
-
-          <div className="flex items-center space-x-1 lg:space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowMembers(true)}
-              className="h-7 w-7 md:h-8 md:w-8"
-            >
-              <Users className="h-3 w-3 md:h-4 md:w-4" />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 md:h-8 md:w-8"
-                >
-                  <MoreVertical className="h-3 w-3 md:h-4 md:w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="bg-background border border-border shadow-lg z-50"
-              >
-                <DropdownMenuItem
-                  onClick={() => setShowMuteDialog(true)}
-                  className="hover:bg-accent"
-                >
-                  <VolumeX className="h-4 w-4 mr-2" />
-                  Mute
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleSync()}
-                  className="hover:bg-accent"
-                >
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                  Sync
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div>
+              <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
+                {(conversation as Group)?.name || "Group Chat"}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {membersData?.length} members
+              </p>
+            </div>
           </div>
         </div>
 
+        <div className="flex items-center space-x-1 lg:space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowMembers(true)}
+            className="h-7 w-7 md:h-8 md:w-8"
+          >
+            <Users className="h-3 w-3 md:h-4 md:w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 md:h-8 md:w-8"
+              >
+                <MoreVertical className="h-3 w-3 md:h-4 md:w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-background border border-border shadow-lg z-50"
+            >
+              <DropdownMenuItem
+                onClick={() => setShowMuteDialog(true)}
+                className="hover:bg-accent"
+              >
+                <VolumeX className="h-4 w-4 mr-2" />
+                Mute
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleSync()}
+                className="hover:bg-accent"
+              >
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Sync
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div className="flex flex-col h-[calc(100vh-184px)] md:h-[calc(100vh-214px)]">
         {/* Pinned Messages Bar */}
         {conversation && (
           <PinnedMessagesBar
@@ -458,6 +458,7 @@ const GroupConversation = () => {
         conversationName={conversation?.name || "group"}
       /> */}
       </div>
+
       {/* Message Input */}
       <MessageInput
         conversation={conversation}
@@ -475,7 +476,7 @@ const GroupConversation = () => {
           setReplyTo(undefined);
           scrollToBottom();
         }}
-      />{" "}
+      />
     </>
   );
 };

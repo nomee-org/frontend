@@ -356,89 +356,89 @@ const UserConversation = () => {
 
   return (
     <>
-      <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-140px)]">
-        {/* Chat Header */}
-        <div className="p-4 sticky top-0 border-b border-border bg-background flex items-center justify-between">
-          <div className="flex items-center space-x-0 md:space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (isMobile && navigator.vibrate) {
-                  navigator.vibrate(50);
-                }
-                navigate("/");
-              }}
-              className="h-8 w-8 p-0 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div
-              className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
-              onClick={() => setShowConversationInfo(true)}
-            >
-              <div className="relative">
-                <DomainAvatar
-                  domain={nickname(peerAddress)}
-                  className="h-8 w-8 md:h-10 md:w-10"
-                />
-              </div>
-              <div>
-                <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
-                  {nickname(peerAddress, 8)}
-                </h3>
-                <OnlineStatus
-                  isActive={conversation?.isActive}
-                  className="mt-0.5"
-                />
-              </div>
+      {/* Chat Header */}
+      <div className="p-4 sticky top-0 border-b border-border bg-background flex items-center justify-between">
+        <div className="flex items-center space-x-0 md:space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (isMobile && navigator.vibrate) {
+                navigator.vibrate(50);
+              }
+              navigate("/");
+            }}
+            className="h-8 w-8 p-0 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div
+            className="flex items-center space-x-2 md:space-x-3 cursor-pointer hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
+            onClick={() => setShowConversationInfo(true)}
+          >
+            <div className="relative">
+              <DomainAvatar
+                domain={nickname(peerAddress)}
+                className="h-8 w-8 md:h-10 md:w-10"
+              />
             </div>
-          </div>
-
-          <div className="flex items-center space-x-1 lg:space-x-2">
-            {peerAddress && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowTradePopup(true)}
-                className="text-primary border-primary hover:bg-primary hover:text-primary-foreground text-xs lg:text-sm h-7 md:h-8"
-              >
-                Trade
-              </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 md:h-8 md:w-8"
-                >
-                  <MoreVertical className="h-3 w-3 md:h-4 md:w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="bg-background border border-border shadow-lg z-50"
-              >
-                <DropdownMenuItem
-                  onClick={() => setShowMuteDialog(true)}
-                  className="hover:bg-accent"
-                >
-                  <VolumeX className="h-4 w-4 mr-2" />
-                  Mute
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleSync()}
-                  className="hover:bg-accent"
-                >
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                  Sync
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div>
+              <h3 className="font-semibold text-xs md:text-sm lg:text-base truncate max-w-[120px] md:max-w-none">
+                {nickname(peerAddress, 8)}
+              </h3>
+              <OnlineStatus
+                isActive={conversation?.isActive}
+                className="mt-0.5"
+              />
+            </div>
           </div>
         </div>
 
+        <div className="flex items-center space-x-1 lg:space-x-2">
+          {peerAddress && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTradePopup(true)}
+              className="text-primary border-primary hover:bg-primary hover:text-primary-foreground text-xs lg:text-sm h-7 md:h-8"
+            >
+              Trade
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 md:h-8 md:w-8"
+              >
+                <MoreVertical className="h-3 w-3 md:h-4 md:w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-background border border-border shadow-lg z-50"
+            >
+              <DropdownMenuItem
+                onClick={() => setShowMuteDialog(true)}
+                className="hover:bg-accent"
+              >
+                <VolumeX className="h-4 w-4 mr-2" />
+                Mute
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleSync()}
+                className="hover:bg-accent"
+              >
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Sync
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div className="flex flex-col h-[calc(100vh-184px)] md:h-[calc(100vh-214px)]">
         {/* Pinned Messages Bar */}
         {conversation && (
           <PinnedMessagesBar
@@ -517,7 +517,7 @@ const UserConversation = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-0 px-2 md:px-0">
+                <div className="space-y-0 px-2 md:px-0 ">
                   <MessageList
                     conversation={conversation}
                     onReply={(message) => setReplyTo(message)}

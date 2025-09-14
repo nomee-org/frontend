@@ -13,6 +13,7 @@ import { useUsername } from "@/contexts/UsernameContext";
 import { UsernameSelector } from "@/components/common/UsernameSelector";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Nomee from "../common/Nomee";
+import { cn } from "@/lib/utils";
 
 function AppLayoutContent() {
   const location = useLocation();
@@ -65,7 +66,7 @@ function AppLayoutContent() {
 
   return (
     <SidebarProvider defaultOpen={sidebarDefaultOpen}>
-      <div className="min-h-screen flex w-full">
+      <div className="flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           {/* Header */}
@@ -109,7 +110,12 @@ function AppLayoutContent() {
 
           {/* Main Content */}
           <main className={`flex-1`}>
-            <div className={"max-w-[max(80rem,calc(100%-32px))] mx-auto"}>
+            <div
+              className={cn(
+                "max-w-[max(80rem,calc(100%-32px))] mx-auto",
+                isConversation ? "pb-0" : "pb-[69px] md:pb-0"
+              )}
+            >
               <Outlet />
             </div>
           </main>

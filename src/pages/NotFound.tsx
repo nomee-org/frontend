@@ -15,7 +15,7 @@ const NotFound = () => {
   return (
     <>
       <NotFoundSEO requestedPath={location.pathname} />
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4">
+      <div className="flex items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4">
         <div className="text-center max-w-md mx-auto">
           {/* Large 404 */}
           <div className="mb-8">

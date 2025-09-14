@@ -60,7 +60,7 @@ export function CreateGroupDialog({
     isLoading: searchLoading,
     fetchNextPage: searchFetchNextPage,
     hasNextPage: searchHasNextPage,
-  } = useNames(10, false, searchQuery, []);
+  } = useNames(6, false, searchQuery, []);
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
@@ -130,7 +130,7 @@ export function CreateGroupDialog({
   };
 
   const content = (
-    <div className="space-y-4 overflow-auto max-h-[55vh]">
+    <div className="space-y-4 overflow-auto max-h-[50vh]">
       {/* Group Name */}
       <div className="space-y-2">
         <Label htmlFor="groupName">Group Name</Label>
