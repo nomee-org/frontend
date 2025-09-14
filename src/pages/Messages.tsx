@@ -173,7 +173,7 @@ const Messages = () => {
         description="Access your direct messages and group chats. Stay connected with your community through secure XMTP messaging."
         keywords="messages, direct messages, group chat, XMTP, secure messaging, web3 chat"
       />
-      <div className="max-w-[1400px] mx-auto px-0 !py-0 md:p-content h-[calc(100vh-50px)] md:h-[calc(100vh-80px)] overflow-hidden flex">
+      <div className="max-w-[86rem] mx-auto px-0 !py-0 md:p-content h-[calc(100vh-50px)] md:h-[calc(100vh-80px)] overflow-hidden flex">
         {/* Conversations Sidebar */}
         <div
           className={`${
