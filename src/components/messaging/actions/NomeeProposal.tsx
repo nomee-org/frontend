@@ -39,10 +39,11 @@ export const NomeeProposal = ({
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) => {
+      (entries, obs) => {
         const [entry] = entries;
-        if (!isInView) {
-          setIsInView(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          obs.unobserve(entry.target);
         }
       },
       {
@@ -56,9 +57,7 @@ export const NomeeProposal = ({
     }
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
-      }
+      observer.disconnect();
     };
   }, []);
 
