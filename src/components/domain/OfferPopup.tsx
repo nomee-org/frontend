@@ -40,6 +40,7 @@ import { useOrderbook } from "@/hooks/use-orderbook";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
+import { CreateOfferProps } from "../messaging/actions/NomeeCreateOffer";
 
 interface OfferPopupProps {
   conversation?: Conversation;
@@ -48,7 +49,6 @@ interface OfferPopupProps {
   onClose: () => void;
   token: Token;
   domainName: string;
-  onMessage?: () => void;
 }
 
 export function OfferPopup({
@@ -58,7 +58,6 @@ export function OfferPopup({
   onClose,
   token,
   domainName,
-  onMessage,
 }: OfferPopupProps) {
   const [offerAmount, setOfferAmount] = useState("");
   const [offerType, setOfferType] = useState<"instant" | "make-offer">(
@@ -125,7 +124,7 @@ export function OfferPopup({
           orderId: token.listings[0].externalId,
         };
 
-        await buyListing({
+        const boughtListing = await buyListing({
           params,
           chainId: token.chain.networkId,
           onProgress: (progress) => {
@@ -137,6 +136,29 @@ export function OfferPopup({
           },
           signer: viemToEthersSigner(walletClient, token.chain.networkId),
         });
+
+        if (conversation) {
+          const richMessage = `bought::${JSON.stringify({
+            domainName,
+            status: boughtListing?.status,
+            transactionHash: boughtListing?.transactionHash,
+          })}`;
+
+          if (replyTo) {
+            await conversation.sendOptimistic(
+              {
+                content: richMessage,
+                reference: replyTo.id,
+                contentType: ContentTypeText,
+              } as Reply,
+              ContentTypeReply
+            );
+          } else {
+            await conversation.sendOptimistic(richMessage, ContentTypeText);
+          }
+
+          conversation.publishMessages();
+        }
 
         onClose();
       } else {
@@ -181,9 +203,9 @@ export function OfferPopup({
 
         if (conversation) {
           const richMessage = `created_offer::${JSON.stringify({
-            domainName,
             orderId: createdOffer.orders?.[0]?.orderId,
-          })}`;
+            domainName,
+          } as CreateOfferProps)}`;
 
           if (replyTo) {
             await conversation.sendOptimistic(
@@ -205,8 +227,6 @@ export function OfferPopup({
       }
     } catch (error) {
       console.log(error);
-
-      toast.error(error?.message);
     }
   };
 
@@ -336,17 +356,6 @@ export function OfferPopup({
         <Button onClick={handleSubmit} className="flex-1">
           {offerType === "instant" ? "Buy Now" : "Submit Offer"}
         </Button>
-
-        {onMessage && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onMessage}
-            title="Send Message"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </Button>
-        )}
       </div>
     </>
   );

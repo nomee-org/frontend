@@ -1,10 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
+import { useHelper } from "@/hooks/use-helper";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { LetterText } from "lucide-react";
 import { useState } from "react";
+
+export interface ProposalProps {
+  domainName: string;
+  amount: number;
+  currency: string;
+}
 
 export const NomeeProposal = ({
   props,
@@ -12,21 +19,24 @@ export const NomeeProposal = ({
   conversation,
   message,
 }: {
-  props: any;
+  props: ProposalProps;
   isOwn: boolean;
   conversation: Conversation;
   message?: DecodedMessage;
 }) => {
   const [loading, setLoading] = useState(false);
 
+  const { formatLargeNumber } = useHelper();
+
   const handleCancel = async () => {
     try {
       setLoading(true);
+      const richMessage = `cancelled::${JSON.stringify({})}`;
 
       if (message) {
         await conversation?.sendOptimistic(
           {
-            content: "Cancelled",
+            content: richMessage,
             reference: message.id,
             referenceInboxId: message.senderInboxId,
             contentType: ContentTypeText,
@@ -34,7 +44,7 @@ export const NomeeProposal = ({
           ContentTypeReply
         );
       } else {
-        await conversation?.sendOptimistic("Cancelled", ContentTypeText);
+        await conversation?.sendOptimistic(richMessage, ContentTypeText);
       }
 
       await conversation.publishMessages();
@@ -48,10 +58,12 @@ export const NomeeProposal = ({
   const handleReject = async () => {
     try {
       setLoading(true);
+      const richMessage = `rejected::${JSON.stringify({})}`;
+
       if (message) {
         await conversation?.sendOptimistic(
           {
-            content: "Rejected",
+            content: richMessage,
             reference: message.id,
             referenceInboxId: message.senderInboxId,
             contentType: ContentTypeText,
@@ -59,7 +71,7 @@ export const NomeeProposal = ({
           ContentTypeReply
         );
       } else {
-        await conversation?.sendOptimistic("Rejected", ContentTypeText);
+        await conversation?.sendOptimistic(richMessage, ContentTypeText);
       }
 
       conversation.publishMessages();
@@ -77,7 +89,9 @@ export const NomeeProposal = ({
       {/* Title */}
       <div className="text-base font-semibold flex items-center gap-1">
         <LetterText />
-        Proposal
+        {isOwn
+          ? "You sent a listing proposal."
+          : "You received a listing proposal."}
       </div>
 
       {/* Info */}
@@ -88,7 +102,9 @@ export const NomeeProposal = ({
         </div>
         <div className="flex items-center justify-between">
           <span className="font-medium">Amount:</span>{" "}
-          <span className="text-primary-foreground">{props.amount}</span>
+          <span className="text-primary-foreground">
+            {formatLargeNumber(props.amount)}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="font-medium">Currency:</span>{" "}
@@ -106,7 +122,7 @@ export const NomeeProposal = ({
             onClick={handleAccept}
             disabled={loading}
           >
-            Create
+            List
           </Button>
           <Button
             variant="destructive"

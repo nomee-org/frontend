@@ -24,8 +24,13 @@ import {
 import { useHelper } from "@/hooks/use-helper";
 import { formatUnits } from "viem";
 import { useOrderbook } from "@/hooks/use-orderbook";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { ContentTypeText } from "@xmtp/content-type-text";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 
 interface CancelOfferPopupProps {
+  conversation?: Conversation;
+  replyTo?: DecodedMessage;
   isOpen: boolean;
   onClose: () => void;
   token: Token;
@@ -34,6 +39,8 @@ interface CancelOfferPopupProps {
 }
 
 export function CancelOfferPopup({
+  conversation,
+  replyTo,
   isOpen,
   onClose,
   token,
@@ -58,7 +65,7 @@ export function CancelOfferPopup({
         orderId: offer.externalId,
       };
 
-      await cancelOffer({
+      const cancelledOffer = await cancelOffer({
         params,
         chainId: `eip155:${Number(parseCAIP10(token.chain.networkId).chainId)}`,
         onProgress: (progress) => {
@@ -70,6 +77,29 @@ export function CancelOfferPopup({
         },
         signer: viemToEthersSigner(walletClient, token.chain.networkId),
       });
+
+      if (conversation) {
+        const richMessage = `cancelled::${JSON.stringify({
+          domainName,
+          status: cancelledOffer.status,
+          transactionHash: cancelledOffer.transactionHash,
+        })}`;
+
+        if (replyTo) {
+          await conversation.sendOptimistic(
+            {
+              content: richMessage,
+              reference: replyTo.id,
+              contentType: ContentTypeText,
+            } as Reply,
+            ContentTypeReply
+          );
+        } else {
+          await conversation.sendOptimistic(richMessage, ContentTypeText);
+        }
+
+        conversation.publishMessages();
+      }
 
       toast.success("Offer cancelled successfully");
 

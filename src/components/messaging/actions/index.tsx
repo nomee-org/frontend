@@ -1,6 +1,7 @@
 import { NomeeProposal } from "./NomeeProposal";
-import { NomeeCreatedListing } from "./NomeeCreatedListing";
+import { NomeeCreateListing } from "./NomeeCreateListing";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { NomeeCreateOffer } from "./NomeeCreateOffer";
 
 export const NomeeAction = ({
   conversation,
@@ -36,7 +37,29 @@ export const NomeeAction = ({
 
   if (data.startsWith("created_listing::")) {
     try {
-      return <NomeeCreatedListing props={JSON.parse(text)} isOwn={isOwn} />;
+      return (
+        <NomeeCreateListing
+          props={JSON.parse(text)}
+          isOwn={isOwn}
+          conversation={conversation}
+          message={message}
+        />
+      );
+    } catch {
+      return <p className="text-destructive">Invalid JSON payload.</p>;
+    }
+  }
+
+  if (data.startsWith("created_offer::")) {
+    try {
+      return (
+        <NomeeCreateOffer
+          props={JSON.parse(text)}
+          isOwn={isOwn}
+          conversation={conversation}
+          message={message}
+        />
+      );
     } catch {
       return <p className="text-destructive">Invalid JSON payload.</p>;
     }

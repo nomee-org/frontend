@@ -33,6 +33,7 @@ import { ContentTypeText } from "@xmtp/content-type-text";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { ListDomainPopup } from "../domain/ListDomainPopup";
 import { formatUnits, parseUnits } from "viem";
+import { CreateListingProps } from "./actions/NomeeCreateListing";
 
 interface TradeOptionPopupProps {
   conversation: Conversation;
@@ -241,16 +242,8 @@ export function TradeOptionPopup({
             if (conversation) {
               const richMessage = `created_listing::${JSON.stringify({
                 domainName: name.name,
-                orderId: listing?.externalId,
-                contract: token.tokenAddress,
-                tokenId: token.tokenId,
-                price: formatUnits(
-                  BigInt(listing.price),
-                  listing.currency.decimals
-                ).toString(),
-                currency: listing.currency?.symbol,
-                expiresMs: listing.expiresAt,
-              })}`;
+                orderId: listing.externalId,
+              } as CreateListingProps)}`;
 
               if (replyTo) {
                 await conversation.sendOptimistic(

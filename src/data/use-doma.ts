@@ -19,6 +19,8 @@ export const queryKeys = {
   defaultOffers: ["offers"] as const,
   allOffers: (page: number, take: number, tokenId: string) =>
     [...queryKeys.defaultOffers, page, take, tokenId] as const,
+  singleOffer: (externalId: string) =>
+    [...queryKeys.defaultOffers, externalId] as const,
 };
 
 export function useNames(
@@ -108,5 +110,13 @@ export function useOffers(take: number, tokenId: string) {
     },
 
     initialPageParam: 1,
+  });
+}
+
+export function useOffer(externalId: string) {
+  return useQuery({
+    queryKey: queryKeys.singleOffer(externalId),
+    queryFn: () => dataService.getOffer({ externalId }),
+    enabled: !!externalId,
   });
 }

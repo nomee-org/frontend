@@ -116,8 +116,9 @@ export function AcceptRejectOfferPopup({
         });
 
         if (conversation) {
-          const richMessage = `accepted_offer::${JSON.stringify({
+          const richMessage = `accepted::${JSON.stringify({
             domainName,
+            status: acceptedOffer.status,
             transactionHash: acceptedOffer.transactionHash,
           })}`;
 
@@ -158,8 +159,9 @@ export function AcceptRejectOfferPopup({
         });
 
         if (conversation) {
-          const richMessage = `cancelled_offer::${JSON.stringify({
+          const richMessage = `rejected::${JSON.stringify({
             domainName,
+            status: cancelledOffer.status,
             transactionHash: cancelledOffer.transactionHash,
           })}`;
 

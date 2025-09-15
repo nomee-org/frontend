@@ -39,6 +39,7 @@ import { useOrderbook } from "@/hooks/use-orderbook";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
+import { CreateListingProps } from "../messaging/actions/NomeeCreateListing";
 
 interface ListDomainPopupProps {
   conversation?: Conversation;
@@ -167,12 +168,7 @@ export function ListDomainPopup({
         const richMessage = `created_listing::${JSON.stringify({
           domainName,
           orderId: createdListing.orders?.[0]?.orderId,
-          contract: token.tokenAddress,
-          tokenId: token.tokenId,
-          price: listingPrice,
-          currency: selectedCurrency.symbol,
-          expiresMs: Date.now() + durationMs,
-        })}`;
+        } as CreateListingProps)}`;
 
         if (replyTo) {
           await conversation.sendOptimistic(

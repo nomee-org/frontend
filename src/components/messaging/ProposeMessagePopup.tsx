@@ -29,6 +29,7 @@ import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { Name } from "@/types/doma";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
+import { ProposalProps } from "./actions/NomeeProposal";
 
 interface ProposeMessagePopupProps {
   conversation: Conversation;
@@ -87,9 +88,9 @@ const ProposeMessagePopup = ({
     try {
       const richMessage = `proposal::${JSON.stringify({
         domainName,
-        amount,
+        amount: Number(amount),
         currency,
-      })}`;
+      } as ProposalProps)}`;
 
       if (replyTo) {
         await conversation.sendOptimistic(
