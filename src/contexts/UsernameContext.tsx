@@ -42,32 +42,26 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
   const { data: namesData } = useOwnedNames(address, 10, []);
   const { data: profileData, refetch: refetchProfile } = useGetUserProfile();
 
-  const lastOpenedAt = new Date(
-    localStorage.getItem(`${activeUsername}:last-opened-at`)
-  );
-
   const _setActiveUsername = (newUsername: string) => {
     setIsSwitching(true);
 
-    backendService()
-      .getToken(newUsername)
-      .then((token) => {
-        if (token && token.accessToken && token.refreshToken) {
-          backendService().setTokens(token.accessToken, token.refreshToken);
+    backendService.getToken(newUsername).then((token) => {
+      if (token && token.accessToken && token.refreshToken) {
+        backendService.setTokens(token.accessToken, token.refreshToken);
 
-          refetchProfile();
+        refetchProfile();
 
-          webSocketService.updateConfig({
-            token: token.accessToken,
-            username: activeUsername,
-          });
+        webSocketService.updateConfig({
+          token: token.accessToken,
+          username: activeUsername,
+        });
 
-          webSocketService.connect();
-        }
+        webSocketService.connect();
+      }
 
-        setActiveUsername(newUsername);
-        setIsSwitching(false);
-      });
+      setActiveUsername(newUsername);
+      setIsSwitching(false);
+    });
   };
 
   useEffect(() => {
@@ -90,7 +84,7 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
 
   useEffect(() => {
     if (token && token.accessToken && token.refreshToken) {
-      backendService().setTokens(token.accessToken, token.refreshToken);
+      backendService.setTokens(token.accessToken, token.refreshToken);
 
       refetchProfile();
 

@@ -8,7 +8,7 @@ export class ApiClient {
   private refreshToken: string | null = null;
   private baseURL: string;
 
-  constructor(baseURL: string, onRequestToken?: () => Promise<string>) {
+  constructor(baseURL: string) {
     this.baseURL = baseURL;
     this.client = axios.create({
       baseURL,
@@ -18,17 +18,14 @@ export class ApiClient {
       },
     });
 
-    this.setupInterceptors(onRequestToken);
+    this.setupInterceptors();
   }
 
-  private setupInterceptors(onRequestToken?: () => Promise<string>): void {
+  private setupInterceptors(): void {
     this.client.interceptors.request.use(
       async (config) => {
         if (this.accessToken) {
           config.headers.Authorization = `Bearer ${this.accessToken}`;
-        } else {
-          const signature = await onRequestToken?.();
-          config.headers["signature"] = signature;
         }
         return config;
       },

@@ -296,7 +296,7 @@ export function useGetToken(
 ) {
   return useQuery<AuthResponse, Error>({
     queryKey: queryKeys.auth.token(username),
-    queryFn: () => backendService().getToken(username),
+    queryFn: () => backendService.getToken(username),
     ...options,
   });
 }
@@ -307,13 +307,13 @@ export function useRefreshToken() {
     Error,
     RefreshTokenDto
   >({
-    mutationFn: (dto) => backendService().refreshToken(dto),
+    mutationFn: (dto) => backendService.refreshToken(dto),
   });
 }
 
 export function useLogout() {
   return useMutation<{ message: string }, Error, void>({
-    mutationFn: () => backendService().logout(),
+    mutationFn: () => backendService.logout(),
   });
 }
 
@@ -326,7 +326,7 @@ export function useSetTokens(activeUsername?: string) {
     { accessToken: string; refreshToken: string }
   >({
     mutationFn: ({ accessToken, refreshToken }) => {
-      backendService().setTokens(accessToken, refreshToken);
+      backendService.setTokens(accessToken, refreshToken);
       return Promise.resolve();
     },
     onSuccess: () => {
@@ -342,7 +342,7 @@ export function useClearTokens(activeUsername?: string) {
 
   return useMutation<void, Error, void>({
     mutationFn: () => {
-      backendService().clearTokens();
+      backendService.clearTokens();
       return Promise.resolve();
     },
     onSuccess: () => {
@@ -358,7 +358,7 @@ export function useGetUserProfile(
 ) {
   return useQuery<IUserProfile, Error>({
     queryKey: queryKeys.users.profile,
-    queryFn: () => backendService().getUserProfile(),
+    queryFn: () => backendService.getUserProfile(),
     ...options,
   });
 }
@@ -367,7 +367,7 @@ export function useUpdateProfile(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<IUser, Error, UpdateProfileDto>({
-    mutationFn: (dto) => backendService().updateProfile(dto),
+    mutationFn: (dto) => backendService.updateProfile(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.profile(activeUsername),
@@ -384,7 +384,7 @@ export function useDeleteAccount() {
     Error,
     DeleteAccountDto
   >({
-    mutationFn: (dto) => backendService().deleteAccount(dto),
+    mutationFn: (dto) => backendService.deleteAccount(dto),
     onSuccess: () => {
       queryClient.clear();
     },
@@ -395,7 +395,7 @@ export function useDeactivateAccount(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, DeleteAccountDto>({
-    mutationFn: (dto) => backendService().deactivateAccount(dto),
+    mutationFn: (dto) => backendService.deactivateAccount(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.profile(activeUsername),
@@ -408,7 +408,7 @@ export function useReactivateAccount(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, void>({
-    mutationFn: () => backendService().reactivateAccount(),
+    mutationFn: () => backendService.reactivateAccount(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.profile(activeUsername),
@@ -424,7 +424,7 @@ export function useGetUserByUsername(
 ) {
   return useQuery<IUserProfile, Error>({
     queryKey: queryKeys.users.byUsername(username, activeUsername),
-    queryFn: () => backendService().getUserByUsername(username, activeUsername),
+    queryFn: () => backendService.getUserByUsername(username, activeUsername),
     ...options,
   });
 }
@@ -433,7 +433,7 @@ export function useFollowUser(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (username) => backendService().followUser(username),
+    mutationFn: (username) => backendService.followUser(username),
     onSuccess: (_, username) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.byUsername(username, activeUsername),
@@ -449,7 +449,7 @@ export function useUnfollowUser(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (username) => backendService().unfollowUser(username),
+    mutationFn: (username) => backendService.unfollowUser(username),
     onSuccess: (_, username) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.byUsername(username, activeUsername),
@@ -465,7 +465,7 @@ export function useBlockUser(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (username) => backendService().blockUser(username),
+    mutationFn: (username) => backendService.blockUser(username),
     onSuccess: (_, username) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.byUsername(username, activeUsername),
@@ -478,7 +478,7 @@ export function useUnblockUser(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (username) => backendService().unblockUser(username),
+    mutationFn: (username) => backendService.unblockUser(username),
     onSuccess: (_, username) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.byUsername(username, activeUsername),
@@ -495,7 +495,7 @@ export function useGetFollowers(
   return useInfiniteQuery({
     queryKey: queryKeys.users.followers(username, 1, limit, activeUsername),
     queryFn: ({ pageParam }: { pageParam: number }) =>
-      backendService().getFollowers(username, pageParam, limit, activeUsername),
+      backendService.getFollowers(username, pageParam, limit, activeUsername),
     getNextPageParam: (lastPage: any) => {
       return lastPage.pagination?.hasNext
         ? lastPage.pagination.page + 1
@@ -518,7 +518,7 @@ export function useGetFollowing(
   return useInfiniteQuery({
     queryKey: queryKeys.users.following(username, 1, limit, activeUsername),
     queryFn: ({ pageParam }: { pageParam: number }) =>
-      backendService().getFollowing(username, pageParam, limit, activeUsername),
+      backendService.getFollowing(username, pageParam, limit, activeUsername),
     getNextPageParam: (lastPage: any) => {
       return lastPage.pagination?.hasNext
         ? lastPage.pagination.page + 1
@@ -539,14 +539,14 @@ export function useGetFollowSuggestions(
 ) {
   return useQuery<IFollowSuggestion[], Error>({
     queryKey: queryKeys.users.followSuggestions(activeUsername),
-    queryFn: () => backendService().getFollowSuggestions(activeUsername),
+    queryFn: () => backendService.getFollowSuggestions(activeUsername),
     ...options,
   });
 }
 
 export function useProvideSuggestionFeedback() {
   return useMutation<{ message: string }, Error, FollowSuggestionFeedbackDto>({
-    mutationFn: (dto) => backendService().provideSuggestionFeedback(dto),
+    mutationFn: (dto) => backendService.provideSuggestionFeedback(dto),
   });
 }
 
@@ -554,7 +554,7 @@ export function useRefreshSuggestions(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, void>({
-    mutationFn: () => backendService().refreshSuggestions(),
+    mutationFn: () => backendService.refreshSuggestions(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.followSuggestions(activeUsername),
@@ -567,7 +567,7 @@ export function useRequestVerification(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<IUserProfile, Error, void>({
-    mutationFn: () => backendService().requestVerification(),
+    mutationFn: () => backendService.requestVerification(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.profile(activeUsername),
@@ -580,7 +580,7 @@ export function useVerifyUser(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<IUserProfile, Error, string>({
-    mutationFn: (username) => backendService().verifyUser(username),
+    mutationFn: (username) => backendService.verifyUser(username),
     onSuccess: (_, username) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.byUsername(username, activeUsername),
@@ -594,7 +594,7 @@ export function useWatchUser(activeUsername?: string) {
 
   return useMutation<{ message: string }, Error, string>({
     mutationFn: (usernameToWatch: string) =>
-      backendService().watchUsername({ usernameToWatch }),
+      backendService.watchUsername({ usernameToWatch }),
     onSuccess: (_) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.profile(activeUsername),
@@ -608,7 +608,7 @@ export function useUnWatchUser(activeUsername?: string) {
 
   return useMutation<{ message: string }, Error, string>({
     mutationFn: (usernameToUnwatch: string) =>
-      backendService().unwatchUsername(usernameToUnwatch),
+      backendService.unwatchUsername(usernameToUnwatch),
     onSuccess: (_) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.profile(activeUsername),
@@ -621,7 +621,7 @@ export function useUpdateInterests(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<IUserProfile, Error, UpdateInterestsDto>({
-    mutationFn: (dto) => backendService().updateInterests(dto),
+    mutationFn: (dto) => backendService.updateInterests(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.users.profile(activeUsername),
@@ -638,7 +638,7 @@ export function useGetInterestSuggestions(
 ) {
   return useQuery<{ categories: string[]; popularHashtags: string[] }, Error>({
     queryKey: queryKeys.users.interestSuggestions,
-    queryFn: () => backendService().getInterestSuggestions(),
+    queryFn: () => backendService.getInterestSuggestions(),
     ...options,
   });
 }
@@ -652,7 +652,7 @@ export function useCreatePost() {
     { createPostDto: CreatePostDto; mediaFiles?: File[] }
   >({
     mutationFn: ({ createPostDto, mediaFiles }) =>
-      backendService().createPost(createPostDto, mediaFiles),
+      backendService.createPost(createPostDto, mediaFiles),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.posts.all] });
       queryClient.invalidateQueries({ queryKey: [queryKeys.feeds.timeline] });
@@ -684,7 +684,7 @@ export function useGetPostProgress(
     Error
   >({
     queryKey: queryKeys.posts.progress(postId),
-    queryFn: () => backendService().getPostProgress(postId),
+    queryFn: () => backendService.getPostProgress(postId),
     ...options,
   });
 }
@@ -697,7 +697,7 @@ export function useGetPosts(
   return useInfiniteQuery({
     queryKey: queryKeys.posts.all(1, limit, username, activeUsername),
     queryFn: ({ pageParam }: { pageParam: number }) =>
-      backendService().getPosts(pageParam, limit, username, activeUsername),
+      backendService.getPosts(pageParam, limit, username, activeUsername),
     getNextPageParam: (lastPage: any) => {
       return lastPage.pagination?.hasNext
         ? lastPage.pagination.page + 1
@@ -719,7 +719,7 @@ export function useGetTrendingPosts(
   return useInfiniteQuery({
     queryKey: queryKeys.posts.trending(1, limit, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getTrendingPosts(pageParam, limit, activeUsername),
+      backendService.getTrendingPosts(pageParam, limit, activeUsername),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -741,7 +741,7 @@ export function useGetPost(
 ) {
   return useQuery<IPost, Error>({
     queryKey: queryKeys.posts.byId(postId, activeUsername),
-    queryFn: () => backendService().getPost(postId, activeUsername),
+    queryFn: () => backendService.getPost(postId, activeUsername),
     ...options,
   });
 }
@@ -755,7 +755,7 @@ export function useUpdatePost(activeUsername?: string) {
     { postId: string; updatePostDto: UpdatePostDto; mediaFiles?: File[] }
   >({
     mutationFn: ({ postId, updatePostDto, mediaFiles }) =>
-      backendService().updatePost(postId, updatePostDto, mediaFiles),
+      backendService.updatePost(postId, updatePostDto, mediaFiles),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(data.id, activeUsername),
@@ -770,7 +770,7 @@ export function useDeletePost(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (postId) => backendService().deletePost(postId),
+    mutationFn: (postId) => backendService.deletePost(postId),
     onSuccess: (_, postId) => {
       queryClient.removeQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -785,7 +785,7 @@ export function useLikePost(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (postId) => backendService().likePost(postId),
+    mutationFn: (postId) => backendService.likePost(postId),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -801,7 +801,7 @@ export function useUnlikePost(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (postId) => backendService().unlikePost(postId),
+    mutationFn: (postId) => backendService.unlikePost(postId),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -817,7 +817,7 @@ export function usePinPost(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (postId) => backendService().pinPost(postId),
+    mutationFn: (postId) => backendService.pinPost(postId),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -830,7 +830,7 @@ export function useUnpinPost(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (postId) => backendService().unpinPost(postId),
+    mutationFn: (postId) => backendService.unpinPost(postId),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -848,7 +848,7 @@ export function useGetPostLikes(
   return useInfiniteQuery({
     queryKey: queryKeys.posts.likes(postId, 1, limit, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getPostLikes(postId, pageParam, limit),
+      backendService.getPostLikes(postId, pageParam, limit),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -873,7 +873,7 @@ export function useVotePoll(activeUsername?: string) {
     { postId: string; votePollDto: VotePollDto }
   >({
     mutationFn: ({ postId, votePollDto }) =>
-      backendService().votePoll(postId, votePollDto),
+      backendService.votePoll(postId, votePollDto),
     onSuccess: (_, { postId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -889,7 +889,7 @@ export function useRemovePollVote(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (postId) => backendService().removePollVote(postId),
+    mutationFn: (postId) => backendService.removePollVote(postId),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -908,7 +908,7 @@ export function useGetPollResults(
 ) {
   return useQuery<{ poll: any }, Error>({
     queryKey: queryKeys.posts.pollResults(postId, activeUsername),
-    queryFn: () => backendService().getPollResults(postId, activeUsername),
+    queryFn: () => backendService.getPollResults(postId, activeUsername),
     ...options,
   });
 }
@@ -928,7 +928,7 @@ export function useGetPollVoters(
       activeUsername
     ),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getPollVoters(
+      backendService.getPollVoters(
         postId,
         optionId,
         pageParam,
@@ -953,7 +953,7 @@ export function useRepost(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<IPost, Error, string>({
-    mutationFn: (postId) => backendService().repost(postId),
+    mutationFn: (postId) => backendService.repost(postId),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -971,7 +971,7 @@ export function useRepostWithComment(activeUsername?: string) {
 
   return useMutation<IPost, Error, { postId: string; comment: string }>({
     mutationFn: ({ postId, comment }) =>
-      backendService().repostWithComment(postId, comment),
+      backendService.repostWithComment(postId, comment),
     onSuccess: (_, { postId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -988,7 +988,7 @@ export function useRemoveRepost(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (postId) => backendService().removeRepost(postId),
+    mutationFn: (postId) => backendService.removeRepost(postId),
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.byId(postId, activeUsername),
@@ -1009,7 +1009,7 @@ export function useGetReposts(
   return useInfiniteQuery({
     queryKey: queryKeys.posts.reposts(postId, 1, limit, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getReposts(postId, pageParam, limit, activeUsername),
+      backendService.getReposts(postId, pageParam, limit, activeUsername),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -1029,7 +1029,7 @@ export function useCreateComment(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<IComment, Error, CreateCommentDto>({
-    mutationFn: (dto) => backendService().createComment(dto),
+    mutationFn: (dto) => backendService.createComment(dto),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.comments.byPost(data.postId, 1, 20, activeUsername),
@@ -1046,12 +1046,7 @@ export function useGetPostComments(
   return useInfiniteQuery({
     queryKey: queryKeys.comments.byPost(postId, 1, limit, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getPostComments(
-        postId,
-        pageParam,
-        limit,
-        activeUsername
-      ),
+      backendService.getPostComments(postId, pageParam, limit, activeUsername),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -1074,7 +1069,7 @@ export function useGetCommentReplies(
   return useInfiniteQuery({
     queryKey: queryKeys.comments.replies(commentId, 1, limit, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getCommentReplies(
+      backendService.getCommentReplies(
         commentId,
         pageParam,
         limit,
@@ -1103,7 +1098,7 @@ export function useUpdateComment(activeUsername?: string) {
     { commentId: string; updateCommentDto: UpdateCommentDto }
   >({
     mutationFn: ({ commentId, updateCommentDto }) =>
-      backendService().updateComment(commentId, updateCommentDto),
+      backendService.updateComment(commentId, updateCommentDto),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.comments.byId(data.id),
@@ -1123,7 +1118,7 @@ export function useDeleteComment(activeUsername?: string) {
     Error,
     { commentId: string; postId: string }
   >({
-    mutationFn: ({ commentId }) => backendService().deleteComment(commentId),
+    mutationFn: ({ commentId }) => backendService.deleteComment(commentId),
     onSuccess: (_, { postId }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.comments.byPost(postId, 1, 20, activeUsername),
@@ -1136,7 +1131,7 @@ export function useLikeComment(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (commentId) => backendService().likeComment(commentId),
+    mutationFn: (commentId) => backendService.likeComment(commentId),
     onSuccess: (_, commentId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.comments.byId(commentId),
@@ -1149,7 +1144,7 @@ export function useUnlikeComment(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, string>({
-    mutationFn: (commentId) => backendService().unlikeComment(commentId),
+    mutationFn: (commentId) => backendService.unlikeComment(commentId),
     onSuccess: (_, commentId) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.comments.byId(commentId),
@@ -1167,7 +1162,7 @@ export function useGetTimeline(
   return useInfiniteQuery({
     queryKey: queryKeys.feeds.timeline(1, limit, username, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getTimeline(pageParam, limit, username),
+      backendService.getTimeline(pageParam, limit, username),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -1190,7 +1185,7 @@ export function useGetTrendingHashtags(
 ) {
   return useQuery<IHashtag[], Error>({
     queryKey: queryKeys.hashtags.trending(limit, activeUsername),
-    queryFn: () => backendService().getTrendingHashtags(limit, activeUsername),
+    queryFn: () => backendService.getTrendingHashtags(limit, activeUsername),
     ...options,
   });
 }
@@ -1203,8 +1198,7 @@ export function useSearchHashtags(
 ) {
   return useQuery<IHashtag[], Error>({
     queryKey: queryKeys.hashtags.search(query, limit, activeUsername),
-    queryFn: () =>
-      backendService().searchHashtags(query, limit, activeUsername),
+    queryFn: () => backendService.searchHashtags(query, limit, activeUsername),
     enabled: query.length > 0,
     ...options,
   });
@@ -1218,7 +1212,7 @@ export function useGetHashtagPosts(
   return useInfiniteQuery({
     queryKey: queryKeys.hashtags.posts(tag, 1, limit, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getHashtagPosts(tag, pageParam, limit, activeUsername),
+      backendService.getHashtagPosts(tag, pageParam, limit, activeUsername),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -1241,7 +1235,7 @@ export function useSearchUsers(
 ) {
   return useQuery<{ data: IUserBasic[]; total: number }, Error>({
     queryKey: queryKeys.search.users(query, limit, activeUsername),
-    queryFn: () => backendService().searchUsers(query, limit, activeUsername),
+    queryFn: () => backendService.searchUsers(query, limit, activeUsername),
     enabled: query.length > 0,
     ...options,
   });
@@ -1255,7 +1249,7 @@ export function useSearchPosts(
   return useInfiniteQuery({
     queryKey: queryKeys.search.posts(query, 1, limit, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().searchPosts(query, pageParam, limit, activeUsername),
+      backendService.searchPosts(query, pageParam, limit, activeUsername),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -1280,7 +1274,7 @@ export function useSearchHashtagsInSearch(
   return useQuery<IHashtag[], Error>({
     queryKey: queryKeys.search.hashtags(query, limit, activeUsername),
     queryFn: () =>
-      backendService().searchHashtagsInSearch(query, limit, activeUsername),
+      backendService.searchHashtagsInSearch(query, limit, activeUsername),
     enabled: query.length > 0,
     ...options,
   });
@@ -1296,7 +1290,7 @@ export function useAutocomplete(
   return useQuery<IUserBasic[] | IHashtag[], Error>({
     queryKey: queryKeys.search.autocomplete(query, type, limit, activeUsername),
     queryFn: () =>
-      backendService().getAutocomplete(query, type, limit, activeUsername),
+      backendService.getAutocomplete(query, type, limit, activeUsername),
     enabled: query.length > 0,
     ...options,
   });
@@ -1310,7 +1304,7 @@ export function useNotifications(
   return useInfiniteQuery({
     queryKey: queryKeys.notifications.all(1, limit, unreadOnly, activeUsername),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getNotifications(pageParam, limit, unreadOnly),
+      backendService.getNotifications(pageParam, limit, unreadOnly),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -1330,7 +1324,7 @@ export function useMarkNotificationAsRead(activeUsername?: string) {
 
   return useMutation<{ message: string }, Error, string>({
     mutationFn: (notificationId) =>
-      backendService().markNotificationAsRead(notificationId),
+      backendService.markNotificationAsRead(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [queryKeys.notifications.all],
@@ -1346,7 +1340,7 @@ export function useMarkAllNotificationsAsRead(activeUsername?: string) {
   const queryClient = useQueryClient();
 
   return useMutation<{ message: string }, Error, void>({
-    mutationFn: () => backendService().markAllNotificationsAsRead(),
+    mutationFn: () => backendService.markAllNotificationsAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [queryKeys.notifications.all],
@@ -1363,7 +1357,7 @@ export function useDeleteNotification() {
 
   return useMutation<{ message: string }, Error, string>({
     mutationFn: (notificationId) =>
-      backendService().deleteNotification(notificationId),
+      backendService.deleteNotification(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [queryKeys.notifications.all],
@@ -1374,14 +1368,14 @@ export function useDeleteNotification() {
 
 export function useUploadMedia() {
   return useMutation<string[], Error, { files: File[] }>({
-    mutationFn: ({ files }) => backendService().uploadMultipleFiles(files),
+    mutationFn: ({ files }) => backendService.uploadMultipleFiles(files),
   });
 }
 
 export function useUploadProgress(uploadId: string) {
   return useQuery<UploadProgress, Error>({
     queryKey: queryKeys.media.uploadProgress(uploadId),
-    queryFn: () => backendService().getUploadProgress(uploadId),
+    queryFn: () => backendService.getUploadProgress(uploadId),
   });
 }
 
@@ -1395,7 +1389,7 @@ export function useDownloadUrl(fileUrl: string) {
     Error
   >({
     queryKey: queryKeys.media.downloadUrl(fileUrl),
-    queryFn: () => backendService().getDownloadUrl(fileUrl),
+    queryFn: () => backendService.getDownloadUrl(fileUrl),
   });
 }
 
@@ -1410,7 +1404,7 @@ export function useGetMediaInfo(fileUrl: string) {
     Error
   >({
     queryKey: queryKeys.media.info(fileUrl),
-    queryFn: () => backendService().getMediaInfo(fileUrl),
+    queryFn: () => backendService.getMediaInfo(fileUrl),
   });
 }
 
@@ -1560,7 +1554,7 @@ export function useGetStickerPacks(limit: number = 20) {
   return useInfiniteQuery({
     queryKey: queryKeys.stickers.packs(1, limit),
     queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      backendService().getStickerPacks(pageParam, limit),
+      backendService.getStickerPacks(pageParam, limit),
     getNextPageParam: (lastPage) => {
       return lastPage.pagination.page < lastPage.pagination.totalPages
         ? lastPage.pagination.page + 1
@@ -1581,7 +1575,7 @@ export function useGetStickerPack(
 ) {
   return useQuery<StickerPack, Error>({
     queryKey: queryKeys.stickers.pack(packId),
-    queryFn: () => backendService().getStickerPack(packId),
+    queryFn: () => backendService.getStickerPack(packId),
     ...options,
   });
 }
@@ -1592,7 +1586,7 @@ export function useGetTrendingStickers(
 ) {
   return useQuery<Sticker[], Error>({
     queryKey: queryKeys.stickers.trending(limit),
-    queryFn: () => backendService().getTrendingStickers(limit),
+    queryFn: () => backendService.getTrendingStickers(limit),
     ...options,
   });
 }
@@ -1603,7 +1597,7 @@ export function useGetRecentStickers(
 ) {
   return useQuery<Sticker[], Error>({
     queryKey: queryKeys.stickers.recent(limit),
-    queryFn: () => backendService().getRecentStickers(limit),
+    queryFn: () => backendService.getRecentStickers(limit),
     ...options,
   });
 }
@@ -1621,7 +1615,7 @@ export function useGetFeedAds(
     Error
   >({
     queryKey: queryKeys.ads.feed(context, limit),
-    queryFn: () => backendService().getFeedAds(context, limit),
+    queryFn: () => backendService.getFeedAds(context, limit),
   });
 }
 
@@ -1629,7 +1623,7 @@ export function useCreateAd() {
   const queryClient = useQueryClient();
 
   return useMutation<ISponsoredAd, Error, CreateAdDto>({
-    mutationFn: (dto) => backendService().createAd(dto),
+    mutationFn: (dto) => backendService.createAd(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.ads.feed] });
     },
@@ -1645,7 +1639,7 @@ export function useUpdateAd() {
     { adId: string; updateAdDto: UpdateAdDto }
   >({
     mutationFn: ({ adId, updateAdDto }) =>
-      backendService().updateAd(adId, updateAdDto),
+      backendService.updateAd(adId, updateAdDto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.ads.feed] });
     },
@@ -1656,7 +1650,7 @@ export function usePauseAd() {
   const queryClient = useQueryClient();
 
   return useMutation<ISponsoredAd, Error, string>({
-    mutationFn: (adId) => backendService().pauseAd(adId),
+    mutationFn: (adId) => backendService.pauseAd(adId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.ads.feed] });
     },
@@ -1673,7 +1667,7 @@ export function useRecordAdInteraction() {
     }
   >({
     mutationFn: ({ adId, dto }) =>
-      backendService().recordAdInteraction(adId, dto),
+      backendService.recordAdInteraction(adId, dto),
   });
 }
 
@@ -1701,7 +1695,7 @@ export function useGetAdAnalytics(
     Error
   >({
     queryKey: queryKeys.ads.analytics(adId),
-    queryFn: () => backendService().getAdAnalytics(adId),
+    queryFn: () => backendService.getAdAnalytics(adId),
     ...options,
   });
 }
@@ -1729,7 +1723,7 @@ export function useUserEngagementMetrics(
     Error
   >({
     queryKey: queryKeys.analytics.engagement,
-    queryFn: () => backendService().getUserEngagementMetrics(),
+    queryFn: () => backendService.getUserEngagementMetrics(),
     ...options,
   });
 }

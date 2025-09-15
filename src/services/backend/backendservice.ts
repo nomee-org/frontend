@@ -35,8 +35,8 @@ import {
 class BackendService {
   private apiClient: ApiClient;
 
-  constructor(config: ClientConfig, onRequestToken?: () => Promise<string>) {
-    this.apiClient = new ApiClient(config.baseURL, onRequestToken);
+  constructor(config: ClientConfig) {
+    this.apiClient = new ApiClient(config.baseURL);
   }
 
   async getToken(username: string | null): Promise<AuthResponse> {
@@ -824,11 +824,7 @@ class BackendService {
   }
 }
 
-export const backendService = (onRequestToken?: () => Promise<string>) =>
-  new BackendService(
-    {
-      baseURL: import.meta.env.VITE_NOMEE_BACKEND_URL,
-      wsURL: import.meta.env.VITE_NOMEE_BACKEND_WS_URL,
-    },
-    onRequestToken
-  );
+export const backendService = new BackendService({
+  baseURL: import.meta.env.VITE_NOMEE_BACKEND_URL,
+  wsURL: import.meta.env.VITE_NOMEE_BACKEND_WS_URL,
+});
