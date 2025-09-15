@@ -48,6 +48,8 @@ interface ListDomainPopupProps {
   onClose: () => void;
   token: Token;
   domainName: string;
+  initPrice?: string;
+  initCurrency?: string;
 }
 
 export function ListDomainPopup({
@@ -57,8 +59,10 @@ export function ListDomainPopup({
   onClose,
   token,
   domainName,
+  initPrice,
+  initCurrency,
 }: ListDomainPopupProps) {
-  const [listingPrice, setListingPrice] = useState("");
+  const [listingPrice, setListingPrice] = useState(initPrice ?? "");
   const [orderbook, setOrderbook] = useState<OrderbookType>(OrderbookType.DOMA);
   const [expirationDays, setExpirationDays] = useState("30");
   const [isLoading, setIsLoading] = useState(false);
@@ -88,7 +92,11 @@ export function ListDomainPopup({
       setCurrencies(result);
 
       if (result.length) {
-        setSelectedCurrency(result[0]);
+        setSelectedCurrency(
+          result.find(
+            (c) => c.symbol.toLowerCase() == initCurrency.toLowerCase()
+          ) ?? result[0]
+        );
       }
     } catch (error) {
       console.error("Failed to get currencies:", error);
@@ -231,6 +239,7 @@ export function ListDomainPopup({
             onValueChange={(e) =>
               setSelectedCurrency(currencies.find((c) => c.symbol === e))
             }
+            disabled={Boolean(initCurrency)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select currency" />
@@ -254,6 +263,7 @@ export function ListDomainPopup({
             placeholder={`Enter price in ${selectedCurrency?.symbol}`}
             value={listingPrice}
             onChange={(e) => setListingPrice(e.target.value)}
+            disabled={Boolean(initPrice)}
           />
         </div>
 

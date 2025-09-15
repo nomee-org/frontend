@@ -80,7 +80,7 @@ export const NomeeProposal = ({
         await conversation?.sendOptimistic(richMessage, ContentTypeText);
       }
 
-      await conversation.publishMessages();
+      conversation.publishMessages();
     } catch (error) {
       console.log(error);
     } finally {
@@ -205,6 +205,8 @@ export const NomeeProposal = ({
             setIsAccepting(false);
           }}
           token={token}
+          initPrice={props.amount.toString()}
+          initCurrency={props.currency}
         />
       )}
     </>
