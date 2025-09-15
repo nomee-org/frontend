@@ -7,7 +7,7 @@ import { useHelper } from "@/hooks/use-helper";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { ContentTypeText } from "@xmtp/content-type-text";
-import { Coins } from "lucide-react";
+import { Coins, Loader } from "lucide-react";
 import moment from "moment";
 import { useState } from "react";
 import { formatUnits } from "viem";
@@ -76,34 +76,50 @@ export const NomeeCreateListing = ({
         </div>
 
         {/* Info */}
-        <div className="space-y-1 text-sm leading-relaxed">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Domain:</span>{" "}
-            <span className="text-primary-foreground">{name.data.name}</span>
+        {offer.isLoading ||
+        offer.isFetching ||
+        name.isLoading ||
+        name.isFetching ? (
+          <div className="min-h-32 flex items-center justify-center">
+            <Loader className="animate-spin" />
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Price:</span>{" "}
-            <span className="text-primary-foreground">
-              {formatLargeNumber(
-                Number(
-                  formatUnits(BigInt(listing.price), listing.currency.decimals)
-                )
-              )}
-            </span>
+        ) : !(offer?.data || listing) ? (
+          <div className="min-h-32 flex items-center justify-center">
+            <p className="text-red-500 text-center">Invalid listing.</p>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Currency:</span>
-            <span className="text-primary-foreground">
-              {listing.currency.symbol}
-            </span>
+        ) : (
+          <div className="space-y-1 text-sm leading-relaxed">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Domain:</span>{" "}
+              <span className="text-primary-foreground">{name.data.name}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Price:</span>{" "}
+              <span className="text-primary-foreground">
+                {formatLargeNumber(
+                  Number(
+                    formatUnits(
+                      BigInt(listing.price),
+                      listing.currency.decimals
+                    )
+                  )
+                )}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Currency:</span>
+              <span className="text-primary-foreground">
+                {listing.currency.symbol}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Expiration:</span>{" "}
+              <span className="text-primary-foreground">
+                {moment(new Date(listing.expiresAt)).fromNow()}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-medium">Expiration:</span>{" "}
-            <span className="text-primary-foreground">
-              {moment(new Date(listing.expiresAt)).fromNow()}
-            </span>
-          </div>
-        </div>
+        )}
 
         {/* Actions */}
         {!isOwn ? (
