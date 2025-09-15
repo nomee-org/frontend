@@ -2,6 +2,10 @@ import { NomeeProposal } from "./NomeeProposal";
 import { NomeeCreateListing } from "./NomeeCreateListing";
 import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
 import { NomeeCreateOffer } from "./NomeeCreateOffer";
+import { Cancelled } from "./Cancelled";
+import { Rejected } from "./Rejected";
+import { Accepted } from "./Accepted";
+import { Bought } from "./Bought";
 
 export const NomeeAction = ({
   conversation,
@@ -18,6 +22,38 @@ export const NomeeAction = ({
 
   if (!text) {
     return <p className="text-muted-foreground">Cannot parse message.</p>;
+  }
+
+  if (data.startsWith("rejected::")) {
+    try {
+      return <Rejected props={JSON.parse(text)} />;
+    } catch (error) {
+      return <p className="text-destructive">Invalid JSON payload.</p>;
+    }
+  }
+
+  if (data.startsWith("accepted::")) {
+    try {
+      return <Accepted props={JSON.parse(text)} />;
+    } catch (error) {
+      return <p className="text-destructive">Invalid JSON payload.</p>;
+    }
+  }
+
+  if (data.startsWith("cancelled::")) {
+    try {
+      return <Cancelled props={JSON.parse(text)} />;
+    } catch (error) {
+      return <p className="text-destructive">Invalid JSON payload.</p>;
+    }
+  }
+
+  if (data.startsWith("bought")) {
+    try {
+      return <Bought props={JSON.parse(text)} />;
+    } catch (error) {
+      return <p className="text-destructive">Invalid JSON payload.</p>;
+    }
   }
 
   if (data.startsWith("proposal::")) {

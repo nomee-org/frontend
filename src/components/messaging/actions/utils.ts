@@ -9,8 +9,13 @@ import { ContentTypeText } from "@xmtp/content-type-text";
 import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
 
 export const isNomeeAction = (data: string): boolean => {
+  if (data.startsWith("accepted::")) return true;
+  if (data.startsWith("rejected::")) return true;
+  if (data.startsWith("cancelled::")) return true;
+  if (data.startsWith("bought::")) return true;
   if (data.startsWith("proposal::")) return true;
   if (data.startsWith("created_listing::")) return true;
+  if (data.startsWith("created_offer::")) return true;
   return false;
 };
 

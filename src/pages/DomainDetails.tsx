@@ -41,7 +41,7 @@ import { formatUnits } from "viem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CancelListingPopup } from "@/components/domain/CancelListingPopup";
 import { ListDomainPopup } from "@/components/domain/ListDomainPopup";
-import { OfferPopup } from "@/components/domain/OfferPopup";
+import { BuyOrMakeOfferPopup } from "@/components/domain/BuyOrMakeOfferPopup";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
   useFollowUser,
@@ -1366,7 +1366,7 @@ const DomainDetails = () => {
 
         {/* Offer Popup */}
         {showOfferPopup && nameData.tokens.length > 0 && selectedToken && (
-          <OfferPopup
+          <BuyOrMakeOfferPopup
             isOpen={showOfferPopup}
             token={selectedToken}
             domainName={nameData?.name}

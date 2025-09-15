@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { CancelOfferPopup } from "@/components/domain/CancelOfferPopup";
-import { OfferPopup } from "@/components/domain/OfferPopup";
+import { CancelListingPopup } from "@/components/domain/CancelListingPopup";
+import { BuyOrMakeOfferPopup } from "@/components/domain/BuyOrMakeOfferPopup";
 import { Button } from "@/components/ui/button";
 import { useName, useOffer } from "@/data/use-doma";
 import { useHelper } from "@/hooks/use-helper";
@@ -9,7 +9,7 @@ import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { Coins, Loader } from "lucide-react";
 import moment from "moment";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatUnits } from "viem";
 
 export interface CreateListingProps {
@@ -28,16 +28,42 @@ export const NomeeCreateListing = ({
   conversation: Conversation;
   message?: DecodedMessage;
 }) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [isInView, setIsInView] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isBuyingOrMakingOffer, setIsBuyingOrMakingOffer] = useState(false);
 
   const { formatLargeNumber } = useHelper();
 
-  const offer = useOffer(props.orderId);
-  const name = useName(props.domainName);
+  const name = useName(props.domainName, isInView);
   const token = name?.data?.tokens?.[0];
   const listing = name?.data?.tokens?.[0]?.listings?.[0];
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!isInView) {
+          setIsInView(entry.isIntersecting);
+        }
+      },
+      {
+        root: null,
+        threshold: 0.1,
+      }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, []);
 
   const handleReject = async () => {
     try {
@@ -68,7 +94,7 @@ export const NomeeCreateListing = ({
 
   return (
     <>
-      <div className="w-64 md:w-96 p-2 md:p-3 max-w-full space-y-3">
+      <div className="w-64 md:w-96 p-2 md:p-3 max-w-full space-y-3" ref={ref}>
         {/* Title */}
         <div className="text-base font-semibold flex items-center gap-1">
           <Coins />
@@ -76,25 +102,22 @@ export const NomeeCreateListing = ({
         </div>
 
         {/* Info */}
-        {offer.isLoading ||
-        offer.isFetching ||
-        name.isLoading ||
-        name.isFetching ? (
-          <div className="min-h-32 flex items-center justify-center">
+        {name.isLoading || name.isFetching ? (
+          <div className="min-h-20 flex items-center justify-center">
             <Loader className="animate-spin" />
           </div>
-        ) : !(offer?.data || listing) ? (
-          <div className="min-h-32 flex items-center justify-center">
-            <p className="text-red-500 text-center">Invalid listing.</p>
+        ) : !listing ? (
+          <div className="min-h-20 flex items-center justify-center">
+            <p className="text-red-500 text-center">Completed.</p>
           </div>
         ) : (
           <div className="space-y-1 text-sm leading-relaxed">
             <div className="flex items-center justify-between">
-              <span className="font-medium">Domain:</span>{" "}
+              <span className="font-medium">Domain:</span>
               <span className="text-primary-foreground">{name.data.name}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-medium">Price:</span>{" "}
+              <span className="font-medium">Price:</span>
               <span className="text-primary-foreground">
                 {formatLargeNumber(
                   Number(
@@ -103,17 +126,12 @@ export const NomeeCreateListing = ({
                       listing.currency.decimals
                     )
                   )
-                )}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Currency:</span>
-              <span className="text-primary-foreground">
+                )}{" "}
                 {listing.currency.symbol}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-medium">Expiration:</span>{" "}
+              <span className="font-medium">Expiration:</span>
               <span className="text-primary-foreground">
                 {moment(new Date(listing.expiresAt)).fromNow()}
               </span>
@@ -162,8 +180,8 @@ export const NomeeCreateListing = ({
         )}
       </div>
 
-      {offer?.data && token && isBuyingOrMakingOffer && (
-        <OfferPopup
+      {token && isBuyingOrMakingOffer && (
+        <BuyOrMakeOfferPopup
           conversation={conversation}
           replyTo={message}
           domainName={name.data.name}
@@ -175,12 +193,11 @@ export const NomeeCreateListing = ({
         />
       )}
 
-      {offer?.data && token && isCancelling && (
-        <CancelOfferPopup
+      {token && isCancelling && (
+        <CancelListingPopup
           conversation={conversation}
           replyTo={message}
           isOpen={isCancelling}
-          offer={offer.data}
           domainName={name.data.name}
           onClose={() => {
             setIsCancelling(false);

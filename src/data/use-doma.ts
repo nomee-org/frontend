@@ -82,11 +82,11 @@ export function useSelectedNames(
   });
 }
 
-export function useName(name: string) {
+export function useName(name: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.single(name),
     queryFn: () => dataService.getName({ name }),
-    enabled: name.includes("."),
+    enabled: name.includes(".") && enabled,
   });
 }
 
@@ -113,10 +113,10 @@ export function useOffers(take: number, tokenId: string) {
   });
 }
 
-export function useOffer(externalId: string) {
+export function useOffer(externalId: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.singleOffer(externalId),
     queryFn: () => dataService.getOffer({ externalId }),
-    enabled: !!externalId,
+    enabled: !!externalId && enabled,
   });
 }

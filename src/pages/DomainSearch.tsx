@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { OfferPopup } from "@/components/domain/OfferPopup";
+import { BuyOrMakeOfferPopup } from "@/components/domain/BuyOrMakeOfferPopup";
 import { Search, Filter, Eye, EyeOff, Loader } from "lucide-react";
 import { useNames } from "@/data/use-doma";
 import { Switch } from "@/components/ui/switch";
@@ -426,7 +426,7 @@ const DomainSearch = () => {
 
       {/* Offer Popup */}
       {selectedToken && (
-        <OfferPopup
+        <BuyOrMakeOfferPopup
           isOpen={Boolean(selectedToken)}
           token={selectedToken}
           domainName={selectedDomain}

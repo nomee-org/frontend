@@ -81,8 +81,8 @@ export function CancelOfferPopup({
       if (conversation) {
         const richMessage = `cancelled::${JSON.stringify({
           domainName,
-          status: cancelledOffer.status,
-          transactionHash: cancelledOffer.transactionHash,
+          status: cancelledOffer?.status,
+          transactionHash: cancelledOffer?.transactionHash,
         })}`;
 
         if (replyTo) {
@@ -106,7 +106,6 @@ export function CancelOfferPopup({
       onClose();
     } catch (error) {
       console.log(error);
-      toast.error(error?.message);
     } finally {
       setIsLoading(false);
     }

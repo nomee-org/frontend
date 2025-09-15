@@ -24,8 +24,13 @@ import {
 import { useHelper } from "@/hooks/use-helper";
 import { formatUnits } from "viem";
 import { useOrderbook } from "@/hooks/use-orderbook";
+import { Conversation, DecodedMessage } from "@xmtp/browser-sdk";
+import { ContentTypeText } from "@xmtp/content-type-text";
+import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 
 interface CancelListingPopupProps {
+  conversation?: Conversation;
+  replyTo?: DecodedMessage;
   isOpen: boolean;
   onClose: () => void;
   token: Token;
@@ -33,6 +38,8 @@ interface CancelListingPopupProps {
 }
 
 export function CancelListingPopup({
+  conversation,
+  replyTo,
   isOpen,
   onClose,
   token,
@@ -60,7 +67,7 @@ export function CancelListingPopup({
         cancellationType: "off-chain",
       };
 
-      await cancelListing({
+      const cancelledLisiting = await cancelListing({
         params,
         chainId: `eip155:${Number(parseCAIP10(token.chain.networkId).chainId)}`,
         onProgress: (progress) => {
@@ -73,11 +80,34 @@ export function CancelListingPopup({
         signer: viemToEthersSigner(walletClient, token.chain.networkId),
       });
 
+      if (conversation) {
+        const richMessage = `cancelled::${JSON.stringify({
+          domainName,
+          status: cancelledLisiting?.status,
+          transactionHash: cancelledLisiting?.transactionHash,
+        })}`;
+
+        if (replyTo) {
+          await conversation.sendOptimistic(
+            {
+              content: richMessage,
+              reference: replyTo.id,
+              contentType: ContentTypeText,
+            } as Reply,
+            ContentTypeReply
+          );
+        } else {
+          await conversation.sendOptimistic(richMessage, ContentTypeText);
+        }
+
+        conversation.publishMessages();
+      }
+
       toast.success("Listing cancelled successfully");
 
       onClose();
     } catch (error) {
-      toast.error(error?.message);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }

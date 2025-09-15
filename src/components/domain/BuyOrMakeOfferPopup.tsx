@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Zap, Clock, Info } from "lucide-react";
+import { Zap, Clock, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useHelper } from "@/hooks/use-helper";
 import { formatUnits, parseUnits } from "viem";
@@ -42,7 +42,7 @@ import { ContentTypeText } from "@xmtp/content-type-text";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { CreateOfferProps } from "../messaging/actions/NomeeCreateOffer";
 
-interface OfferPopupProps {
+interface BuyOrMakeOfferPopupProps {
   conversation?: Conversation;
   replyTo?: DecodedMessage;
   isOpen: boolean;
@@ -51,14 +51,14 @@ interface OfferPopupProps {
   domainName: string;
 }
 
-export function OfferPopup({
+export function BuyOrMakeOfferPopup({
   conversation,
   replyTo,
   isOpen,
   onClose,
   token,
   domainName,
-}: OfferPopupProps) {
+}: BuyOrMakeOfferPopupProps) {
   const [offerAmount, setOfferAmount] = useState("");
   const [offerType, setOfferType] = useState<"instant" | "make-offer">(
     "instant"

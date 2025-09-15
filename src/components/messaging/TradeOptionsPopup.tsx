@@ -5,7 +5,6 @@ import {
   Loader,
   LetterText,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -27,12 +26,11 @@ import { toast } from "sonner";
 import { useState } from "react";
 import ListProposeMessagePopup from "./ProposeMessagePopup";
 import { NameOptionsPopup } from "./NamesOptionsPopup";
-import { OfferPopup } from "../domain/OfferPopup";
+import { BuyOrMakeOfferPopup } from "../domain/BuyOrMakeOfferPopup";
 import { Name } from "@/types/doma";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { ListDomainPopup } from "../domain/ListDomainPopup";
-import { formatUnits, parseUnits } from "viem";
 import { CreateListingProps } from "./actions/NomeeCreateListing";
 
 interface TradeOptionPopupProps {
@@ -158,7 +156,7 @@ export function TradeOptionPopup({
   // layer 2
   if (showOfferListing && selectedName && selectedName?.tokens?.length > 0) {
     return (
-      <OfferPopup
+      <BuyOrMakeOfferPopup
         conversation={conversation}
         replyTo={replyTo}
         isOpen={showOfferListing}
