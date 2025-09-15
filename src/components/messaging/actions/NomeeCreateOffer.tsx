@@ -81,81 +81,87 @@ export const NomeeCreateOffer = ({
           </div>
         ) : !(offer?.data || token) ? (
           <div className="min-h-20 flex items-center justify-center">
-            <p className="text-red-500 text-center">Completed.</p>
+            <p className="text-red-500 text-center">
+              Offer not exsting anymore.
+            </p>
           </div>
         ) : (
-          <div className="space-y-1 text-sm leading-relaxed">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Domain:</span>
-              <span className="text-primary-foreground">{name.data.name}</span>
+          <>
+            <div className="space-y-1 text-sm leading-relaxed">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Domain:</span>
+                <span className="text-primary-foreground">
+                  {name.data.name}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Price:</span>
+                <span className="text-primary-foreground">
+                  {formatLargeNumber(
+                    Number(offer.data.price) /
+                      Math.pow(10, offer.data.currency.decimals)
+                  )}{" "}
+                  {offer.data.currency.symbol}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Offer Id:</span>
+                <span className="text-primary-foreground truncate max-w-24">
+                  {offer.data.externalId}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Expiration:</span>
+                <span className="text-primary-foreground">
+                  {moment(new Date(offer.data.expiresAt)).fromNow()}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Price:</span>
-              <span className="text-primary-foreground">
-                {formatLargeNumber(
-                  Number(offer.data.price) /
-                    Math.pow(10, offer.data.currency.decimals)
-                )}{" "}
-                {offer.data.currency.symbol}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Offer Id:</span>
-              <span className="text-primary-foreground truncate max-w-24">
-                {offer.data.externalId}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Expiration:</span>
-              <span className="text-primary-foreground">
-                {moment(new Date(offer.data.expiresAt)).fromNow()}
-              </span>
-            </div>
-          </div>
-        )}
 
-        {/* Actions */}
-        {!isOwn ? (
-          <div className="flex gap-2 pt-1">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="flex-1"
-              onClick={() => {
-                setAction("accept");
-                setIsAcceptingOrRejecting(true);
-              }}
-              disabled={isAcceptingOrRejecting}
-            >
-              Accept
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="flex-1"
-              onClick={() => {
-                setAction("reject");
-                setIsAcceptingOrRejecting(true);
-              }}
-              disabled={isAcceptingOrRejecting}
-            >
-              Reject
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-2 pt-1">
-            <Button
-              variant="destructive"
-              size="sm"
-              className="flex-1"
-              onClick={() => {
-                setIsCancelling(true);
-              }}
-              disabled={isCancelling}
-            >
-              Cancel
-            </Button>
-          </div>
+            {/* Actions */}
+            {!isOwn ? (
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setAction("accept");
+                    setIsAcceptingOrRejecting(true);
+                  }}
+                  disabled={isAcceptingOrRejecting}
+                >
+                  Accept
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setAction("reject");
+                    setIsAcceptingOrRejecting(true);
+                  }}
+                  disabled={isAcceptingOrRejecting}
+                >
+                  Reject
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setIsCancelling(true);
+                  }}
+                  disabled={isCancelling}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
