@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Icon imports
-import { TrendingUp, Loader, User, Search, Sparkles } from "lucide-react";
+import { TrendingUp, Loader, Search, Sparkles } from "lucide-react";
 
 // Local component imports
 import CommunityPost from "@/components/posts/CommunityPost";
