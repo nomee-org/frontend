@@ -1,6 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -71,10 +81,13 @@ export function MediaPickerPopup({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg>();
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
-  
-  const [selectedFiles, setSelectedFiles] = useState<ProcessedMediaFile[]>(existingFiles);
+
+  const [selectedFiles, setSelectedFiles] =
+    useState<ProcessedMediaFile[]>(existingFiles);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
-  const [editMode, setEditMode] = useState<"none" | "crop" | "filter" | "trim">("none");
+  const [editMode, setEditMode] = useState<"none" | "crop" | "filter" | "trim">(
+    "none"
+  );
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [filters, setFilters] = useState<ImageFilters>(DEFAULT_FILTERS);
@@ -86,21 +99,26 @@ export function MediaPickerPopup({
   useEffect(() => {
     const loadFFmpeg = async () => {
       if (ffmpegRef.current) return;
-      
+
       try {
         const ffmpeg = new FFmpeg();
         ffmpegRef.current = ffmpeg;
-        
+
         const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
         await ffmpeg.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+          coreURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.js`,
+            "text/javascript"
+          ),
+          wasmURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.wasm`,
+            "application/wasm"
+          ),
         });
-        
+
         setFfmpegLoaded(true);
       } catch (error) {
         console.warn("FFmpeg failed to load:", error);
-        toast.error("Video editing not available");
       }
     };
 
@@ -118,7 +136,7 @@ export function MediaPickerPopup({
 
     filesToProcess.forEach((file) => {
       // Validate file type
-      const isValidType = acceptedTypes.some(type => {
+      const isValidType = acceptedTypes.some((type) => {
         if (type === "image/*") return file.type.startsWith("image/");
         if (type === "video/*") return file.type.startsWith("video/");
         return file.type === type;
@@ -149,8 +167,8 @@ export function MediaPickerPopup({
       });
     });
 
-    setSelectedFiles(prev => [...prev, ...newFiles]);
-    
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -158,18 +176,18 @@ export function MediaPickerPopup({
   };
 
   const removeFile = (fileId: string) => {
-    setSelectedFiles(prev => {
-      const fileToRemove = prev.find(f => f.id === fileId);
+    setSelectedFiles((prev) => {
+      const fileToRemove = prev.find((f) => f.id === fileId);
       if (fileToRemove) {
         URL.revokeObjectURL(fileToRemove.preview);
       }
-      const newFiles = prev.filter(f => f.id !== fileId);
-      
+      const newFiles = prev.filter((f) => f.id !== fileId);
+
       // Adjust current index if needed
       if (currentFileIndex >= newFiles.length && newFiles.length > 0) {
         setCurrentFileIndex(newFiles.length - 1);
       }
-      
+
       return newFiles;
     });
   };
@@ -183,7 +201,7 @@ export function MediaPickerPopup({
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       const img = new Image();
-      
+
       // Set crossorigin to handle potential CORS issues
       img.crossOrigin = "anonymous";
 
@@ -199,13 +217,17 @@ export function MediaPickerPopup({
 
       if (ctx) {
         // Clear canvas with white background
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Calculate scale factors based on displayed vs natural image size  
-        const imageElement = document.querySelector('.ReactCrop__image') as HTMLImageElement;
-        const scaleX = img.naturalWidth / (imageElement?.clientWidth || img.naturalWidth);
-        const scaleY = img.naturalHeight / (imageElement?.clientHeight || img.naturalHeight);
+
+        // Calculate scale factors based on displayed vs natural image size
+        const imageElement = document.querySelector(
+          ".ReactCrop__image"
+        ) as HTMLImageElement;
+        const scaleX =
+          img.naturalWidth / (imageElement?.clientWidth || img.naturalWidth);
+        const scaleY =
+          img.naturalHeight / (imageElement?.clientHeight || img.naturalHeight);
 
         ctx.drawImage(
           img,
@@ -219,27 +241,33 @@ export function MediaPickerPopup({
           completedCrop.height
         );
 
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const croppedFile = new File([blob], currentFile.file.name, {
-              type: currentFile.file.type,
-            });
-            
-            URL.revokeObjectURL(currentFile.preview);
-            const newPreview = URL.createObjectURL(croppedFile);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const croppedFile = new File([blob], currentFile.file.name, {
+                type: currentFile.file.type,
+              });
 
-            setSelectedFiles(prev => prev.map((file, index) => 
-              index === currentFileIndex 
-                ? { ...file, file: croppedFile, preview: newPreview }
-                : file
-            ));
+              URL.revokeObjectURL(currentFile.preview);
+              const newPreview = URL.createObjectURL(croppedFile);
 
-            setEditMode("none");
-            setCrop(undefined);
-            setCompletedCrop(undefined);
-            toast.success("Image cropped successfully");
-          }
-        }, currentFile.file.type, 0.95);
+              setSelectedFiles((prev) =>
+                prev.map((file, index) =>
+                  index === currentFileIndex
+                    ? { ...file, file: croppedFile, preview: newPreview }
+                    : file
+                )
+              );
+
+              setEditMode("none");
+              setCrop(undefined);
+              setCompletedCrop(undefined);
+              toast.success("Image cropped successfully");
+            }
+          },
+          currentFile.file.type,
+          0.95
+        );
       }
     } catch (error) {
       console.error("Crop error:", error);
@@ -274,15 +302,17 @@ export function MediaPickerPopup({
             const filteredFile = new File([blob], currentFile.file.name, {
               type: currentFile.file.type,
             });
-            
+
             URL.revokeObjectURL(currentFile.preview);
             const newPreview = URL.createObjectURL(filteredFile);
 
-            setSelectedFiles(prev => prev.map((file, index) => 
-              index === currentFileIndex 
-                ? { ...file, file: filteredFile, preview: newPreview }
-                : file
-            ));
+            setSelectedFiles((prev) =>
+              prev.map((file, index) =>
+                index === currentFileIndex
+                  ? { ...file, file: filteredFile, preview: newPreview }
+                  : file
+              )
+            );
 
             setEditMode("none");
             setFilters(DEFAULT_FILTERS);
@@ -298,7 +328,8 @@ export function MediaPickerPopup({
   };
 
   const trimVideo = async () => {
-    if (!ffmpegLoaded || !ffmpegRef.current || !selectedFiles[currentFileIndex]) return;
+    if (!ffmpegLoaded || !ffmpegRef.current || !selectedFiles[currentFileIndex])
+      return;
 
     setIsProcessing(true);
     try {
@@ -306,9 +337,9 @@ export function MediaPickerPopup({
       const ffmpeg = ffmpegRef.current;
 
       // Create a video element to get duration
-      const video = document.createElement('video');
+      const video = document.createElement("video");
       video.src = currentFile.preview;
-      
+
       await new Promise((resolve) => {
         video.onloadedmetadata = resolve;
       });
@@ -321,15 +352,21 @@ export function MediaPickerPopup({
       await ffmpeg.writeFile("input.mp4", await fetchFile(currentFile.file));
 
       await ffmpeg.exec([
-        "-i", "input.mp4",
-        "-ss", startTime.toString(),
-        "-t", trimDuration.toString(),
-        "-c", "copy",
-        "output.mp4"
+        "-i",
+        "input.mp4",
+        "-ss",
+        startTime.toString(),
+        "-t",
+        trimDuration.toString(),
+        "-c",
+        "copy",
+        "output.mp4",
       ]);
 
-      const data = await ffmpeg.readFile("output.mp4") as Uint8Array;
-      const trimmedBlob = new Blob([new Uint8Array(data)], { type: "video/mp4" });
+      const data = (await ffmpeg.readFile("output.mp4")) as Uint8Array;
+      const trimmedBlob = new Blob([new Uint8Array(data)], {
+        type: "video/mp4",
+      });
       const trimmedFile = new File([trimmedBlob], currentFile.file.name, {
         type: "video/mp4",
       });
@@ -337,11 +374,13 @@ export function MediaPickerPopup({
       URL.revokeObjectURL(currentFile.preview);
       const newPreview = URL.createObjectURL(trimmedFile);
 
-      setSelectedFiles(prev => prev.map((file, index) => 
-        index === currentFileIndex 
-          ? { ...file, file: trimmedFile, preview: newPreview }
-          : file
-      ));
+      setSelectedFiles((prev) =>
+        prev.map((file, index) =>
+          index === currentFileIndex
+            ? { ...file, file: trimmedFile, preview: newPreview }
+            : file
+        )
+      );
 
       setEditMode("none");
       setVideoTrimStart(0);
@@ -362,7 +401,7 @@ export function MediaPickerPopup({
 
   const handleClose = () => {
     // Cleanup: revoke all object URLs and reset state
-    selectedFiles.forEach(file => {
+    selectedFiles.forEach((file) => {
       URL.revokeObjectURL(file.preview);
     });
     setSelectedFiles([]);
@@ -394,13 +433,15 @@ export function MediaPickerPopup({
     if (currentFile.originalFile) {
       URL.revokeObjectURL(currentFile.preview);
       const newPreview = URL.createObjectURL(currentFile.originalFile);
-      
-      setSelectedFiles(prev => prev.map((file, index) => 
-        index === currentFileIndex 
-          ? { ...file, file: currentFile.originalFile!, preview: newPreview }
-          : file
-      ));
-      
+
+      setSelectedFiles((prev) =>
+        prev.map((file, index) =>
+          index === currentFileIndex
+            ? { ...file, file: currentFile.originalFile!, preview: newPreview }
+            : file
+        )
+      );
+
       setEditMode("none");
       setCrop(undefined);
       setCompletedCrop(undefined);
@@ -420,10 +461,18 @@ export function MediaPickerPopup({
             <div className="flex justify-between items-center">
               <h3 className="font-medium">Crop Image</h3>
               <div className="space-x-2">
-                <Button onClick={() => setEditMode("none")} variant="outline" size="sm">
+                <Button
+                  onClick={() => setEditMode("none")}
+                  variant="outline"
+                  size="sm"
+                >
                   Cancel
                 </Button>
-                <Button onClick={applyCrop} disabled={!completedCrop || isProcessing} size="sm">
+                <Button
+                  onClick={applyCrop}
+                  disabled={!completedCrop || isProcessing}
+                  size="sm"
+                >
                   {isProcessing ? "Processing..." : "Apply"}
                 </Button>
               </div>
@@ -445,21 +494,31 @@ export function MediaPickerPopup({
             <div className="flex justify-between items-center">
               <h3 className="font-medium">Apply Filters</h3>
               <div className="space-x-2">
-                <Button onClick={() => setEditMode("none")} variant="outline" size="sm">
+                <Button
+                  onClick={() => setEditMode("none")}
+                  variant="outline"
+                  size="sm"
+                >
                   Cancel
                 </Button>
-                <Button onClick={applyFilters} disabled={isProcessing} size="sm">
+                <Button
+                  onClick={applyFilters}
+                  disabled={isProcessing}
+                  size="sm"
+                >
                   {isProcessing ? "Processing..." : "Apply"}
                 </Button>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium">Brightness</label>
                 <Slider
                   value={[filters.brightness]}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, brightness: value[0] }))}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, brightness: value[0] }))
+                  }
                   max={200}
                   min={0}
                   step={1}
@@ -470,7 +529,9 @@ export function MediaPickerPopup({
                 <label className="text-sm font-medium">Contrast</label>
                 <Slider
                   value={[filters.contrast]}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, contrast: value[0] }))}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, contrast: value[0] }))
+                  }
                   max={200}
                   min={0}
                   step={1}
@@ -481,7 +542,9 @@ export function MediaPickerPopup({
                 <label className="text-sm font-medium">Saturation</label>
                 <Slider
                   value={[filters.saturation]}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, saturation: value[0] }))}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, saturation: value[0] }))
+                  }
                   max={200}
                   min={0}
                   step={1}
@@ -492,7 +555,9 @@ export function MediaPickerPopup({
                 <label className="text-sm font-medium">Blur</label>
                 <Slider
                   value={[filters.blur]}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, blur: value[0] }))}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, blur: value[0] }))
+                  }
                   max={10}
                   min={0}
                   step={0.1}
@@ -503,7 +568,9 @@ export function MediaPickerPopup({
                 <label className="text-sm font-medium">Sepia</label>
                 <Slider
                   value={[filters.sepia]}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, sepia: value[0] }))}
+                  onValueChange={(value) =>
+                    setFilters((prev) => ({ ...prev, sepia: value[0] }))
+                  }
                   max={100}
                   min={0}
                   step={1}
@@ -512,13 +579,16 @@ export function MediaPickerPopup({
               </div>
             </div>
 
-            <div 
+            <div
               className="preview-container"
               style={{
-                filter: `brightness(${filters.brightness}%) contrast(${filters.contrast}%) saturate(${filters.saturation}%) blur(${filters.blur}px) sepia(${filters.sepia}%)`
+                filter: `brightness(${filters.brightness}%) contrast(${filters.contrast}%) saturate(${filters.saturation}%) blur(${filters.blur}px) sepia(${filters.sepia}%)`,
               }}
             >
-              <img src={currentFile.preview} className="max-h-32 mx-auto rounded" />
+              <img
+                src={currentFile.preview}
+                className="max-h-32 mx-auto rounded"
+              />
             </div>
           </div>
         ) : null;
@@ -529,7 +599,11 @@ export function MediaPickerPopup({
             <div className="flex justify-between items-center">
               <h3 className="font-medium">Trim Video</h3>
               <div className="space-x-2">
-                <Button onClick={() => setEditMode("none")} variant="outline" size="sm">
+                <Button
+                  onClick={() => setEditMode("none")}
+                  variant="outline"
+                  size="sm"
+                >
                   Cancel
                 </Button>
                 <Button onClick={trimVideo} disabled={isProcessing} size="sm">
@@ -537,10 +611,12 @@ export function MediaPickerPopup({
                 </Button>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium">Start ({videoTrimStart}%)</label>
+                <label className="text-sm font-medium">
+                  Start ({videoTrimStart}%)
+                </label>
                 <Slider
                   value={[videoTrimStart]}
                   onValueChange={(value) => setVideoTrimStart(value[0])}
@@ -551,7 +627,9 @@ export function MediaPickerPopup({
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">End ({videoTrimEnd}%)</label>
+                <label className="text-sm font-medium">
+                  End ({videoTrimEnd}%)
+                </label>
                 <Slider
                   value={[videoTrimEnd]}
                   onValueChange={(value) => setVideoTrimEnd(value[0])}
@@ -563,7 +641,11 @@ export function MediaPickerPopup({
               </div>
             </div>
 
-            <video src={currentFile.preview} controls className="max-h-32 mx-auto rounded" />
+            <video
+              src={currentFile.preview}
+              controls
+              className="max-h-32 mx-auto rounded"
+            />
           </div>
         ) : null;
 
@@ -577,7 +659,9 @@ export function MediaPickerPopup({
       {selectedFiles.length === 0 ? (
         <div className="text-center py-8">
           <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-4">Select media files to get started</p>
+          <p className="text-muted-foreground mb-4">
+            Select media files to get started
+          </p>
           <Button onClick={() => fileInputRef.current?.click()}>
             <Plus className="h-4 w-4 mr-2" />
             Add Files
@@ -590,7 +674,7 @@ export function MediaPickerPopup({
             <span className="text-sm text-muted-foreground">
               {selectedFiles.length} of {maxFiles} files
             </span>
-            <div className="space-x-2">
+            <div className="flex items-center gap-1">
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={selectedFiles.length >= maxFiles}
@@ -616,9 +700,11 @@ export function MediaPickerPopup({
                   pagination={{ clickable: true }}
                   spaceBetween={16}
                   slidesPerView={1}
-                  onSlideChange={(swiper) => setCurrentFileIndex(swiper.activeIndex)}
+                  onSlideChange={(swiper) =>
+                    setCurrentFileIndex(swiper.activeIndex)
+                  }
                   className="media-swiper h-full"
-                  style={{ height: '100%' }}
+                  style={{ height: "100%" }}
                 >
                   {selectedFiles.map((file, index) => (
                     <SwiperSlide key={file.id}>
@@ -651,7 +737,7 @@ export function MediaPickerPopup({
               </div>
 
               {/* Editing tools */}
-              <div className="flex justify-center space-x-2">
+              <div className="flex justify-center gap-2">
                 {selectedFiles[currentFileIndex]?.type === "image" && (
                   <>
                     <Button
@@ -674,26 +760,28 @@ export function MediaPickerPopup({
                     </Button>
                   </>
                 )}
-                {selectedFiles[currentFileIndex]?.type === "video" && ffmpegLoaded && (
-                  <Button
-                    onClick={() => setEditMode("trim")}
-                    variant="outline"
-                    size={isMobile ? "icon" : "sm"}
-                    className={isMobile ? "h-10 w-10" : ""}
-                  >
-                    <Scissors className="h-4 w-4" />
-                    {!isMobile && <span className="ml-1">Trim</span>}
-                  </Button>
-                )}
+                {selectedFiles[currentFileIndex]?.type === "video" &&
+                  ffmpegLoaded && (
+                    <Button
+                      onClick={() => setEditMode("trim")}
+                      variant="outline"
+                      size={isMobile ? "icon" : "sm"}
+                      className={isMobile ? "h-10 w-10" : ""}
+                    >
+                      <Scissors className="h-4 w-4" />
+                      {!isMobile && <span className="ml-1">Trim</span>}
+                    </Button>
+                  )}
               </div>
 
               {/* Action buttons */}
-              <div className="flex justify-end space-x-2 pt-4">
+              <div className="flex justify-end gap-2 pt-4">
                 <Button onClick={onClose} variant="outline">
                   Cancel
                 </Button>
                 <Button onClick={handleSubmit}>
-                  Use {selectedFiles.length} File{selectedFiles.length !== 1 ? 's' : ''}
+                  Use {selectedFiles.length} File
+                  {selectedFiles.length !== 1 ? "s" : ""}
                 </Button>
               </div>
             </>
@@ -722,9 +810,7 @@ export function MediaPickerPopup({
           <DrawerHeader>
             <DrawerTitle>Media Picker</DrawerTitle>
           </DrawerHeader>
-          <div className="p-4 overflow-y-auto flex-1">
-            {content}
-          </div>
+          <div className="p-4 overflow-y-auto flex-1">{content}</div>
         </DrawerContent>
       </Drawer>
     );

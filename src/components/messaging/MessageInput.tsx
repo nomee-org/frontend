@@ -33,6 +33,8 @@ import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { Sticker } from "@/types/backend";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { getSummary } from "./actions/utils";
+import { useUsername } from "@/contexts/UsernameContext";
+import { toast } from "sonner";
 
 interface MessageInputProps {
   placeHolder?: string;
@@ -59,6 +61,8 @@ export function MessageInput({
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showStickersPicker, setShowStickersPicker] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+
+  const { activeUsername } = useUsername();
 
   // Member tagging states
   const [showMemberTagging, setShowMemberTagging] = useState(false);
@@ -495,7 +499,13 @@ export function MessageInput({
           variant="ghost"
           size="sm"
           className="text-muted-foreground hover:text-foreground flex-shrink-0"
-          onClick={() => setShowMediaPicker(true)}
+          onClick={() => {
+            if (!activeUsername) {
+              toast.error("Your need a domain name.");
+            } else {
+              setShowMediaPicker(true);
+            }
+          }}
         >
           <Paperclip className="h-4 w-4" />
         </Button>
@@ -573,7 +583,13 @@ export function MessageInput({
                   variant="ghost"
                   size="sm"
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground h-8 w-8 p-0"
-                  onClick={() => setShowStickersPicker(true)}
+                  onClick={() => {
+                    if (!activeUsername) {
+                      toast.error("Your need a domain name.");
+                    } else {
+                      setShowStickersPicker(true);
+                    }
+                  }}
                 >
                   <Smile className="h-4 w-4" />
                 </Button>
@@ -626,7 +642,13 @@ export function MessageInput({
                 variant="default"
                 size="sm"
                 className="rounded-full h-10 w-10 p-0 flex-shrink-0"
-                onClick={() => setShowVoiceRecorder(true)}
+                onClick={() => {
+                  if (!activeUsername) {
+                    toast.error("Your need a domain name.");
+                  } else {
+                    setShowVoiceRecorder(true);
+                  }
+                }}
               >
                 <Mic className="h-4 w-4" />
               </Button>
