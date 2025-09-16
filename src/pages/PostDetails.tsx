@@ -362,7 +362,7 @@ const PostDetails = () => {
         mediaUrls={post?.mediaUrls || []}
       />
       <main
-        className="max-w-7xl mx-auto px-4 md:px-6 py-8 space-y-8"
+        className="max-w-7xl w-full mx-auto px-4 md:px-6 py-8 space-y-8"
         role="main"
         aria-label={`Post by ${post?.author?.username}`}
       >

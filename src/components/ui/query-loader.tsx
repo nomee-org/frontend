@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 
 export function QueryLoader({ className }: { className?: string }) {
   return (
-    <div className={`max-w-7xl mx-auto space-y-6 p-4 ${className}`}>
+    <div className={`max-w-7xl w-full mx-auto space-y-6 p-4 ${className}`}>
       {/* Header Skeleton */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-10 w-32" />
@@ -53,7 +53,7 @@ export function QueryLoader({ className }: { className?: string }) {
 
 export function QueryCardLoader({ className }: { className?: string }) {
   return (
-    <Card className={`max-w-7xl mx-auto p-6 ${className}`}>
+    <Card className={`max-w-7xl w-full mx-auto p-6 ${className}`}>
       <div className="space-y-4">
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-4 w-full" />

@@ -175,7 +175,7 @@ const DomainDetails = () => {
 
   if (nameError) {
     return (
-      <div className="max-w-7xl mx-auto p-content space-content">
+      <div className="max-w-7xl w-full mx-auto p-content space-content">
         <QueryError
           error={nameError}
           onRetry={refetchName}
@@ -191,7 +191,7 @@ const DomainDetails = () => {
 
   if (!nameData) {
     return (
-      <div className="max-w-7xl mx-auto p-content space-content bg-background flex items-center justify-center">
+      <div className="max-w-7xl w-full mx-auto p-content space-content bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-muted-foreground">
             Domain not found
@@ -235,7 +235,7 @@ const DomainDetails = () => {
         postsCount={userData?._count?.posts}
         followersCount={userData?._count?.followers}
       />
-      <main className="max-w-7xl mx-auto p-content space-content">
+      <main className="max-w-7xl w-full mx-auto p-content space-content">
         <div className="relative overflow-hidden">
           <div className="relative z-1">
             <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">

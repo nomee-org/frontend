@@ -160,7 +160,7 @@ const Community = () => {
         activeUsername={activeUsername}
         postsCount={totalPosts}
       />
-      <main className="max-w-7xl mx-auto flex flex-col lg:flex-row h-full">
+      <main className="max-w-7xl w-full mx-auto flex flex-col lg:flex-row h-full">
         {/* Main Content */}
         <section
           className="flex-1 p-4 lg:p-6 space-y-4 lg:space-y-6 order-2 lg:order-1"

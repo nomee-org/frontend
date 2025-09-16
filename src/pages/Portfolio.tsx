@@ -12,21 +12,13 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  TrendingUp,
-  TrendingDown,
   Globe,
-  ExternalLink,
-  MoreHorizontal,
   Plus,
   Eye,
   EyeOff,
   DollarSign,
-  Crown,
   Star,
   Activity,
-  Calendar,
-  Wallet,
-  Loader,
 } from "lucide-react";
 
 import { useAccount } from "wagmi";
@@ -127,7 +119,7 @@ const Portfolio = () => {
         />
         <div className="space-y-6">
           {/* Header Skeleton */}
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="max-w-7xl w-full mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <Skeleton className="h-8 w-32 mb-2" />
               <Skeleton className="h-4 w-64" />
@@ -136,7 +128,7 @@ const Portfolio = () => {
           </div>
 
           {/* Portfolio Overview Skeletons */}
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="max-w-7xl w-full mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
             {[...Array(2)].map((_, i) => (
               <Card key={i} className="p-content">
                 <div className="space-y-3 md:space-y-4">
@@ -152,7 +144,7 @@ const Portfolio = () => {
           </div>
 
           {/* Tabs Skeleton */}
-          <div className="max-w-7xl mx-auto space-y-4">
+          <div className="max-w-7xl w-full mx-auto space-y-4">
             <Skeleton className="h-10 w-64" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(4)].map((_, i) => (
@@ -196,7 +188,7 @@ const Portfolio = () => {
         totalValue={0}
         isConnected={Boolean(address)}
       />
-      <div className="max-w-7xl mx-auto p-content space-content">
+      <div className="max-w-7xl w-full mx-auto p-content space-content">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

@@ -234,7 +234,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-content space-content">
+    <div className="max-w-7xl w-full mx-auto p-content space-content">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

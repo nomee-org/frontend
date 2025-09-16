@@ -17,7 +17,7 @@ export function ConnectWallet({
   const { trimAddress } = useHelper();
 
   return (
-    <div className="max-w-7xl mx-auto p-content space-content flex flex-col items-center justify-center min-h-[60vh] space-y-4 md:space-y-6">
+    <div className="max-w-7xl w-full mx-auto p-content space-content flex flex-col items-center justify-center min-h-[60vh] space-y-4 md:space-y-6">
       <div className="flex flex-col items-center space-y-3 md:space-y-4 text-center">
         <div className="p-3 md:p-4 rounded-full bg-muted">
           <Wallet className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground" />
