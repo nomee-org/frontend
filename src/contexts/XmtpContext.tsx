@@ -9,7 +9,7 @@ import React, {
   useState,
 } from "react";
 import { toBytes } from "viem";
-import { useAccount, useSignMessage, useWalletClient } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 import { Reaction, ReactionCodec } from "@xmtp/content-type-reaction";
 import {
   AttachmentCodec,
@@ -18,13 +18,14 @@ import {
 } from "@xmtp/content-type-remote-attachment";
 import { Reply, ReplyCodec } from "@xmtp/content-type-reply";
 import { TextCodec } from "@xmtp/content-type-text";
-import {
-  ContentTypeReadReceipt,
-  ReadReceiptCodec,
-} from "@xmtp/content-type-read-receipt";
+import { ReadReceipt, ReadReceiptCodec } from "@xmtp/content-type-read-receipt";
+
+const XMTP_ENV = "dev" as const;
 
 interface XmtpContextType {
-  client: Client<string | any | Reply | RemoteAttachment | Reaction> | null;
+  client: Client<
+    string | any | Reply | RemoteAttachment | ReadReceipt | Reaction
+  > | null;
   identifier: Identifier | null;
   isLoading: boolean;
   error: Error | null;
@@ -46,9 +47,9 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [client, setClient] = useState<Client<string | any | Reaction> | null>(
-    null
-  );
+  const [client, setClient] = useState<Client<
+    string | any | Reply | RemoteAttachment | ReadReceipt | Reaction
+  > | null>(null);
   const [identifier, setIdentifier] = useState<Identifier | null>(null);
   const [newMessages, setNewMessages] = useState<DecodedMessage[]>([]);
   const [latestMessage, setLatestMessage] = useState<
@@ -66,25 +67,22 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    let streamController: AsyncIterator<any, any, any> | undefined;
+    let asyncIterator: AsyncIterator<any, any, any> | undefined;
 
     if (client?.inboxId) {
       (async () => {
-        streamController = await client.conversations.streamAllMessages({
+        asyncIterator = await client.conversations.streamAllMessages({
           onValue: (value) => {
             setNewMessages((prev) => [value, ...prev]);
             setLatestMessage(value);
-          },
-          onError: (error) => {
-            // setConversationsError(error);
           },
         });
       })();
     }
 
     return () => {
-      if (streamController && typeof streamController.return === "function") {
-        streamController.return();
+      if (asyncIterator && typeof asyncIterator.return === "function") {
+        asyncIterator.return();
       }
     };
   }, [client]);
@@ -117,11 +115,11 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
         identifierKind: "Ethereum",
       };
 
-      const canMessage = await Client.canMessage([xmtpIdentifier]);
+      const canMessage = await Client.canMessage([xmtpIdentifier], XMTP_ENV);
 
       if (canMessage.get(address)) {
         const xmtpClient = await Client.build(xmtpIdentifier, {
-          env: "dev",
+          env: XMTP_ENV,
           appVersion: "nomee-app/1.0",
           codecs: [
             new ReplyCodec(),
@@ -137,7 +135,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
         xmtpClient.conversations.syncAll();
       } else {
         const xmtpClient = await Client.create(signer, {
-          env: "dev",
+          env: XMTP_ENV,
           appVersion: "nomee-app/1.0",
           codecs: [
             new ReplyCodec(),

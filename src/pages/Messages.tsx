@@ -90,11 +90,11 @@ const Messages = () => {
   }, [lastestMessage]);
 
   useEffect(() => {
-    let streamController: AsyncIterator<any, any, any> | undefined;
+    let asyncIterator: AsyncIterator<any, any, any> | undefined;
 
     if (client) {
       (async () => {
-        streamController = await client.conversations.stream({
+        asyncIterator = await client.conversations.stream({
           onValue: (value) => {
             setConversations((prev) => [value, ...prev]);
           },
@@ -106,8 +106,8 @@ const Messages = () => {
     }
 
     return () => {
-      if (streamController && typeof streamController.return === "function") {
-        streamController.return();
+      if (asyncIterator && typeof asyncIterator.return === "function") {
+        asyncIterator.return();
       }
     };
   }, [identifier, client]);
