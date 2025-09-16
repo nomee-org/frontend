@@ -241,8 +241,7 @@ const DomainSearch = () => {
                     </div>
                     <Skeleton className="h-4 w-24" />
                   </div>
-                  <div className="flex space-x-2">
-                    <Skeleton className="h-10 flex-1" />
+                  <div className="flex">
                     <Skeleton className="h-10 flex-1" />
                   </div>
                 </div>
@@ -355,17 +354,22 @@ const DomainSearch = () => {
                             </p>
                           </>
                         ) : (
-                          <div className="flex items-center justify-between">
-                            <span className="text-lg font-medium text-foreground/70">
-                              Available for Offers
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className="text-xs border-yellow-400/50 text-yellow-700 bg-yellow-50"
-                            >
-                              Unlisted
-                            </Badge>
-                          </div>
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-2xl font-bold font-grotesk text-muted-foreground">
+                                0.00
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className="text-xs border-yellow-400/50 text-yellow-700 bg-yellow-50"
+                              >
+                                Unlisted
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              $ --
+                            </p>
+                          </>
                         )}
                       </div>
 
@@ -384,8 +388,8 @@ const DomainSearch = () => {
                           </Button>
                         ) : (
                           <Button
-                            variant="ghost"
-                            className="flex-1 text-foreground/70 hover:bg-accent/30"
+                            variant="outline"
+                            className="flex-1"
                             onClick={(e) => {
                               e.preventDefault();
                               handleWatch(name.name);
