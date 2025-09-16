@@ -44,6 +44,16 @@ export interface IPost {
   reposts?: IRepost[];
   comments?: IComment[];
   likes?: ILike[];
+  repostedFrom?: {
+    id: string;
+    comment?: string;
+    createdAt: string;
+    userId: string;
+    originalPostId: string;
+    repostId: string;
+    originalPost: IPost;
+    user: IUserBasic;
+  };
   _count: {
     likes: number;
     comments: number;
@@ -233,8 +243,6 @@ export enum NotificationType {
   MENTION = "MENTION",
   POST_REPLY = "POST_REPLY",
   TRENDING_HASHTAG = "TRENDING_HASHTAG",
-  MESSAGE = "MESSAGE",
-  GROUP_INVITE = "GROUP_INVITE",
   POLL_VOTE = "POLL_VOTE",
   VERIFICATION_APPROVED = "VERIFICATION_APPROVED",
   REPOST = "REPOST",
