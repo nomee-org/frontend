@@ -233,6 +233,7 @@ const Community = () => {
                               timestamp={new Date(post.createdAt).toISOString()}
                               likes={post._count.likes}
                               commentsCount={post._count.comments}
+                              repostCount={post._count.reposts}
                               comments={post.comments ?? []}
                               isLiked={(post?.likes?.length ?? 0) > 0}
                               media={
@@ -303,6 +304,7 @@ const Community = () => {
                               timestamp={new Date(post.createdAt).toISOString()}
                               likes={post._count.likes}
                               commentsCount={post._count.comments}
+                              repostCount={post._count.reposts}
                               comments={post.comments ?? []}
                               isLiked={(post?.likes?.length ?? 0) > 0}
                               media={

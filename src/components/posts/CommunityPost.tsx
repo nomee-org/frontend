@@ -27,16 +27,13 @@ import {
   MessageCircle,
   Share,
   MoreHorizontal,
-  Edit,
   Trash2,
-  Pin,
   Link,
   Repeat,
   MessageSquare,
-  Check,
   ShieldCheck,
 } from "lucide-react";
-import { IComment, IPost, IPoll, IPollVote } from "@/types/backend";
+import { IComment, IPoll, IPollVote } from "@/types/backend";
 import moment from "moment";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -72,6 +69,7 @@ interface PostProps {
   timestamp: string;
   likes: number;
   commentsCount: number;
+  repostCount: number;
   comments: IComment[];
   isLiked: boolean;
   parentId?: string;
@@ -90,6 +88,7 @@ const CommunityPost = ({
   timestamp,
   likes,
   commentsCount,
+  repostCount,
   comments,
   isLiked,
   parentId,
@@ -431,6 +430,7 @@ const CommunityPost = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Repeat className="w-4 h-4" />
+                  {repostCount}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
@@ -469,8 +469,14 @@ const CommunityPost = ({
                   try {
                     if (isLiked) {
                       await unlikePost.mutateAsync(id);
+                      isLiked = false;
+                      if (likes > 0) {
+                        likes -= 1;
+                      }
                     } else {
                       await likePost.mutateAsync(id);
+                      isLiked = true;
+                      likes += 1;
                     }
                   } catch (error) {
                     console.error("Failed to like/unlike post:", error);

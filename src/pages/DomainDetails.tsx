@@ -1161,6 +1161,7 @@ const DomainDetails = () => {
                               timestamp={new Date(post.createdAt).toISOString()}
                               likes={post._count.likes}
                               commentsCount={post._count.comments}
+                              repostCount={post._count.reposts}
                               comments={post.comments ?? []}
                               isLiked={false}
                               media={
