@@ -125,11 +125,6 @@ const Community = () => {
     setReplyingTo(postId);
   };
 
-  const handleShare = (postId: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/feeds/${postId}`);
-    toast.success("Link copied to clipboard!");
-  };
-
   useEffect(() => {
     const handlers: WebSocketEventHandlers = {
       id: "community",
