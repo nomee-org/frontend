@@ -1316,6 +1316,7 @@ export function useNotifications(
         : undefined;
     },
     initialPageParam: 1,
+    enabled: !!activeUsername,
   });
 }
 
