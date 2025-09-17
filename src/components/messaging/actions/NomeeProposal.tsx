@@ -161,9 +161,7 @@ export const NomeeProposal = ({
                   variant="secondary"
                   size="sm"
                   className="flex-1"
-                  onClick={() => {
-                    setIsAccepting(true);
-                  }}
+                  onClick={() => setIsAccepting(true)}
                   disabled={isAccepting}
                 >
                   List
@@ -201,9 +199,7 @@ export const NomeeProposal = ({
           replyTo={message}
           domainName={name.data.name}
           isOpen={isAccepting}
-          onClose={() => {
-            setIsAccepting(false);
-          }}
+          onClose={() => setIsAccepting(false)}
           token={token}
           initPrice={props.amount.toString()}
           initCurrency={props.currency}
