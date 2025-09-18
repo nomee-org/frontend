@@ -123,7 +123,6 @@ const Messages = () => {
       }
     } catch (error) {
       console.log({ error });
-
       setConversationsError(error);
     } finally {
       setConversationsLoading(false);
@@ -266,7 +265,11 @@ const Messages = () => {
               <div className="md:space-y-3 md:p-4">
                 {conversations?.map((conversation) => {
                   return (
-                    <Chat key={conversation.id} conversation={conversation} />
+                    <Chat
+                      key={conversation.id}
+                      conversation={conversation}
+                      searchQuery={searchQuery}
+                    />
                   );
                 })}
               </div>

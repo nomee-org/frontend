@@ -11,18 +11,21 @@ import moment from "moment";
 import { DomainAvatar } from "../domain/DomainAvatar";
 import { Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { ContentTypeRemoteAttachment } from "@xmtp/content-type-remote-attachment";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { formatUnits } from "viem";
-import { ContentTypeText } from "@xmtp/content-type-text";
 import { useNavigate } from "react-router-dom";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
-import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
 import { Badge } from "../ui/badge";
 import { getSummary } from "./actions/utils";
 
-export const Chat = ({ conversation }: { conversation: Conversation }) => {
+export const Chat = ({
+  conversation,
+  searchQuery,
+}: {
+  conversation: Conversation;
+  searchQuery: string;
+}) => {
   const { client, newMessages } = useXmtp();
   const { nickname } = useNameResolver();
   const [lastMessage, setLastMessage] = useState<DecodedMessage>(undefined);
@@ -47,21 +50,15 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
     }
   };
 
-  const handleLastMessage = useCallback(
-    (message: DecodedMessage) => setLastMessage(message),
-    [client]
-  );
-
   useEffect(() => {
     const newMessage = newMessages.find(
       (m) => m.conversationId === conversation.id
     );
     if (!newMessage) return;
+    setLastMessage(newMessage);
+  }, [conversation, newMessages]);
 
-    handleLastMessage(newMessage);
-  }, [newMessages]);
-
-  const getPeerAddress = async () => {
+  const getPeerAddress = useCallback(async () => {
     try {
       if (conversation.metadata.conversationType === "dm") {
         const peerInboxId = await (conversation as Dm).peerInboxId();
@@ -73,9 +70,9 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
     } catch (error) {
       setPeerAddress(undefined);
     }
-  };
+  }, [client, conversation]);
 
-  const getLastMessages = async () => {
+  const getLastMessages = useCallback(async () => {
     try {
       const messages = await conversation.messages({
         contentTypes: [
@@ -92,17 +89,27 @@ export const Chat = ({ conversation }: { conversation: Conversation }) => {
         direction: SortDirection.Descending,
       });
       if ((messages?.length ?? 0) > 0) {
-        handleLastMessage(messages[0]);
+        setLastMessage(messages[0]);
       }
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [conversation]);
 
   useEffect(() => {
     getPeerAddress();
     getLastMessages();
-  }, [conversation]);
+  }, [getPeerAddress, getLastMessages]);
+
+  if (
+    searchQuery.length > 0 &&
+    !(
+      peerAddress?.toLowerCase().includes(searchQuery?.toLowerCase()) ||
+      nickname(peerAddress)?.toLowerCase().includes(searchQuery?.toLowerCase())
+    )
+  ) {
+    return null;
+  }
 
   return (
     <div
