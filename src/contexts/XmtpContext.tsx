@@ -155,7 +155,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     } catch (error) {
       setError(error);
     }
-  }, [address, setClient, signMessageAsync]);
+  }, [address, signMessageAsync]);
 
   useEffect(() => {
     if (!address) {
