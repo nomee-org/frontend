@@ -34,7 +34,9 @@ export const StartChat = ({ dmId }: { dmId: string }) => {
               </h3>
             </div>
             <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
-              <span className="text-xs text-muted-foreground font-medium"></span>
+              <span className="text-xs text-muted-foreground font-medium">
+                New chat
+              </span>
             </div>
           </div>
           <div className="flex items-center space-x-2">

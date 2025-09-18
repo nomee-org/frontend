@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from "react";
 // Third-party imports
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAccount } from "wagmi";
-import moment from "moment";
 
 // UI component imports
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
-import { domainRegex } from "@/lib/utils";
+import { addressRegex, domainRegex } from "@/lib/utils";
 import { StartChat } from "@/components/messaging/StartChat";
 
 const Messages = () => {
@@ -54,7 +53,7 @@ const Messages = () => {
   // User and account states
   const { address } = useAccount();
   const isMobile = useIsMobile();
-  const { identifier, client, lastestMessage } = useXmtp();
+  const { client, lastestMessage } = useXmtp();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,12 +65,6 @@ const Messages = () => {
   const [conversationsError, setConversationsError] = useState<
     Error | undefined
   >(undefined);
-
-  useEffect(() => {
-    if (identifier && client) {
-      getConversations();
-    }
-  }, [identifier, client]);
 
   useEffect(() => {
     if (
@@ -89,7 +82,7 @@ const Messages = () => {
         });
       }
     }
-  }, [lastestMessage]);
+  }, [conversations, lastestMessage]);
 
   useEffect(() => {
     let asyncIterator: AsyncIterator<any, any, any> | undefined;
@@ -100,9 +93,6 @@ const Messages = () => {
           onValue: (value) => {
             setConversations((prev) => [value, ...prev]);
           },
-          onError: (error) => {
-            // setConversationsError(error);
-          },
         });
       })();
     }
@@ -112,12 +102,11 @@ const Messages = () => {
         asyncIterator.return();
       }
     };
-  }, [identifier, client]);
+  }, [client]);
 
   const getConversations = useCallback(async () => {
-    setConversationsLoading(true);
-
     try {
+      setConversationsLoading(true);
       if (client) {
         setConversations(await client.conversations.list());
       } else {
@@ -131,6 +120,12 @@ const Messages = () => {
     }
   }, [client]);
 
+  useEffect(() => {
+    if (client) {
+      getConversations();
+    }
+  }, [client, getConversations]);
+
   const handleSyncAll = useCallback(async () => {
     await client.conversations.syncAll();
     setConversations(await client.conversations.list());
@@ -138,10 +133,10 @@ const Messages = () => {
   }, [client]);
 
   useEffect(() => {
-    if (identifier && client) {
+    if (client) {
       getConversations();
     }
-  }, [identifier, client]);
+  }, [client, getConversations]);
 
   useEffect(() => {
     const wasSelected = isConversationSelected;
@@ -275,7 +270,8 @@ const Messages = () => {
                   );
                 })}
 
-                {domainRegex.test(searchQuery) && (
+                {(domainRegex.test(searchQuery) ||
+                  addressRegex.test(searchQuery)) && (
                   <StartChat dmId={searchQuery} />
                 )}
               </div>
