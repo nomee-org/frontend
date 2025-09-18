@@ -87,7 +87,6 @@ export const plainTextFromFilename = (filename: string): string => {
 export const summarizeAttachment = (filename: string, prefix = ""): string => {
   if (/image/i.test(filename)) return `${prefix}Image`;
   if (/video/i.test(filename)) return `${prefix}Video`;
-  if (/video/i.test(filename)) return `${prefix}Video`;
   if (/sticker/i.test(filename)) return `${prefix}Sticker`;
   return `${prefix}Document`;
 };
@@ -138,6 +137,25 @@ export const getSummary = (
       }
       if (str.startsWith("created_listing::")) {
         return simple ? "Listing created" : `${senderPrefix} a Nomee listing`;
+      }
+      if (str.startsWith("created_offer::")) {
+        return simple ? "Offer created" : `${senderPrefix} a Nomee offer`;
+      }
+      if (str.startsWith("accepted::")) {
+        return simple
+          ? "Action accepted"
+          : `${senderPrefix} a Nomee acceptance`;
+      }
+      if (str.startsWith("rejected::")) {
+        return simple ? "Action rejected" : `${senderPrefix} a Nomee rejection`;
+      }
+      if (str.startsWith("cancelled::")) {
+        return simple
+          ? "Action cancelled"
+          : `${senderPrefix} a Nomee cancellation`;
+      }
+      if (str.startsWith("bought::")) {
+        return simple ? "Purchase made" : `${senderPrefix} a Nomee purchase`;
       }
     }
 
