@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Bought = ({ props }: { props: any }) => {
   return (
@@ -14,9 +15,11 @@ export const Bought = ({ props }: { props: any }) => {
         {props.domainName && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Domain:</span>
-            <span className="text-primary-foreground truncate max-w-24">
-              {props.domainName}
-            </span>
+            <Link className="underline" to={`/names/${props.domainName}`}>
+              <span className="text-primary-foreground">
+                {props.domainName}
+              </span>
+            </Link>
           </div>
         )}
         {props.status && (

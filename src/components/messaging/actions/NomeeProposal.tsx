@@ -8,6 +8,7 @@ import { ContentTypeReply, Reply } from "@xmtp/content-type-reply";
 import { ContentTypeText } from "@xmtp/content-type-text";
 import { LetterText, Loader } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 export interface ProposalProps {
   domainName: string;
@@ -142,9 +143,11 @@ export const NomeeProposal = ({
             <div className="space-y-1 text-sm leading-relaxed">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Domain:</span>
-                <span className="text-primary-foreground">
-                  {props.domainName}
-                </span>
+                <Link className="underline" to={`/names/${props.domainName}`}>
+                  <span className="text-primary-foreground">
+                    {props.domainName}
+                  </span>
+                </Link>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Amount:</span>

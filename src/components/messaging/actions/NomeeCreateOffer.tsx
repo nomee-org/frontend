@@ -8,6 +8,7 @@ import { AcceptRejectOfferPopup } from "@/components/domain/AcceptRejectOfferPop
 import { useName, useOffer } from "@/data/use-doma";
 import { useHelper } from "@/hooks/use-helper";
 import { CancelOfferPopup } from "@/components/domain/CancelOfferPopup";
+import { Link } from "react-router-dom";
 
 export interface CreateOfferProps {
   orderId: string;
@@ -89,9 +90,11 @@ export const NomeeCreateOffer = ({
             <div className="space-y-1 text-sm leading-relaxed">
               <div className="flex items-center justify-between">
                 <span className="font-medium">Domain:</span>
-                <span className="text-primary-foreground">
-                  {name.data.name}
-                </span>
+                <Link className="underline" to={`/names/${name.data.name}`}>
+                  <span className="text-primary-foreground">
+                    {name.data.name}
+                  </span>
+                </Link>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Price:</span>
