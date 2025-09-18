@@ -380,8 +380,8 @@ const CommunityPost = ({
                   {moment(comments[0].createdAt).fromNow()}
                 </span>
               </div>
-              <ParsedText
-                text={comments[0].content}
+              <ParsedContent
+                content={comments[0].content}
                 className="text-sm text-foreground/90 mb-2 line-clamp-2"
               />
               <div className="flex items-center justify-between">

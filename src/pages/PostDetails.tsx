@@ -281,8 +281,8 @@ const PostDetails = () => {
                       </span>
                     </div>
 
-                    <ParsedText
-                      text={comment.content}
+                    <ParsedContent
+                      content={comment.content}
                       className="text-foreground leading-relaxed text-sm whitespace-pre-wrap mb-3"
                     />
 

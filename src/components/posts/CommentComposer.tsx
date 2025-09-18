@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
-import { Smile, Bold, Underline } from "lucide-react";
+import { Smile } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import {
   Popover,
@@ -12,7 +12,6 @@ import {
 import { useNames } from "@/data/use-doma";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCreateComment } from "@/data/use-backend";
-import { useUsername } from "@/hooks/use-username";
 import { IComment } from "@/types/backend";
 
 interface CommentComposerProps {
@@ -49,7 +48,6 @@ const CommentComposer = ({
   };
 
   const createComment = useCreateComment();
-  const { activeUsername } = useUsername();
 
   const handleSubmit = async () => {
     const textContent = getTextContent();
@@ -57,7 +55,7 @@ const CommentComposer = ({
       setIsSubmitting(true);
       try {
         const htmlContent = editorRef.current?.innerHTML || "";
-        
+
         const result = await createComment.mutateAsync({
           postId,
           content: htmlContent,
@@ -135,11 +133,6 @@ const CommentComposer = ({
     editorRef.current.focus();
   };
 
-  const formatText = (command: string) => {
-    document.execCommand(command, false);
-    editorRef.current?.focus();
-  };
-
   const handleEmojiClick = (emojiData: any) => {
     if (editorRef.current) {
       const selection = window.getSelection();
@@ -188,26 +181,7 @@ const CommentComposer = ({
           />
 
           <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center space-x-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => formatText("bold")}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Bold className="w-4 h-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => formatText("underline")}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Underline className="w-4 h-4" />
-              </Button>
-            </div>
+            <div></div>
 
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
