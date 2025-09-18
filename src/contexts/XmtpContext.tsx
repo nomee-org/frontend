@@ -87,24 +87,6 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     };
   }, [client]);
 
-  const signer: Signer = useMemo(() => {
-    return {
-      type: "EOA",
-      getIdentifier: () => ({
-        identifier: address,
-        identifierKind: "Ethereum",
-      }),
-      signMessage: async (message) => {
-        return toBytes(
-          await signMessageAsync({
-            account: address,
-            message,
-          })
-        );
-      },
-    };
-  }, [address, signMessageAsync]);
-
   const connect = useCallback(async () => {
     if (!address) return;
     try {
@@ -134,18 +116,35 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
         setClient(xmtpClient);
         xmtpClient.conversations.syncAll();
       } else {
-        const xmtpClient = await Client.create(signer, {
-          env: XMTP_ENV,
-          appVersion: "nomee-app/1.0",
-          codecs: [
-            new ReplyCodec(),
-            new ReactionCodec(),
-            new AttachmentCodec(),
-            new RemoteAttachmentCodec(),
-            new TextCodec(),
-            new ReadReceiptCodec(),
-          ],
-        });
+        const xmtpClient = await Client.create(
+          {
+            type: "EOA",
+            getIdentifier: () => ({
+              identifier: address,
+              identifierKind: "Ethereum",
+            }),
+            signMessage: async (message) => {
+              return toBytes(
+                await signMessageAsync({
+                  account: address,
+                  message,
+                })
+              );
+            },
+          },
+          {
+            env: XMTP_ENV,
+            appVersion: "nomee-app/1.0",
+            codecs: [
+              new ReplyCodec(),
+              new ReactionCodec(),
+              new AttachmentCodec(),
+              new RemoteAttachmentCodec(),
+              new TextCodec(),
+              new ReadReceiptCodec(),
+            ],
+          }
+        );
         setClient(xmtpClient);
         xmtpClient.conversations.syncAll();
       }
@@ -155,7 +154,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     } catch (error) {
       setError(error);
     }
-  }, [address, setClient, signer]);
+  }, [address, setClient, signMessageAsync]);
 
   useEffect(() => {
     if (!address) {
