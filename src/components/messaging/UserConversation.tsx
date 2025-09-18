@@ -70,6 +70,7 @@ import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { ContentTypeReaction } from "@xmtp/content-type-reaction";
 import { TradeOptionPopup } from "./TradeOptionsPopup";
 import { dnsConnect } from "@/services/dnsconnect";
+import { domainRegex } from "@/lib/utils";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -234,10 +235,8 @@ const UserConversation = () => {
       if (dmId?.toLowerCase() === "you") {
         setPeerAddress(myAddress);
         setPeerInboxId(client?.inboxId);
-      } else if (dmId.includes(".")) {
+      } else if (domainRegex.test(dmId)) {
         const address = await dnsConnect.resolve(dmId, "ETH");
-
-        console.log({ address });
 
         setPeerAddress(address);
         setNickname(address, dmId);

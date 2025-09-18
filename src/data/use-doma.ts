@@ -1,5 +1,6 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { dataService } from "@/services/doma/dataservice";
+import { domainRegex } from "@/lib/utils";
 
 export const queryKeys = {
   default: ["names"] as const,
@@ -86,7 +87,7 @@ export function useName(name: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.single(name),
     queryFn: () => dataService.getName({ name }),
-    enabled: name.includes(".") && enabled,
+    enabled: domainRegex.test(name) && enabled,
   });
 }
 
