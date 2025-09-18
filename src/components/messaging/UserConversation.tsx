@@ -66,10 +66,10 @@ import { formatUnits } from "viem";
 import { toast } from "sonner";
 import { useNameResolver } from "@/contexts/NicknameContext";
 import { useAccount } from "wagmi";
-import { useName } from "@/data/use-doma";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
 import { ContentTypeReaction } from "@xmtp/content-type-reaction";
 import { TradeOptionPopup } from "./TradeOptionsPopup";
+import { dnsConnect } from "@/services/dnsconnect";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -87,9 +87,8 @@ const UserConversation = () => {
   const [showMuteDialog, setShowMuteDialog] = useState(false);
   const [peerAddress, setPeerAddress] = useState<string | undefined>(undefined);
   const [peerInboxId, setPeerInboxId] = useState<string | undefined>(undefined);
-  const { identifier, client, newMessages, clearNewMessages } = useXmtp();
+  const { client, newMessages, clearNewMessages } = useXmtp();
   const { nickname, setNickname } = useNameResolver();
-  const { parseCAIP10 } = useHelper();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [recordingUsers, setRecordingUsers] = useState<string[]>([]);
   const [conversation, setConversation] = useState<Conversation | undefined>(
@@ -106,13 +105,6 @@ const UserConversation = () => {
   const [messagesError, setMessagesError] = useState<Error | undefined>(
     undefined
   );
-
-  const {
-    data: nameData,
-    isLoading: isNameLoading,
-    isRefetching,
-    isEnabled,
-  } = useName(dmId);
 
   const getOrCreateConversation = useCallback(
     async (inboxId: string) => {
@@ -231,7 +223,7 @@ const UserConversation = () => {
     getOrCreateConversation(peerInboxId);
   }, [peerInboxId, getOrCreateConversation]);
 
-  const init = async () => {
+  const init = useCallback(async () => {
     try {
       setMessages([]);
       setReactionMessages([]);
@@ -242,11 +234,13 @@ const UserConversation = () => {
       if (dmId?.toLowerCase() === "you") {
         setPeerAddress(myAddress);
         setPeerInboxId(client?.inboxId);
-      } else if (nameData?.claimedBy && dmId.includes(".")) {
-        const address = parseCAIP10(nameData.claimedBy).address;
+      } else if (dmId.includes(".")) {
+        const address = await dnsConnect.resolve(dmId, "ETH");
+
+        console.log({ address });
 
         setPeerAddress(address);
-        setNickname(address, nameData.name);
+        setNickname(address, dmId);
 
         setPeerInboxId(
           await client.findInboxIdByIdentifier({
@@ -271,13 +265,13 @@ const UserConversation = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [client, dmId, myAddress, setNickname]);
 
   useEffect(() => {
     if (client) {
       init();
     }
-  }, [dmId, identifier, client, nameData]);
+  }, [client, init]);
 
   const {
     containerRef,
@@ -449,7 +443,7 @@ const UserConversation = () => {
           />
         )}
 
-        {(isLoading || (isEnabled && (isNameLoading || isRefetching))) && (
+        {isLoading && (
           <div className="flex-1 flex h-full items-center justify-center p-4">
             <div className="text-center">
               <Loader className="w-8 h-8 animate-spin mx-auto" />
@@ -457,116 +451,114 @@ const UserConversation = () => {
           </div>
         )}
 
-        {!conversation &&
-          !(isLoading || (isEnabled && (isNameLoading || isRefetching))) && (
-            <div className="flex-1 flex items-center justify-center p-4">
-              <div className="text-center space-y-4">
-                <UserRoundX className="w-8 h-8 mx-auto mb-2" />
-                <p className="text-muted-foreground">
-                  User is not registered on XTMP.
-                </p>
-                <div className="flex items-center justify-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (isMobile && navigator.vibrate) {
-                        navigator.vibrate(50);
-                      }
-                      navigate("/");
-                    }}
-                    className="h-8 w-8 p-0 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="secondary">
-                    Invite them
-                  </Button>
-                </div>
+        {!conversation && !isLoading && (
+          <div className="flex-1 flex items-center justify-center p-4">
+            <div className="text-center space-y-4">
+              <UserRoundX className="w-8 h-8 mx-auto mb-2" />
+              <p className="text-muted-foreground">
+                User is not registered on XTMP.
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (isMobile && navigator.vibrate) {
+                      navigator.vibrate(50);
+                    }
+                    navigate("/");
+                  }}
+                  className="h-8 w-8 p-0 hover:bg-accent/80 transition-all duration-200 hover:scale-110 active:scale-95"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="secondary">
+                  Invite them
+                </Button>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
         {/* Messages */}
-        {!(isLoading || (isEnabled && (isNameLoading || isRefetching))) &&
-          conversation && (
-            <div
-              ref={containerRef}
-              onScroll={handleScroll}
-              className="flex-1 p-2 md:p-3 lg:p-4 overflow-y-auto overflow-x-hidden h-full"
-            >
-              {messagesLoading ? (
-                <div className="text-center text-muted-foreground h-full flex items-center justify-center">
-                  <div className="flex justify-center py-6 md:py-8">
-                    <Loader className="h-4 w-4 md:h-6 md:w-6 animate-spin" />
-                  </div>
+        {!isLoading && conversation && (
+          <div
+            ref={containerRef}
+            onScroll={handleScroll}
+            className="flex-1 p-2 md:p-3 lg:p-4 overflow-y-auto overflow-x-hidden h-full"
+          >
+            {messagesLoading ? (
+              <div className="text-center text-muted-foreground h-full flex items-center justify-center">
+                <div className="flex justify-center py-6 md:py-8">
+                  <Loader className="h-4 w-4 md:h-6 md:w-6 animate-spin" />
                 </div>
-              ) : messagesError ? (
-                <div className="text-center text-muted-foreground h-full flex items-center justify-center">
-                  <div className="text-center text-red-500 text-xs md:text-sm">
-                    Failed to load messages
-                  </div>
+              </div>
+            ) : messagesError ? (
+              <div className="text-center text-muted-foreground h-full flex items-center justify-center">
+                <div className="text-center text-red-500 text-xs md:text-sm">
+                  Failed to load messages
                 </div>
-              ) : messages?.length === 0 ? (
-                <div className="text-center text-muted-foreground h-full flex items-center justify-center">
-                  <div className="space-y-1 md:space-y-2 self-center">
-                    <p className="text-xs md:text-sm">No messages yet</p>
-                    <p className="text-xs">
-                      Send a message to start the conversation!
-                    </p>
-                  </div>
+              </div>
+            ) : messages?.length === 0 ? (
+              <div className="text-center text-muted-foreground h-full flex items-center justify-center">
+                <div className="space-y-1 md:space-y-2 self-center">
+                  <p className="text-xs md:text-sm">No messages yet</p>
+                  <p className="text-xs">
+                    Send a message to start the conversation!
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-0 px-2 md:px-0 ">
-                  <MessageList
-                    conversation={conversation}
-                    onReply={(message) => setReplyTo(message)}
-                    onReplyClick={scrollToMessage}
-                    messages={
-                      messages?.sort(
-                        (a, b) =>
-                          new Date(
-                            Math.ceil(Number(formatUnits(a.sentAtNs, 6)))
-                          ).getTime() -
-                          new Date(
-                            Math.ceil(Number(formatUnits(b.sentAtNs, 6)))
-                          ).getTime()
-                      ) ?? []
-                    }
-                    pinnedMessages={pinnedMessages}
-                    reactionMessages={reactionMessages}
-                    peerLastReceipt={
-                      receiptMessages.sort(
-                        (a, b) =>
-                          Number(formatUnits(b.sentAtNs, 6)) -
-                          Number(formatUnits(a.sentAtNs, 6))
-                      )?.[0] ?? undefined
-                    }
-                  />
-                </div>
-              )}
+              </div>
+            ) : (
+              <div className="space-y-0 px-2 md:px-0 ">
+                <MessageList
+                  conversation={conversation}
+                  onReply={(message) => setReplyTo(message)}
+                  onReplyClick={scrollToMessage}
+                  messages={
+                    messages?.sort(
+                      (a, b) =>
+                        new Date(
+                          Math.ceil(Number(formatUnits(a.sentAtNs, 6)))
+                        ).getTime() -
+                        new Date(
+                          Math.ceil(Number(formatUnits(b.sentAtNs, 6)))
+                        ).getTime()
+                    ) ?? []
+                  }
+                  pinnedMessages={pinnedMessages}
+                  reactionMessages={reactionMessages}
+                  peerLastReceipt={
+                    receiptMessages.sort(
+                      (a, b) =>
+                        Number(formatUnits(b.sentAtNs, 6)) -
+                        Number(formatUnits(a.sentAtNs, 6))
+                    )?.[0] ?? undefined
+                  }
+                />
+              </div>
+            )}
 
-              {/* Typing Indicator */}
-              <TypingIndicator addresses={typingUsers} />
+            {/* Typing Indicator */}
+            <TypingIndicator addresses={typingUsers} />
 
-              {/* Recording Indicator */}
-              <RecordingIndicator addresses={recordingUsers} />
+            {/* Recording Indicator */}
+            <RecordingIndicator addresses={recordingUsers} />
 
-              {/* Scroll to bottom button */}
-              {!isNearBottom && (
-                <Button
-                  onClick={() => {
-                    scrollToBottom(conversation);
-                  }}
-                  className="fixed bottom-20 md:bottom-20 right-4 md:right-6 rounded-full w-8 h-8 md:w-10 md:h-10 p-0 animate-scale-in"
-                  size="sm"
-                  variant="secondary"
-                >
-                  <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
-                </Button>
-              )}
-            </div>
-          )}
+            {/* Scroll to bottom button */}
+            {!isNearBottom && (
+              <Button
+                onClick={() => {
+                  scrollToBottom(conversation);
+                }}
+                className="fixed bottom-20 md:bottom-20 right-4 md:right-6 rounded-full w-8 h-8 md:w-10 md:h-10 p-0 animate-scale-in"
+                size="sm"
+                variant="secondary"
+              >
+                <ChevronDown className="h-3 w-3 md:h-4 md:w-4" />
+              </Button>
+            )}
+          </div>
+        )}
 
         {peerAddress && conversation && (
           <TradeOptionPopup

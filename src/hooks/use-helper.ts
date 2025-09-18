@@ -1,14 +1,14 @@
+export const parseCAIP10 = (input: string) => {
+  const parts = input.split(":");
+
+  const namespace = parts[0];
+  const chainId = parts[1];
+  const address = parts[2] ?? null;
+
+  return { namespace, chainId, address };
+};
+
 export const useHelper = () => {
-  const parseCAIP10 = (input: string) => {
-    const parts = input.split(":");
-
-    const namespace = parts[0];
-    const chainId = parts[1];
-    const address = parts[2] ?? null;
-
-    return { namespace, chainId, address };
-  };
-
   const trimAddress = (address: string, lenght = 4): string => {
     if (address.length <= lenght * 2) return address;
     return `${address.substring(0, lenght)}...${address.substring(
