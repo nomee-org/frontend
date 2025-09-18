@@ -89,6 +89,7 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
 
   const connect = useCallback(async () => {
     if (!address) return;
+
     try {
       setIsLoading(true);
 
@@ -163,13 +164,11 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
       setClient(null);
       setIdentifier(null);
     }
-  }, [address, setClient]);
+  }, [address]);
 
   useEffect(() => {
-    if (address && !client) {
-      connect();
-    }
-  }, [address, client, connect, setClient]);
+    connect();
+  }, [connect]);
 
   const value = {
     client,
