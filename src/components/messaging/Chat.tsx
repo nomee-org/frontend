@@ -22,9 +22,11 @@ import { getSummary } from "./actions/utils";
 export const Chat = ({
   conversation,
   searchQuery,
+  onExist,
 }: {
   conversation: Conversation;
   searchQuery: string;
+  onExist: (dmId) => void;
 }) => {
   const { client, newMessages } = useXmtp();
   const { nickname } = useNameResolver();
@@ -65,12 +67,17 @@ export const Chat = ({
         const state = await client.preferences.inboxStateFromInboxIds([
           peerInboxId,
         ]);
-        setPeerAddress(state?.[0]?.identifiers?.[0]?.identifier);
+        const address = state?.[0]?.identifiers?.[0]?.identifier;
+        setPeerAddress(address);
+        if (address) {
+          onExist(address);
+          onExist(nickname(address));
+        }
       }
     } catch (error) {
       setPeerAddress(undefined);
     }
-  }, [client, conversation]);
+  }, [client, conversation, nickname, onExist]);
 
   const getLastMessages = useCallback(async () => {
     try {

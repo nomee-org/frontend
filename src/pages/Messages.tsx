@@ -57,6 +57,9 @@ const Messages = () => {
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
+  const [existingDmIds, setExistingDmIds] = useState<Set<string[]>>(
+    new Set([])
+  );
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [isConversationSelected, setIsConversationSelected] = useState(false);
   const [isClosingConversation, setIsClosingConversation] = useState(false);
@@ -266,14 +269,21 @@ const Messages = () => {
                       key={conversation.id}
                       conversation={conversation}
                       searchQuery={searchQuery}
+                      onExist={(dmId) => {
+                        setExistingDmIds((prev) => prev.add(dmId));
+                      }}
                     />
                   );
                 })}
 
                 {(domainRegex.test(searchQuery) ||
-                  addressRegex.test(searchQuery)) && (
-                  <StartChat dmId={searchQuery} />
-                )}
+                  addressRegex.test(searchQuery)) &&
+                  !Array.from(existingDmIds)
+                    .join("")
+                    ?.toLowerCase()
+                    .includes(searchQuery?.toLowerCase()) && (
+                    <StartChat dmId={searchQuery} />
+                  )}
               </div>
             )}
           </ScrollArea>

@@ -16,7 +16,7 @@ import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { useHelper } from "@/hooks/use-helper";
 import { useUsername } from "@/contexts/UsernameContext";
 import { SearchSEO } from "@/components/seo/SearchSEO";
-import { QueryLoader, QueryListLoader } from "@/components/ui/query-loader";
+import { QueryListLoader } from "@/components/ui/query-loader";
 import { QueryError } from "@/components/ui/query-error";
 
 const Search = () => {
@@ -281,6 +281,7 @@ const Search = () => {
                           timestamp={timestamp}
                           likes={post._count.likes}
                           commentsCount={post._count.comments}
+                          repostCount={post._count.reposts}
                           comments={post.comments ?? []}
                           isLiked={false}
                           media={
