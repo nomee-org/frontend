@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useHelper } from "@/hooks/use-helper";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const Bought = ({ props }: { props: any }) => {
+  const { trimAddress } = useHelper();
+
   return (
     <div className="w-32 md:w-44 max-w-full">
       {/* Title */}
@@ -34,7 +37,7 @@ export const Bought = ({ props }: { props: any }) => {
           <div className="flex items-center justify-between">
             <span className="font-medium">Tx Hash:</span>
             <span className="text-primary-foreground truncate max-w-24">
-              {props.transactionHash}
+              {trimAddress(props.transactionHash)}
             </span>
           </div>
         )}
