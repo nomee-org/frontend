@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useState,
   ReactNode,
+  useCallback,
 } from "react";
 import { useGetToken, useGetUserProfile } from "@/data/use-backend";
 import { useOwnedNames } from "@/data/use-doma";
@@ -42,33 +43,38 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
   const { data: namesData } = useOwnedNames(address, 10, []);
   const { data: profileData, refetch: refetchProfile } = useGetUserProfile();
 
-  const _setActiveUsername = (newUsername: string) => {
-    setIsSwitching(true);
+  const _setActiveUsername = useCallback(
+    (newUsername: string) => {
+      setIsSwitching(true);
 
-    backendService.getToken(newUsername).then((token) => {
-      if (token && token.accessToken && token.refreshToken) {
-        backendService.setTokens(token.accessToken, token.refreshToken);
+      backendService
+        .getToken(newUsername)
+        .then((token) => {
+          if (token && token.accessToken && token.refreshToken) {
+            backendService.setTokens(token.accessToken, token.refreshToken);
 
-        refetchProfile();
+            refetchProfile();
 
-        webSocketService.updateConfig({
-          token: token.accessToken,
-          username: activeUsername,
+            webSocketService.updateConfig({
+              token: token.accessToken,
+              username: newUsername,
+            });
+
+            webSocketService.connect();
+          }
+
+          setActiveUsername(newUsername);
+          toast.success(`Connected to @${newUsername}`);
+        })
+        .catch(() => {
+          toast.error(`Cannot connect to @${newUsername}`);
+        })
+        .finally(() => {
+          setIsSwitching(false);
         });
-
-        webSocketService.connect();
-      }
-
-      setActiveUsername(newUsername);
-      setIsSwitching(false);
-    });
-  };
-
-  useEffect(() => {
-    if (activeUsername) {
-      toast(`Connected to @${activeUsername}`);
-    }
-  }, [activeUsername]);
+    },
+    [refetchProfile]
+  );
 
   useEffect(() => {
     const availableNames = namesData?.pages
@@ -76,11 +82,11 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
       ?.map((name) => name.name);
 
     if (availableNames?.length) {
-      setActiveUsername(availableNames[0]);
+      _setActiveUsername(availableNames[0]);
     } else {
       setActiveUsername(null);
     }
-  }, [namesData]);
+  }, [namesData, _setActiveUsername]);
 
   useEffect(() => {
     if (token && token.accessToken && token.refreshToken) {
@@ -95,7 +101,7 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
 
       webSocketService.connect();
     }
-  }, [token]);
+  }, [token, refetchProfile, activeUsername]);
 
   const value = {
     token,
