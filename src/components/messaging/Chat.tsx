@@ -113,7 +113,6 @@ export const Chat = ({
 
   return (
     <div
-      key={conversation.id}
       onClick={() => handleConversationClick(conversation)}
       className={`mx-4 py-3 last:border-0 md:m-0 md:p-3 cursor-pointer transition-all duration-200 md:hover:bg-accent/80 border-t-sidebar-border border-b md:rounded-xl md:border md:border-transparent ${
         isSelected

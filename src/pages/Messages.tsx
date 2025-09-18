@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { ContentTypeReadReceipt } from "@xmtp/content-type-read-receipt";
+import { domainRegex } from "@/lib/utils";
+import { StartChat } from "@/components/messaging/StartChat";
 
 const Messages = () => {
   // Navigation and routing states
@@ -272,6 +274,10 @@ const Messages = () => {
                     />
                   );
                 })}
+
+                {domainRegex.test(searchQuery) && (
+                  <StartChat dmId={searchQuery} />
+                )}
               </div>
             )}
           </ScrollArea>
