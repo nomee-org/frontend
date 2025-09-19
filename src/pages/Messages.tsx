@@ -53,7 +53,7 @@ const Messages = () => {
   // User and account states
   const { address } = useAccount();
   const isMobile = useIsMobile();
-  const { client, lastestMessage } = useXmtp();
+  const { client, newMessages } = useXmtp();
 
   // Local component states
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,13 +70,16 @@ const Messages = () => {
   >(undefined);
 
   useEffect(() => {
-    if (
-      lastestMessage &&
-      !lastestMessage.contentType.sameAs(ContentTypeReadReceipt)
-    ) {
+    const message =
+      newMessages.length === 0
+        ? undefined
+        : newMessages[newMessages.length - 1];
+
+    if (message && !message.contentType.sameAs(ContentTypeReadReceipt)) {
       const index = conversations.findIndex(
-        (c) => c.id === lastestMessage.conversationId
+        (c) => c.id === message.conversationId
       );
+
       if (index > 0) {
         setConversations((prev) => {
           const updated = [...prev];
@@ -85,20 +88,20 @@ const Messages = () => {
         });
       }
     }
-  }, [conversations, lastestMessage]);
+  }, [conversations, newMessages]);
 
   useEffect(() => {
+    if (!client) return;
+
     let asyncIterator: AsyncIterator<any, any, any> | undefined;
 
-    if (client) {
-      (async () => {
-        asyncIterator = await client.conversations.stream({
-          onValue: (value) => {
-            setConversations((prev) => [value, ...prev]);
-          },
-        });
-      })();
-    }
+    (async () => {
+      asyncIterator = await client.conversations.stream({
+        onValue: (value) => {
+          setConversations((prev) => [value, ...prev]);
+        },
+      });
+    })();
 
     return () => {
       if (asyncIterator && typeof asyncIterator.return === "function") {
@@ -108,6 +111,8 @@ const Messages = () => {
   }, [client]);
 
   const getConversations = useCallback(async () => {
+    if (!client) return;
+
     try {
       setConversationsLoading(true);
       if (client) {
@@ -116,30 +121,19 @@ const Messages = () => {
         setConversations([]);
       }
     } catch (error) {
-      console.log({ error });
       setConversationsError(error);
     } finally {
       setConversationsLoading(false);
     }
   }, [client]);
 
-  useEffect(() => {
-    if (client) {
-      getConversations();
-    }
-  }, [client, getConversations]);
-
   const handleSyncAll = useCallback(async () => {
+    if (!client) return;
+
     await client.conversations.syncAll();
     setConversations(await client.conversations.list());
     toast.success("Synced");
   }, [client]);
-
-  useEffect(() => {
-    if (client) {
-      getConversations();
-    }
-  }, [client, getConversations]);
 
   useEffect(() => {
     const wasSelected = isConversationSelected;
@@ -157,6 +151,10 @@ const Messages = () => {
 
     setIsConversationSelected(isSelected);
   }, [location.pathname, isConversationSelected, isMobile]);
+
+  useEffect(() => {
+    getConversations();
+  }, [getConversations]);
 
   // Show wallet connection message if no address
   if (!address) {

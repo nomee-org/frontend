@@ -29,7 +29,6 @@ interface XmtpContextType {
   isLoading: boolean;
   error: Error | null;
   newMessages: DecodedMessage[];
-  lastestMessage?: DecodedMessage;
   clearNewMessages: (conversationId: string) => void;
   clearAllNewMessages: () => void;
 }
@@ -51,9 +50,6 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   > | null>(null);
   const [identifier, setIdentifier] = useState<Identifier | null>(null);
   const [newMessages, setNewMessages] = useState<DecodedMessage[]>([]);
-  const [latestMessage, setLatestMessage] = useState<
-    DecodedMessage | undefined
-  >(undefined);
 
   const clearNewMessages = (conversationId: string) => {
     setNewMessages((prev) =>
@@ -66,18 +62,17 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    if (!client) return;
+
     let asyncIterator: AsyncIterator<any, any, any> | undefined;
 
-    if (client?.inboxId) {
-      (async () => {
-        asyncIterator = await client.conversations.streamAllMessages({
-          onValue: (value) => {
-            setNewMessages((prev) => [value, ...prev]);
-            setLatestMessage(value);
-          },
-        });
-      })();
-    }
+    (async () => {
+      asyncIterator = await client.conversations.streamAllMessages({
+        onValue: (value) => {
+          setNewMessages((prev) => [value, ...prev]);
+        },
+      });
+    })();
 
     return () => {
       if (asyncIterator && typeof asyncIterator.return === "function") {
@@ -177,7 +172,6 @@ export const XmtpProvider: React.FC<XmtpProviderProps> = ({ children }) => {
     newMessages,
     clearNewMessages,
     clearAllNewMessages,
-    latestMessage,
   };
 
   return <XmtpContext.Provider value={value}>{children}</XmtpContext.Provider>;
