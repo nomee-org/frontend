@@ -2,7 +2,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
-import { UserPreviewPopup } from "./UserPreviewPopup";
 import { ReactionUsersPopup } from "./ReactionUsersPopup";
 import {
   DropdownMenu,
@@ -201,15 +200,13 @@ export function MessageBubble({
               showAvatar ? "opacity-100" : "opacity-0"
             )}
           >
-            <UserPreviewPopup username={nickname(message.senderInboxId)}>
-              <div className="cursor-pointer">
-                <DomainAvatar
-                  domain={nickname(message.senderInboxId)}
-                  size="xs"
-                  className="h-6 w-6 md:h-8 md:w-8 hover:scale-105 transition-transform"
-                />
-              </div>
-            </UserPreviewPopup>
+            <div className="cursor-pointer">
+              <DomainAvatar
+                domain={nickname(message.senderInboxId)}
+                size="xs"
+                className="h-6 w-6 md:h-8 md:w-8 hover:scale-105 transition-transform"
+              />
+            </div>
           </div>
         )}
 

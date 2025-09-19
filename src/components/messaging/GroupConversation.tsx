@@ -98,10 +98,11 @@ const GroupConversation = () => {
   } = useGetConversationMembers(conversation, 50);
 
   useEffect(() => {
+    if (!conversation) return;
+
     const cleanNewMessages = newMessages.filter(
-      (m) => m.conversationId === conversation?.id
+      (m) => m.conversationId === conversation.id
     );
-    if (cleanNewMessages.length === 0) return;
 
     for (const newMessage of cleanNewMessages) {
       if (newMessage.conversationId === conversation?.id) {
@@ -116,9 +117,11 @@ const GroupConversation = () => {
     }
 
     clearNewMessages(conversation?.id);
-  }, [id, newMessages, conversation]);
+  }, [newMessages, conversation, clearNewMessages]);
 
-  const getReactionMessages = async () => {
+  const getReactionMessages = useCallback(async () => {
+    if (!conversation) return;
+
     try {
       setReactionMessages(
         (await conversation.messages({
@@ -128,9 +131,11 @@ const GroupConversation = () => {
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [conversation]);
 
-  const getMessages = async () => {
+  const getMessages = useCallback(async () => {
+    if (!conversation) return;
+
     try {
       setMessages(
         await conversation.messages({
@@ -146,17 +151,16 @@ const GroupConversation = () => {
         })
       );
     } catch (error) {
-      // setMessagesError(error);
+      setMessagesError(error);
     } finally {
       setMessagesLoading(false);
     }
-  };
+  }, [conversation]);
 
   useEffect(() => {
-    if (conversation) {
-      getMessages();
-    }
-  }, [conversation]);
+    getMessages();
+    getReactionMessages();
+  }, [getMessages, getReactionMessages]);
 
   const {
     containerRef,

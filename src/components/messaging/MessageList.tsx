@@ -11,6 +11,7 @@ import { ContentTypeReaction, Reaction } from "@xmtp/content-type-reaction";
 import { formatUnits } from "viem";
 import type { Reply } from "@xmtp/content-type-reply";
 import { ContentTypeReply } from "@xmtp/content-type-reply";
+
 interface MessageListProps {
   conversation: Conversation;
   messages: DecodedMessage[];

@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from "react";
 
 // Third-party imports
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 
 // UI component imports
 import { Button } from "@/components/ui/button";
@@ -22,11 +21,9 @@ import {
   Loader,
   ChevronDown,
   ArrowLeft,
-  Send,
   UserRoundX,
   RefreshCcw,
   VolumeX,
-  HandCoins,
 } from "lucide-react";
 
 // Local component imports
@@ -53,7 +50,6 @@ import {
 // Type imports
 import { RecordingIndicator } from "./RecordingIndicator";
 import { useXmtp } from "@/contexts/XmtpContext";
-import { useHelper } from "@/hooks/use-helper";
 import {
   ConsentEntityType,
   ConsentState,
@@ -112,6 +108,7 @@ const UserConversation = () => {
       try {
         let dm: Dm | undefined = undefined;
         dm = await client.conversations.getDmByInboxId(inboxId);
+
         if (!dm) {
           const consentState = await client.preferences.getConsentState(
             ConsentEntityType.InboxId,
@@ -120,23 +117,22 @@ const UserConversation = () => {
 
           if (consentState === ConsentState.Denied) {
             return toast.error(
-              `Recipient has denied messages from you. Please request permission.`
+              `Recipient has denied messages from you. Please request their permission.`
             );
           }
 
-          await client.preferences.setConsentStates([
-            {
-              entityType: ConsentEntityType.InboxId,
-              entity: inboxId,
-              state: ConsentState.Allowed,
-            },
-          ]);
+          // await client.preferences.setConsentStates([
+          //   {
+          //     entityType: ConsentEntityType.InboxId,
+          //     entity: inboxId,
+          //     state: ConsentState.Allowed,
+          //   },
+          // ]);
 
           dm = await client.conversations.newDm(inboxId);
         }
 
         setConversation(dm);
-
         dm.sync();
       } catch (error) {
         return undefined;
@@ -146,10 +142,11 @@ const UserConversation = () => {
   );
 
   useEffect(() => {
+    if (!conversation) return;
+
     const cleanNewMessages = newMessages.filter(
-      (m) => m.conversationId === conversation?.id
+      (m) => m.conversationId === conversation.id
     );
-    if (cleanNewMessages.length === 0) return;
 
     for (const newMessage of cleanNewMessages) {
       if (newMessage.conversationId === conversation?.id) {
@@ -164,9 +161,11 @@ const UserConversation = () => {
     }
 
     clearNewMessages(conversation?.id);
-  }, [dmId, newMessages, conversation]);
+  }, [newMessages, conversation, clearNewMessages]);
 
-  const getReceiptMessages = async () => {
+  const getReceiptMessages = useCallback(async () => {
+    if (!conversation) return;
+
     try {
       setReceiptMessages(
         (await conversation.messages({
@@ -176,9 +175,11 @@ const UserConversation = () => {
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [conversation]);
 
-  const getReactionMessages = async () => {
+  const getReactionMessages = useCallback(async () => {
+    if (!conversation) return;
+
     try {
       setReactionMessages(
         (await conversation.messages({
@@ -188,9 +189,11 @@ const UserConversation = () => {
     } catch (error) {
       console.log(error);
     }
-  };
+  }, [conversation]);
 
-  const getMessages = async () => {
+  const getMessages = useCallback(async () => {
+    if (!conversation) return;
+
     try {
       setMessages(
         await conversation.messages({
@@ -206,19 +209,17 @@ const UserConversation = () => {
         })
       );
     } catch (error) {
-      // setMessagesError(error);
+      setMessagesError(error);
     } finally {
       setMessagesLoading(false);
     }
-  };
+  }, [conversation]);
 
   useEffect(() => {
-    if (conversation) {
-      getMessages();
-      getReceiptMessages();
-      getReactionMessages();
-    }
-  }, [conversation]);
+    getMessages();
+    getReceiptMessages();
+    getReactionMessages();
+  }, [getMessages, getReactionMessages, getReceiptMessages]);
 
   useEffect(() => {
     getOrCreateConversation(peerInboxId);
@@ -239,14 +240,19 @@ const UserConversation = () => {
         const address = await dnsConnect.resolve(dmId, "ETH");
 
         setPeerAddress(address);
+
+        // address -> domain name
         setNickname(address, dmId);
 
-        setPeerInboxId(
-          await client.findInboxIdByIdentifier({
-            identifier: address,
-            identifierKind: "Ethereum",
-          })
-        );
+        const inboxId = await client.findInboxIdByIdentifier({
+          identifier: address,
+          identifierKind: "Ethereum",
+        });
+
+        // inboxId -> domain name
+        setNickname(inboxId, dmId);
+
+        setPeerInboxId(inboxId);
       } else if (dmId.startsWith("0x")) {
         setPeerAddress(dmId);
         setPeerInboxId(
