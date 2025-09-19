@@ -3,7 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Bell, Heart, MessageSquare, User, Share } from "lucide-react";
+import {
+  CheckCircle2,
+  Bell,
+  Heart,
+  MessageSquare,
+  User,
+  Share,
+} from "lucide-react";
 import {
   useNotifications,
   useMarkAllNotificationsAsRead,
@@ -17,9 +24,9 @@ import { useNavigate } from "react-router-dom";
 import { useAccount } from "wagmi";
 import { ConnectWallet } from "@/components/common/ConnectWallet";
 import { BuyDomain } from "@/components/domain/BuyDomain";
-import { 
-  webSocketService, 
-  WebSocketEventHandlers 
+import {
+  webSocketService,
+  WebSocketEventHandlers,
 } from "@/services/backend/socketservice";
 import NotificationItem from "@/components/notifications/NotificationItem";
 
@@ -50,7 +57,6 @@ export default function Notifications() {
     webSocketService.setEventHandlers({
       id: "notifications",
       onNotification: (notification) => {
-        console.log("New notification received:", notification);
         toast({
           title: "New Notification",
           description: notification.message || notification.title,
@@ -214,9 +220,9 @@ export default function Notifications() {
                 children={notificationsData?.pages
                   ?.flatMap((p) => p.data)
                   ?.map((notification) => (
-                    <NotificationItem 
-                      key={notification.id} 
-                      notification={notification} 
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
                     />
                   ))}
               />
@@ -252,9 +258,9 @@ export default function Notifications() {
                 children={unReadNotificationsData?.pages
                   ?.flatMap((p) => p.data)
                   ?.map((notification) => (
-                    <NotificationItem 
-                      key={notification.id} 
-                      notification={notification} 
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
                     />
                   ))}
               />
