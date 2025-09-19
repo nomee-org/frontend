@@ -130,9 +130,13 @@ const Messages = () => {
   const handleSyncAll = useCallback(async () => {
     if (!client) return;
 
-    await client.conversations.syncAll();
-    setConversations(await client.conversations.list());
-    toast.success("Synced");
+    try {
+      await client.conversations.syncAll();
+      setConversations(await client.conversations.list());
+      toast.success("Synced");
+    } catch (error) {
+      console.log(error);
+    }
   }, [client]);
 
   useEffect(() => {
