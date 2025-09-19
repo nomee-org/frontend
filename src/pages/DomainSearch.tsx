@@ -1,5 +1,3 @@
-/* eslint-disable no-constant-binary-expression */
-/* eslint-disable no-constant-condition */
 import { formatUnits } from "viem";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -406,7 +404,7 @@ const DomainSearch = () => {
             })}
         />
 
-        {(namesData?.pages?.flatMap((p) => p.items)?.length ?? 0) === 0 && (
+        {!namesIsLoading && (namesData?.pages?.[0]?.totalCount ?? 0) === 0 && (
           <Card className="p-section text-center">
             <div className="w-16 h-16 bg-secondary flex items-center justify-center mx-auto mb-4">
               <Search className="h-8 w-8 text-muted-foreground" />
