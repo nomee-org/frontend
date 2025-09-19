@@ -226,6 +226,8 @@ const UserConversation = () => {
   }, [peerInboxId, getOrCreateConversation]);
 
   const init = useCallback(async () => {
+    if (!client) return;
+
     try {
       setMessages([]);
       setReactionMessages([]);
@@ -273,10 +275,8 @@ const UserConversation = () => {
   }, [client, dmId, myAddress, setNickname]);
 
   useEffect(() => {
-    if (client) {
-      init();
-    }
-  }, [client, init]);
+    init();
+  }, [init]);
 
   const {
     containerRef,
