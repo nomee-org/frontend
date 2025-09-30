@@ -116,14 +116,22 @@ export const NomeeCreateListing = ({
               <div className="flex items-center justify-between">
                 <span className="font-medium">Domain:</span>
                 <Link className="underline" to={`/names/${name.data.name}`}>
-                  <span className="text-primary-foreground">
+                  <span
+                    className={
+                      isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                    }
+                  >
                     {name.data.name}
                   </span>
                 </Link>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Price:</span>
-                <span className="text-primary-foreground">
+                <span
+                  className={
+                    isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                  }
+                >
                   {formatLargeNumber(
                     Number(
                       formatUnits(
@@ -137,7 +145,11 @@ export const NomeeCreateListing = ({
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Expiration:</span>
-                <span className="text-primary-foreground">
+                <span
+                  className={
+                    isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                  }
+                >
                   {moment(new Date(listing.expiresAt)).fromNow()}
                 </span>
               </div>

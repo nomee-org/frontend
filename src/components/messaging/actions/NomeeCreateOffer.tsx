@@ -91,14 +91,22 @@ export const NomeeCreateOffer = ({
               <div className="flex items-center justify-between">
                 <span className="font-medium">Domain:</span>
                 <Link className="underline" to={`/names/${name.data.name}`}>
-                  <span className="text-primary-foreground">
+                  <span
+                    className={
+                      isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                    }
+                  >
                     {name.data.name}
                   </span>
                 </Link>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Price:</span>
-                <span className="text-primary-foreground">
+                <span
+                  className={
+                    isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                  }
+                >
                   {formatLargeNumber(
                     Number(offer.data.price) /
                       Math.pow(10, offer.data.currency.decimals)
@@ -108,13 +116,21 @@ export const NomeeCreateOffer = ({
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Offer Id:</span>
-                <span className="text-primary-foreground truncate max-w-24">
+                <span
+                  className={`${
+                    isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                  } truncate max-w-24`}
+                >
                   {offer.data.externalId}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Expiration:</span>
-                <span className="text-primary-foreground">
+                <span
+                  className={
+                    isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                  }
+                >
                   {moment(new Date(offer.data.expiresAt)).fromNow()}
                 </span>
               </div>

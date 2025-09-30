@@ -26,7 +26,7 @@ export const NomeeAction = ({
 
   if (data.startsWith("rejected::")) {
     try {
-      return <Rejected props={JSON.parse(text)} />;
+      return <Rejected isOwn={isOwn} props={JSON.parse(text)} />;
     } catch (error) {
       return <p className="text-destructive">Invalid JSON payload.</p>;
     }
@@ -34,7 +34,7 @@ export const NomeeAction = ({
 
   if (data.startsWith("accepted::")) {
     try {
-      return <Accepted props={JSON.parse(text)} />;
+      return <Accepted isOwn={isOwn} props={JSON.parse(text)} />;
     } catch (error) {
       return <p className="text-destructive">Invalid JSON payload.</p>;
     }
@@ -42,7 +42,7 @@ export const NomeeAction = ({
 
   if (data.startsWith("cancelled::")) {
     try {
-      return <Cancelled props={JSON.parse(text)} />;
+      return <Cancelled isOwn={isOwn} props={JSON.parse(text)} />;
     } catch (error) {
       return <p className="text-destructive">Invalid JSON payload.</p>;
     }
@@ -50,7 +50,7 @@ export const NomeeAction = ({
 
   if (data.startsWith("bought")) {
     try {
-      return <Bought props={JSON.parse(text)} />;
+      return <Bought isOwn={isOwn} props={JSON.parse(text)} />;
     } catch (error) {
       return <p className="text-destructive">Invalid JSON payload.</p>;
     }

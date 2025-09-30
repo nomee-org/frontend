@@ -3,7 +3,7 @@ import { useHelper } from "@/hooks/use-helper";
 import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export const Cancelled = ({ props }: { props: any }) => {
+export const Cancelled = ({ props, isOwn }: { props: any; isOwn: boolean }) => {
   const { trimAddress } = useHelper();
 
   return (
@@ -19,7 +19,11 @@ export const Cancelled = ({ props }: { props: any }) => {
           <div className="flex items-center justify-between">
             <span className="font-medium">Domain:</span>
             <Link className="underline" to={`/names/${props.domainName}`}>
-              <span className="text-primary-foreground">
+              <span
+                className={
+                  isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                }
+              >
                 {props.domainName}
               </span>
             </Link>
@@ -28,7 +32,11 @@ export const Cancelled = ({ props }: { props: any }) => {
         {props.orderId && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Order Id:</span>
-            <span className="text-primary-foreground truncate max-w-24">
+            <span
+              className={`${
+                isOwn ? "text-primary-secondary/80" : "text-primary/80"
+              } truncate max-w-24`}
+            >
               {props.orderId}
             </span>
           </div>
@@ -36,7 +44,11 @@ export const Cancelled = ({ props }: { props: any }) => {
         {props.status && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Status:</span>
-            <span className="text-primary-foreground truncate max-w-24">
+            <span
+              className={`${
+                isOwn ? "text-primary-secondary/80" : "text-primary/80"
+              } truncate max-w-24`}
+            >
               {props.status}
             </span>
           </div>
@@ -44,7 +56,11 @@ export const Cancelled = ({ props }: { props: any }) => {
         {props.transactionHash && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Tx Hash:</span>
-            <span className="text-primary-foreground truncate max-w-24">
+            <span
+              className={`${
+                isOwn ? "text-primary-secondary/80" : "text-primary/80"
+              } truncate max-w-24`}
+            >
               {trimAddress(props.transactionHash)}
             </span>
           </div>

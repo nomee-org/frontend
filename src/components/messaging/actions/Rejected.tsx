@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { X } from "lucide-react";
 
-export const Rejected = ({ props }: { props: any }) => {
+export const Rejected = ({ props, isOwn }: { props: any; isOwn: boolean }) => {
   return (
     <div className="w-32 md:w-44 max-w-full">
       {/* Title */}
@@ -14,7 +14,11 @@ export const Rejected = ({ props }: { props: any }) => {
         {props.domainName && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Domain:</span>
-            <span className="text-primary-foreground truncate max-w-24">
+            <span
+              className={`${
+                isOwn ? "text-primary-secondary/80" : "text-primary/80"
+              } truncate max-w-24`}
+            >
               {props.domainName}
             </span>
           </div>
@@ -22,7 +26,11 @@ export const Rejected = ({ props }: { props: any }) => {
         {props.orderId && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Order Id:</span>
-            <span className="text-primary-foreground truncate max-w-24">
+            <span
+              className={`${
+                isOwn ? "text-primary-secondary/80" : "text-primary/80"
+              } truncate max-w-24`}
+            >
               {props.orderId}
             </span>
           </div>
@@ -30,7 +38,11 @@ export const Rejected = ({ props }: { props: any }) => {
         {props.status && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Status:</span>
-            <span className="text-primary-foreground truncate max-w-24">
+            <span
+              className={`${
+                isOwn ? "text-primary-secondary/80" : "text-primary/80"
+              } truncate max-w-24`}
+            >
               {props.status}
             </span>
           </div>
@@ -38,7 +50,11 @@ export const Rejected = ({ props }: { props: any }) => {
         {props.transactionHash && (
           <div className="flex items-center justify-between">
             <span className="font-medium">Tx Hash:</span>
-            <span className="text-primary-foreground truncate max-w-24">
+            <span
+              className={`${
+                isOwn ? "text-primary-secondary/80" : "text-primary/80"
+              } truncate max-w-24`}
+            >
               {props.transactionHash}
             </span>
           </div>

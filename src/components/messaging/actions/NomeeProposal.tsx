@@ -144,14 +144,22 @@ export const NomeeProposal = ({
               <div className="flex items-center justify-between">
                 <span className="font-medium">Domain:</span>
                 <Link className="underline" to={`/names/${props.domainName}`}>
-                  <span className="text-primary-foreground">
+                  <span
+                    className={
+                      isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                    }
+                  >
                     {props.domainName}
                   </span>
                 </Link>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-medium">Amount:</span>
-                <span className="text-primary-foreground">
+                <span
+                  className={
+                    isOwn ? "text-primary-secondary/80" : "text-primary/80"
+                  }
+                >
                   {formatLargeNumber(Number(props.amount))} {props.currency}
                 </span>
               </div>
