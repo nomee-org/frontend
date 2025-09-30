@@ -176,7 +176,7 @@ export function MessageBubble({
   // === Group updated
   if (message.contentType.typeId === "group_updated") {
     return (
-      <div className="sticky top-0 z-20 flex justify-center">
+      <div className="flex justify-center">
         <Badge
           variant="secondary"
           className="px-3 py-1 text-xs font-medium bg-muted/60 border-0 shadow-sm mt-1"
