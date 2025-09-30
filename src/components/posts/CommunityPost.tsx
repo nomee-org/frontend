@@ -33,7 +33,7 @@ import {
   MessageSquare,
   ShieldCheck,
 } from "lucide-react";
-import { IComment, IPoll, IPollVote } from "@/types/backend";
+import { IComment, IPoll, IPollVote, IRepostedFrom } from "@/types/backend";
 import moment from "moment";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -72,6 +72,7 @@ interface PostProps {
   repostCount: number;
   comments: IComment[];
   isLiked: boolean;
+  repostedFrom?: IRepostedFrom;
   media?: MediaFile[];
   poll?: IPoll;
   userPollVotes?: IPollVote[];
@@ -90,6 +91,7 @@ const CommunityPost = ({
   repostCount,
   comments,
   isLiked,
+  repostedFrom,
   media = [],
   poll,
   userPollVotes = [],
@@ -234,6 +236,7 @@ const CommunityPost = ({
       </Dialog>
     );
   };
+
   const PostContent = (
     <div className="p-card max-md:px-0" onClick={onClick}>
       <div className="flex space-x-3">
@@ -369,6 +372,50 @@ const CommunityPost = ({
                 userVotes={userPollVotes}
                 canVote={true}
               />
+            </div>
+          )}
+
+          {/* Has repost */}
+          {repostedFrom && (
+            <div className="mt-3 p-3 bg-muted/20">
+              <div className="flex items-center space-x-2 mb-1">
+                <DomainAvatar
+                  domain={repostedFrom.originalPost?.authorId}
+                  size="xs"
+                />
+                <span className="text-sm font-medium text-foreground">
+                  {repostedFrom.originalPost?.authorId}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {moment(repostedFrom.originalPost?.createdAt).fromNow()}
+                </span>
+              </div>
+              <ParsedContent
+                content={repostedFrom.originalPost?.content}
+                className="text-sm text-foreground/90 mb-2 line-clamp-2"
+              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <span className="text-xs text-muted-foreground flex items-center">
+                    <Heart className="w-3 h-3 mr-1" />
+                    {repostedFrom.originalPost?._count?.likes || 0}
+                  </span>
+                </div>
+                {repostedFrom.originalPost?._count?.comments > 1 && (
+                  <button
+                    className="text-xs text-primary hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReply(id);
+                    }}
+                  >
+                    View {repostedFrom.originalPost?._count?.comments - 1} more{" "}
+                    {repostedFrom.originalPost?._count?.comments - 1 === 1
+                      ? "reply"
+                      : "replies"}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 

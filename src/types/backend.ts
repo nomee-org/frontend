@@ -27,6 +27,17 @@ export interface IUserBasic {
   isVerified: boolean;
 }
 
+export interface IRepostedFrom {
+  id: string;
+  comment?: string;
+  createdAt: string;
+  userId: string;
+  originalPostId: string;
+  repostId: string;
+  originalPost: IPost;
+  user: IUserBasic;
+}
+
 export interface IPost {
   id: string;
   content: string;
@@ -44,16 +55,7 @@ export interface IPost {
   reposts?: IRepost[];
   comments?: IComment[];
   likes?: ILike[];
-  repostedFrom?: {
-    id: string;
-    comment?: string;
-    createdAt: string;
-    userId: string;
-    originalPostId: string;
-    repostId: string;
-    originalPost: IPost;
-    user: IUserBasic;
-  };
+  repostedFrom?: IRepostedFrom;
   _count: {
     likes: number;
     comments: number;

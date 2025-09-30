@@ -231,6 +231,7 @@ const Community = () => {
                               repostCount={post._count.reposts}
                               comments={post.comments ?? []}
                               isLiked={(post?.likes?.length ?? 0) > 0}
+                              repostedFrom={post?.repostedFrom}
                               media={
                                 post.mediaUrls?.map((url, i) => ({
                                   id: `${post.id}-${i}`,
