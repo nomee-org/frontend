@@ -477,7 +477,13 @@ const UserConversation = () => {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="secondary">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    toast.success("Invitation sent!");
+                  }}
+                >
                   Invite them
                 </Button>
               </div>
