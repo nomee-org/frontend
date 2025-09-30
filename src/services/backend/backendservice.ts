@@ -543,6 +543,12 @@ class BackendService {
     );
   }
 
+  async inviteUser(username: string): Promise<INotification> {
+    return this.apiClient.post<INotification>(
+      `/notifications/${username}/invite`
+    );
+  }
+
   async getNotifications(
     page: number = 1,
     limit: number = 20,

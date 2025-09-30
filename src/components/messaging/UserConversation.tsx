@@ -67,6 +67,7 @@ import { ContentTypeReaction } from "@xmtp/content-type-reaction";
 import { TradeOptionPopup } from "./TradeOptionsPopup";
 import { dnsConnect } from "@/services/dnsconnect";
 import { domainRegex } from "@/lib/utils";
+import { useInviteUser } from "@/data/use-backend";
 
 const UserConversation = () => {
   const [params] = useSearchParams();
@@ -102,6 +103,16 @@ const UserConversation = () => {
   const [messagesError, setMessagesError] = useState<Error | undefined>(
     undefined
   );
+  const inviteUserMutation = useInviteUser();
+
+  const sendInvitation = async () => {
+    try {
+      await inviteUserMutation.mutateAsync(dmId);
+      toast.success("Invitation sent!");
+    } catch (error) {
+      toast.error(error?.message);
+    }
+  };
 
   const getOrCreateConversation = useCallback(
     async (inboxId: string) => {
@@ -477,13 +488,7 @@ const UserConversation = () => {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    toast.success("Invitation sent!");
-                  }}
-                >
+                <Button size="sm" variant="secondary" onClick={sendInvitation}>
                   Invite them
                 </Button>
               </div>

@@ -1367,6 +1367,12 @@ export function useDeleteNotification() {
   });
 }
 
+export function useInviteUser() {
+  return useMutation<{ message: string }, Error, string>({
+    mutationFn: (username) => backendService.inviteUser(username),
+  });
+}
+
 export function useUploadMedia() {
   return useMutation<string[], Error, { files: File[] }>({
     mutationFn: ({ files }) => backendService.uploadMultipleFiles(files),
