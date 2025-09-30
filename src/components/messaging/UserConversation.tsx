@@ -351,7 +351,7 @@ const UserConversation = () => {
     return () => {
       webSocketService.removeEventHandlers(handlers);
     };
-  }, [conversation]);
+  }, [conversation, myAddress]);
 
   return (
     <>

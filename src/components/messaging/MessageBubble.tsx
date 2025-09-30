@@ -37,6 +37,7 @@ import { getSummary } from "./actions/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useXmtp } from "@/contexts/XmtpContext";
 import { MessageRender } from "./renders/MessageRender";
+import { Badge } from "../ui/badge";
 
 const emojis = [
   { emoji: "❤️", icon: Heart, name: "heart" },
@@ -171,6 +172,20 @@ export function MessageBubble({
 
   if (message.contentType.sameAs(ContentTypeReaction)) return null;
   if (message.contentType.sameAs(ContentTypeReadReceipt)) return null;
+
+  // === Group updated
+  if (message.contentType.typeId === "group_updated") {
+    return (
+      <div className="sticky top-0 z-20 flex justify-center">
+        <Badge
+          variant="secondary"
+          className="px-3 py-1 text-xs font-medium bg-muted/60 border-0 shadow-sm mt-1"
+        >
+          Started the conversation
+        </Badge>
+      </div>
+    );
+  }
 
   return (
     <div
