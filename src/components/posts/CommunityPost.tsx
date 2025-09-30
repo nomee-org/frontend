@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { DomainAvatar } from "@/components/domain/DomainAvatar";
 import { PollDisplay } from "@/components/posts/PollDisplay";
-import { ParsedText, ParsedContent, containsHTML } from "@/lib/text-parser";
+import { ParsedContent } from "@/lib/text-parser";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +72,6 @@ interface PostProps {
   repostCount: number;
   comments: IComment[];
   isLiked: boolean;
-  parentId?: string;
   media?: MediaFile[];
   poll?: IPoll;
   userPollVotes?: IPollVote[];
@@ -91,7 +90,6 @@ const CommunityPost = ({
   repostCount,
   comments,
   isLiked,
-  parentId,
   media = [],
   poll,
   userPollVotes = [],
@@ -114,6 +112,10 @@ const CommunityPost = ({
 
   const isOwnPost = currentUser === author.domainName;
 
+  const [reactiveIsLiked, setReactiveIsLiked] = useState(isLiked);
+  const [reactiveLikes, setReactiveLikes] = useState(likes);
+  const [reactiveRepostCount, setReactiveRepostCount] = useState(repostCount);
+
   const handleCopyLink = () => {
     const url = `${window.location.origin}/feeds/${id}`;
     navigator.clipboard.writeText(url);
@@ -135,6 +137,7 @@ const CommunityPost = ({
   const handleRepost = async () => {
     try {
       await repostPost.mutateAsync(id);
+      setReactiveRepostCount((prev) => prev + 1);
       toast.success("Post reposted!");
     } catch (error) {
       console.error("Failed to repost:", error);
@@ -156,6 +159,7 @@ const CommunityPost = ({
 
       setRepostDialogOpen(false);
       setRepostContent("");
+      setReactiveRepostCount((prev) => prev + 1);
       toast.success("Post reposted with comment!");
     } catch (error) {
       console.error("Failed to repost with comment:", error);
@@ -388,7 +392,7 @@ const CommunityPost = ({
                 <div className="flex items-center space-x-3">
                   <span className="text-xs text-muted-foreground flex items-center">
                     <Heart className="w-3 h-3 mr-1" />
-                    {comments[0]._count?.likes || 0}
+                    {reactiveLikes || 0}
                   </span>
                 </div>
                 {commentsCount > 1 && (
@@ -430,7 +434,7 @@ const CommunityPost = ({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Repeat className="w-4 h-4" />
-                  {repostCount}
+                  {reactiveRepostCount}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48">
@@ -460,23 +464,21 @@ const CommunityPost = ({
                 variant="ghost"
                 size="sm"
                 className={`text-muted-foreground transition-colors ${
-                  isLiked
+                  reactiveIsLiked
                     ? "text-red-500 hover:text-red-600 hover:bg-red-50"
                     : "hover:text-red-500 hover:bg-red-50"
                 }`}
                 onClick={async (e) => {
                   e.stopPropagation();
                   try {
-                    if (isLiked) {
+                    if (reactiveIsLiked) {
                       await unlikePost.mutateAsync(id);
-                      isLiked = false;
-                      if (likes > 0) {
-                        likes -= 1;
-                      }
+                      setReactiveLikes((prev) => prev - 1);
+                      setReactiveIsLiked(false);
                     } else {
                       await likePost.mutateAsync(id);
-                      isLiked = true;
-                      likes += 1;
+                      setReactiveLikes((prev) => prev + 1);
+                      setReactiveIsLiked(true);
                     }
                   } catch (error) {
                     console.error("Failed to like/unlike post:", error);
@@ -484,10 +486,12 @@ const CommunityPost = ({
                 }}
               >
                 <Heart
-                  className={`w-4 h-4 mr-2 ${isLiked ? "fill-current" : ""}`}
+                  className={`w-4 h-4 mr-2 ${
+                    reactiveIsLiked ? "fill-current" : ""
+                  }`}
                 />
               </Button>
-              {likes > 0 && (
+              {reactiveLikes > 0 && (
                 <button
                   className="text-sm text-muted-foreground hover:text-red-500 hover:underline transition-colors"
                   onClick={(e) => {
@@ -495,7 +499,7 @@ const CommunityPost = ({
                     setLikesModalOpen(true);
                   }}
                 >
-                  {likes}
+                  {reactiveLikes}
                 </button>
               )}
             </div>

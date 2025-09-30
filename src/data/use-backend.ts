@@ -36,16 +36,11 @@ import {
 } from "../types/backend";
 import {
   Client,
-  ContentTypeId,
   Conversation,
   DecodedMessage,
-  Dm,
   Group,
   PermissionLevel,
 } from "@xmtp/browser-sdk";
-import { RemoteAttachment } from "@xmtp/content-type-remote-attachment";
-import { Reaction } from "@xmtp/content-type-reaction";
-import { Reply } from "@xmtp/content-type-reply";
 
 export const queryKeys = {
   auth: {
