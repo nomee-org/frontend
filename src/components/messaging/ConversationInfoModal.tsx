@@ -263,7 +263,9 @@ export const ConversationInfoModal = ({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <p className="text-sm font-medium">{member.inboxId}</p>
+                    <p className="text-sm font-medium truncate max-w-52">
+                      {member.inboxId}
+                    </p>
                     {member.permissionLevel === PermissionLevel.Admin && (
                       <Badge variant="secondary" className="text-xs">
                         <Crown className="h-3 w-3 mr-1" />
