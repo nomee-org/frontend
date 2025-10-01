@@ -58,6 +58,7 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
             webSocketService.updateConfig({
               token: token.accessToken,
               username: newUsername,
+              address: address,
             });
 
             webSocketService.connect();
@@ -73,7 +74,7 @@ export const UsernameProvider: React.FC<UsernameProviderProps> = ({
           setIsSwitching(false);
         });
     },
-    [refetchProfile]
+    [address, refetchProfile]
   );
 
   useEffect(() => {
