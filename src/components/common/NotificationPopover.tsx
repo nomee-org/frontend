@@ -41,13 +41,11 @@ export function NotificationPopover() {
   const location = useLocation();
   const { token, activeUsername } = useUsername();
 
-  const { data: notificationsData, isLoading } = useNotifications(
-    10,
-    undefined,
-    activeUsername
-  );
-  const { data: unReadNotificationsData, refetch: unRefetchNotificationsData } =
-    useNotifications(10, true, activeUsername);
+  const {
+    data: unReadNotificationsData,
+    refetch: unRefetchNotificationsData,
+    isLoading,
+  } = useNotifications(10, true, activeUsername);
 
   const markAllAsReadMutation = useMarkAllNotificationsAsRead();
   const unreadCount =
@@ -72,7 +70,7 @@ export function NotificationPopover() {
     return () => {
       webSocketService.removeEventHandlers(handlers);
     };
-  }, [token]);
+  }, [token, unRefetchNotificationsData]);
 
   const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
@@ -127,14 +125,15 @@ export function NotificationPopover() {
             <Bell className="h-8 w-8 mx-auto mb-2 opacity-50 animate-pulse" />
             <p>Loading notifications...</p>
           </div>
-        ) : (notificationsData?.pages?.[0].pagination.total ?? 0) === 0 ? (
+        ) : (unReadNotificationsData?.pages?.[0].pagination.total ?? 0) ===
+          0 ? (
           <div className="p-8 text-center text-muted-foreground">
             <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No notifications yet</p>
           </div>
         ) : (
           <div className="space-y-0">
-            {notificationsData?.pages?.[0]?.data?.map((notification) => (
+            {unReadNotificationsData?.pages?.[0]?.data?.map((notification) => (
               <div key={notification.id}>
                 <div
                   className={`p-3 md:p-4 cursor-pointer hover:bg-muted/50 transition-colors ${
