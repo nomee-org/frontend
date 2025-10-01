@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,6 @@ import {
   useGetRecentStickers,
 } from "@/data/use-backend";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { toast } from "sonner";
 import { Sparkles, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sticker } from "@/types/backend";
@@ -48,6 +47,7 @@ export function StickersPickerPopup({
     hasNextPage: stickersHasNextPage,
     isLoading: stickerPacksLoading,
     isError: stickerPacksError,
+    refetch,
   } = useGetStickerPacks(20);
 
   const {
@@ -235,11 +235,7 @@ export function StickersPickerPopup({
                 <p className="text-sm text-muted-foreground mb-2">
                   Failed to load sticker packs
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.location.reload()}
-                >
+                <Button variant="outline" size="sm" onClick={() => refetch}>
                   Try Again
                 </Button>
               </div>
