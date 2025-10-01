@@ -97,8 +97,7 @@ export function MessageInput({
 
   // Handle typing status with improved debouncing
   const handleTypingStart = useCallback(() => {
-    if (!isTyping && conversation?.id) {
-      setIsTyping(true);
+    if (conversation?.id) {
       webSocketService.startTyping(conversation?.id);
     }
 
@@ -114,7 +113,7 @@ export function MessageInput({
         webSocketService.stopTyping(conversation?.id);
       }
     }, 2000);
-  }, [isTyping, conversation?.id]);
+  }, [conversation?.id]);
 
   const handleTypingStop = useCallback(() => {
     if (typingTimeoutRef.current) {
@@ -127,6 +126,16 @@ export function MessageInput({
       webSocketService.stopTyping(conversation?.id);
     }
   }, [isTyping, conversation?.id]);
+
+  useEffect(() => {
+    const typing = message.length > 0;
+    setIsTyping(typing);
+    if (typing) {
+      handleTypingStart();
+    } else {
+      handleTypingStop();
+    }
+  }, [message, handleTypingStart, handleTypingStop]);
 
   // Handle member tagging (only for group conversations)
   const handleMemberTagging = useCallback(
@@ -192,7 +201,7 @@ export function MessageInput({
         handleMemberTagging(value, textareaRef.current.selectionStart || 0);
       }
     },
-    [handleTypingStart, handleTypingStop, handleMemberTagging]
+    [handleMemberTagging]
   );
 
   // Cleanup typing timeout on unmount

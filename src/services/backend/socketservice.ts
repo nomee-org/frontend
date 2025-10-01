@@ -203,7 +203,11 @@ class WebSocketService {
   }
 
   startTyping(conversationId: string): void {
+    console.log("typing-start", this.config.address);
+
     if (this.socket && this.isAuthenticated) {
+      console.log("typing-start2", this.config.address);
+
       this.socket.emit("typing-start", {
         conversationId,
         address: this.config.address,

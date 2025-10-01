@@ -471,9 +471,9 @@ const GroupConversation = () => {
         members={membersData ?? []}
         onRecording={(typing) => {
           if (typing) {
-            webSocketService.startTyping(conversation?.id);
+            webSocketService.startRecording(conversation?.id);
           } else {
-            webSocketService.stopTyping(conversation?.id);
+            webSocketService.stopRecording(conversation?.id);
           }
         }}
         onSendSuccess={() => {
