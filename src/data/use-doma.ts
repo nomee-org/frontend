@@ -114,10 +114,10 @@ export function useOffers(take: number, tokenId: string) {
   });
 }
 
-export function useOffer(externalId: string, enabled = true) {
+export function useOffer(externalId: string, tokenId: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.singleOffer(externalId),
-    queryFn: () => dataService.getOffer({ externalId }),
+    queryFn: () => dataService.getOffer({ externalId, tokenId }),
     enabled: !!externalId && enabled,
   });
 }

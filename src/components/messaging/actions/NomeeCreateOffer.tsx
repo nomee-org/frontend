@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 export interface CreateOfferProps {
   orderId: string;
   domainName: string;
+  tokenId: string;
 }
 
 export const NomeeCreateOffer = ({
@@ -34,7 +35,7 @@ export const NomeeCreateOffer = ({
 
   const { formatLargeNumber } = useHelper();
 
-  const offer = useOffer(props.orderId, isInView);
+  const offer = useOffer(props.orderId, props.tokenId, isInView);
   const name = useName(props.domainName, isInView);
   const token = name?.data?.tokens?.[0];
 
@@ -42,7 +43,7 @@ export const NomeeCreateOffer = ({
     const observer = new IntersectionObserver(
       (entries, obs) => {
         const [entry] = entries;
-        if (entry.isIntersecting) {
+        if (!isInView && entry.isIntersecting) {
           setIsInView(true);
           obs.unobserve(entry.target);
         }
@@ -108,10 +109,10 @@ export const NomeeCreateOffer = ({
                   }
                 >
                   {formatLargeNumber(
-                    Number(offer.data.price) /
-                      Math.pow(10, offer.data.currency.decimals)
+                    Number(offer?.data?.price) /
+                      Math.pow(10, offer?.data?.currency?.decimals)
                   )}{" "}
-                  {offer.data.currency.symbol}
+                  {offer?.data?.currency?.symbol}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -121,7 +122,7 @@ export const NomeeCreateOffer = ({
                     isOwn ? "text-primary-secondary/80" : "text-primary/80"
                   } truncate max-w-24`}
                 >
-                  {offer.data.externalId}
+                  {offer?.data?.externalId}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -131,7 +132,7 @@ export const NomeeCreateOffer = ({
                     isOwn ? "text-primary-secondary/80" : "text-primary/80"
                   }
                 >
-                  {moment(new Date(offer.data.expiresAt)).fromNow()}
+                  {moment(new Date(offer?.data?.expiresAt)).fromNow()}
                 </span>
               </div>
             </div>

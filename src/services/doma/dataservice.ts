@@ -1,7 +1,7 @@
 import { Name, Paging, Offer, NameStats } from "@/types/doma";
 import { graphRequest } from "./client";
 import { GET_NAME, GET_NAME_STATISTICS, GET_NAMES } from "./queries/names";
-import { GET_OFFERS, GET_OFFER } from "./queries/offers";
+import { GET_OFFERS } from "./queries/offers";
 
 interface GetOffersProps {
   page: number;
@@ -10,6 +10,7 @@ interface GetOffersProps {
 }
 
 interface GetOfferProps {
+  tokenId: string;
   externalId: string;
 }
 
@@ -51,12 +52,14 @@ class DataService {
     return data.offers;
   }
 
-  async getOffer(props: GetOfferProps): Promise<Offer> {
-    const data = await graphRequest<{ offer: Offer }>(GET_OFFER, {
+  async getOffer(props: GetOfferProps): Promise<Offer | undefined> {
+    const data = await graphRequest<{ offers: Paging<Offer> }>(GET_OFFERS, {
+      skip: 0,
+      take: 20,
       ...props,
     });
 
-    return data.offer;
+    return data.offers.items?.find((o) => o.externalId == props.externalId);
   }
 
   async getNames(props: GetNamesProps): Promise<Paging<Name>> {

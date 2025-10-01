@@ -46,38 +46,3 @@ export const GET_OFFERS = `
         }
     }
 `;
-
-export const GET_OFFER = `
-    query OfferQuery($externalId: String!) {
-        offer(externalId: $externalId) {
-            totalCount
-            items {
-                externalId
-                price
-                tokenAddress
-                offererAddress
-                orderbook
-                expiresAt
-                createdAt
-                currency {
-                    name
-                    symbol
-                    decimals
-                }
-                name
-                id
-                nameExpiresAt
-                chain {
-                    name
-                    networkId
-                }
-                tokenId
-            }
-            pageSize
-            totalPages
-            hasPreviousPage
-            hasNextPage
-            currentPage
-        }
-    }
-`;

@@ -205,6 +205,7 @@ export function BuyOrMakeOfferPopup({
           const richMessage = `created_offer::${JSON.stringify({
             orderId: createdOffer.orders?.[0]?.orderId,
             domainName,
+            tokenId: token?.tokenId,
           } as CreateOfferProps)}`;
 
           if (replyTo) {
