@@ -88,7 +88,7 @@ export const MessageRender = ({
                 src={attachment.url}
                 alt="Shared image"
                 className={`max-w-full object-contain rounded-lg ${
-                  isReply ? "h-24" : "h-[220px] md:h-[320px]"
+                  isReply ? "h-[320px]" : "h-[220px] md:h-[320px]"
                 }`}
                 onClick={() => window.open(attachment.url, "_blank")}
               />
@@ -106,7 +106,7 @@ export const MessageRender = ({
                 src={attachment.url}
                 controls
                 className={`max-w-full object-contain rounded-lg ${
-                  isReply ? "h-24" : "h-[220px] md:h-[320px]"
+                  isReply ? "h-[320px]" : "h-[220px] md:h-[320px]"
                 }`}
               />
             )}
