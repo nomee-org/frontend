@@ -31,6 +31,7 @@ import { OnlineStatus } from "@/components/messaging/OnlineStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import moment from "moment";
 import {
+  ConsentState,
   Conversation,
   DecodedMessage,
   Group,
@@ -257,9 +258,9 @@ export const ConversationInfoModal = ({
               >
                 <div className="relative">
                   <DomainAvatar domain={member.inboxId} className="h-10 w-10" />
-                  {/* {member.user.isOnline && (
+                  {member.consentState === ConsentState.Allowed && (
                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></div>
-                  )} */}
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
