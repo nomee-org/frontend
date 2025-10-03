@@ -72,7 +72,7 @@ export function UserVerificationPopup({
     } catch (error) {
       toast.error(error?.message || "Verification request failed");
     } finally {
-      window.open("https://x.com/nomee_social", "_blank");
+      window.open("https://x.com/nomee__", "_blank");
       setIsProcessing(false);
     }
   };
